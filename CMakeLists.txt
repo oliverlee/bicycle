@@ -11,5 +11,5 @@ find_package(Boost REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 include_directories(${Boost_INCLUDE_DIR})
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -O3")
 add_executable(bicycle bicycle.cc test.cc)
