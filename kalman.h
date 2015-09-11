@@ -1,6 +1,5 @@
 #pragma once
 #include <Eigen/Dense>
-#include "exception.h"
 
 namespace observer {
 // TODO: Implement linear system interface instead of assuming Bicycle
@@ -9,10 +8,6 @@ namespace observer {
 template<typename T>
 class Kalman {
     public:
-//        using n = typename T::n; // system state size
-//        using m = typename T::m; // system input size
-//        using l = typename T::l; // system output size
-
         using state_t = typename T::state_t;
         using input_t = typename T::input_t;
         using measurement_t = typename T::output_t;
