@@ -12,7 +12,7 @@ namespace {
 } // namespace
 
 int main(int argc, char* argv[]) {
-    (void)argv;
+    (void)argc;
 
     model::Bicycle bicycle(argv[1], v0, dt);
 
@@ -116,5 +116,3 @@ int main(int argc, char* argv[]) {
 
     return EXIT_SUCCESS;
 }
-
-

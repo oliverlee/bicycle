@@ -13,7 +13,6 @@ Bicycle::Bicycle(const char* param_file, double v, double dt) : m_expAT(m_AT) {
     set_matrices_from_file(param_file);
 
     // initialize state space matrices to zero
-    // FIXME: C and D matrices are never set to nonzero values
     m_A.setZero();
     m_B.setZero();
     m_C.setZero();
@@ -69,7 +68,6 @@ Bicycle::state_t Bicycle::x_integrate(const Bicycle::state_t& x, double dt) cons
     return xout;
 }
 
-
 void Bicycle::set_v(double v, double dt) {
     /* system state space is parameterized by forward speed v
      * this function sets forward speed and calculates the state space matrices
@@ -93,7 +91,6 @@ void Bicycle::set_v(double v, double dt) {
         m_Bd = m_A.fullPivHouseholderQr().solve((m_Ad - state_matrix_t::Identity())*m_B);
     }
 }
-
 
 void Bicycle::set_matrices_from_file(const char* param_file) {
     const unsigned int num_elem = o*o;

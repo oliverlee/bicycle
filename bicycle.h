@@ -39,6 +39,18 @@ class Bicycle{
         state_t x_integrate(const state_t& x, double dt) const;
         output_t y(const state_t& x) const;
         void set_v(double v, double dt = 0.0);
+        void set_A(const state_matrix_t& A) {
+            m_A = A;
+        }
+        void set_B(const input_matrix_t& B) {
+            m_B = B;
+        }
+        void set_C(const output_matrix_t& C) {
+            m_C = C;
+        }
+        void set_D(const feedthrough_matrix_t& D) {
+            m_D = D;
+        }
 
         // (pseudo) parameter accessors
         state_matrix_t A() const {
