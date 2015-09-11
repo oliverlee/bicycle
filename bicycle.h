@@ -17,7 +17,7 @@ class Bicycle{
     public:
         static constexpr unsigned int n = 4; // state size
         static constexpr unsigned int m = 2; // input size
-        static constexpr unsigned int l = 1; // output size, only steer angle is measured
+        static constexpr unsigned int l = 2; // output size
         static constexpr unsigned int o = n/2; // second order state size
 
         using state_t = Eigen::Matrix<double, n, 1>;
