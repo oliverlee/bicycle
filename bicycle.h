@@ -36,13 +36,13 @@ class Bicycle{
          * time lookup along with quickly finding a key 'near' the requested
          * one, we convert speeds to a fixed precision integer.
          *
-         * The first digit after the decimal defines the precision used.
-         * v = 6.024 -> 60
+         * Six digits after the decimal defines the precision used.
+         * v = 6.024262 -> 6024262
          *
          * The same is done with sample time dt and microsecond precision is used.
          * dt = 0.005 -> 5000
          *
-         * Keys are defined as a pair: (round(1000*dt), round(10*v)).
+         * Keys are defined as a pair: (round(1000*dt), round(1000000*v)).
          */
         using state_space_map_key_t = const std::pair<uint32_t, int32_t>;
         using state_space_map_value_t = const std::pair<state_matrix_t, input_matrix_t>;
@@ -133,7 +133,7 @@ inline void Bicycle::set_D(const feedthrough_matrix_t& D) {
     m_D = D;
 }
 inline constexpr Bicycle::state_space_map_key_t Bicycle::make_state_space_map_key(double v, double dt) {
-    return state_space_map_key_t(1000*dt, 10*v);
+    return state_space_map_key_t(1000*dt, 1000000*v);
 }
 inline Bicycle::state_matrix_t Bicycle::A() const {
     return m_A;

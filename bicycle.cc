@@ -107,7 +107,9 @@ void Bicycle::set_v(double v, double dt) {
         if (!discrete_state_space_lookup(k)) {
             m_expAT.compute(m_Ad);
             Eigen::FullPivHouseholderQR<state_matrix_t> A_qr(m_A);
-            // TODO: setThreshold() for rank deficiency instead of using default
+            // TODO: Investigate threshold.
+            // Current threshold only results in capsize speed as rank deficient, not weave speed.
+            A_qr.setThreshold(1e-5);
             if (A_qr.rank() < n) {
                 std::cout << "Warning: A is (near) singular and a precomputed Bd has not been " <<
                     "provided in the discrete state space map.\nComputation of Bd may be inaccurate.\n";
@@ -116,10 +118,6 @@ void Bicycle::set_v(double v, double dt) {
         }
     }
 }
-
-//inline constexpr Bicycle::state_space_map_key_t Bicycle::make_state_space_map_key(double v, double dt) {
-//    return state_space_map_key_t(1000*dt, 10*v);
-//}
 
 bool Bicycle::discrete_state_space_lookup(const state_space_map_key_t& k) {
     if (m_discrete_state_space_map == nullptr) {
