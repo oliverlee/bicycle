@@ -15,3 +15,4 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -O3")
 
 add_executable(test_bicycle bicycle.cc test_bicycle.cc)
 add_executable(test_kalman bicycle.cc test_kalman.cc)
+add_executable(test_lqr bicycle.cc test_lqr.cc)
