@@ -3,12 +3,13 @@
 #include <iostream>
 #include "bicycle.h"
 
-
 namespace model {
 
 const double g = 9.80665; // gravitational constant [m/s^2]
 
-Bicycle::Bicycle(const char* param_file, double v, double dt) : m_expAT(m_AT) {
+Bicycle::Bicycle(const char* param_file, double v, double dt,
+        state_space_map_t const* discrete_state_space_map) :
+    m_expAT(m_AT), m_discrete_state_space_map(discrete_state_space_map) {
     // set M, C1, K0, K2 matrices from file
     set_matrices_from_file(param_file);
 
@@ -30,6 +31,22 @@ Bicycle::Bicycle(const char* param_file, double v, double dt) : m_expAT(m_AT) {
     m_B.bottomLeftCorner<o, o>() = m_M.inverse();
     // set forward speed and (optionally sampling time) and update state matrix
     set_v(v, dt);
+}
+
+void Bicycle::set_matrices_from_file(const char* param_file) {
+    const unsigned int num_elem = o*o;
+    std::array<double, 4*num_elem> buffer;
+
+    std::fstream pf(param_file, std::ios_base::in);
+    for (auto& d: buffer) {
+        pf >> d;
+    }
+    pf.close();
+
+    m_M = Eigen::Map<second_order_matrix_t>(buffer.data()).transpose();
+    m_C1 = Eigen::Map<second_order_matrix_t>(buffer.data() + num_elem).transpose();
+    m_K0 = Eigen::Map<second_order_matrix_t>(buffer.data() + 2*num_elem).transpose();
+    m_K2 = Eigen::Map<second_order_matrix_t>(buffer.data() + 3*num_elem).transpose();
 }
 
 Bicycle::state_t Bicycle::x_next(const Bicycle::state_t& x, const Bicycle::input_t& u) const {
@@ -86,26 +103,37 @@ void Bicycle::set_v(double v, double dt) {
         m_Bd.setZero();
     } else {
         m_AT = m_A*dt;
-        m_expAT.compute(m_Ad);
-        // FIXME: Warn if m_A is (close to) singular
-        m_Bd = m_A.fullPivHouseholderQr().solve((m_Ad - state_matrix_t::Identity())*m_B);
+        state_space_map_key_t k = make_state_space_map_key(v, dt);
+        if (!discrete_state_space_lookup(k)) {
+            m_expAT.compute(m_Ad);
+            Eigen::FullPivHouseholderQR<state_matrix_t> A_qr(m_A);
+            // TODO: setThreshold() for rank deficiency instead of using default
+            if (A_qr.rank() < n) {
+                std::cout << "Warning: A is (near) singular and a precomputed Bd has not been " <<
+                    "provided in the discrete state space map.\nComputation of Bd may be inaccurate.\n";
+            }
+            m_Bd = A_qr.solve((m_Ad - state_matrix_t::Identity())*m_B);
+        }
     }
 }
 
-void Bicycle::set_matrices_from_file(const char* param_file) {
-    const unsigned int num_elem = o*o;
-    std::array<double, 4*num_elem> buffer;
+//inline constexpr Bicycle::state_space_map_key_t Bicycle::make_state_space_map_key(double v, double dt) {
+//    return state_space_map_key_t(1000*dt, 10*v);
+//}
 
-    std::fstream pf(param_file, std::ios_base::in);
-    for (auto& d: buffer) {
-        pf >> d;
+bool Bicycle::discrete_state_space_lookup(const state_space_map_key_t& k) {
+    if (m_discrete_state_space_map == nullptr) {
+        return false;
     }
-    pf.close();
+    auto search = m_discrete_state_space_map->find(k);
+    if (search == m_discrete_state_space_map->end()) {
+        return false;
+    }
 
-    m_M = Eigen::Map<second_order_matrix_t>(buffer.data()).transpose();
-    m_C1 = Eigen::Map<second_order_matrix_t>(buffer.data() + num_elem).transpose();
-    m_K0 = Eigen::Map<second_order_matrix_t>(buffer.data() + 2*num_elem).transpose();
-    m_K2 = Eigen::Map<second_order_matrix_t>(buffer.data() + 3*num_elem).transpose();
+    // discrete state space matrices Ad, Bd have been provided for speed v.
+    m_Ad = search->second.first;
+    m_Bd = search->second.second;
+    return true;
 }
 
 } // namespace model
