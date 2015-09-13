@@ -17,11 +17,11 @@ namespace test {
 
 template<typename DerivedA, typename DerivedB>
 bool allclose(const Eigen::DenseBase<DerivedA>& a, const Eigen::DenseBase<DerivedB>& b,
-              const typename DerivedA::RealScalar& rtol
+              const typename DerivedA::RealScalar& reltol
                 = Eigen::NumTraits<typename DerivedA::RealScalar>::dummy_precision(),
-              const typename DerivedA::RealScalar& atol
+              const typename DerivedA::RealScalar& abstol
                 = Eigen::NumTraits<typename DerivedA::RealScalar>::epsilon()) {
-  return ((a.derived() - b.derived()).array().abs() <= (atol + rtol * b.derived().array().abs())).all();
+  return ((a.derived() - b.derived()).array().abs() <= (abstol + reltol * b.derived().array().abs())).all();
 }
 
 } // namespace test
