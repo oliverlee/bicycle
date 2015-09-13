@@ -21,6 +21,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG" CACHE
 
 # compilation flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y -Wall -Wextra")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-missing-field-initializers") # supress warnings from googletest
 
 # default to release type if none provided
 if(NOT CMAKE_BUILD_TYPE)
@@ -35,7 +36,7 @@ include_directories(${BICYCLE_SOURCE_DIR}/inc)
 include_directories(${BICYCLE_SOURCE_DIR}/src)
 set(BICYCLE_SOURCE ${BICYCLE_SOURCE_DIR}/src/bicycle.cc)
 
-option(BICYCLE_BUILD_TESTS "Build tests." OFF)
+option(BICYCLE_BUILD_TESTS "Build tests." ON)
 option(BICYCLE_BUILD_EXAMPLES "Build examples." ON)
 
 if (BICYCLE_BUILD_EXAMPLES)
@@ -43,6 +44,10 @@ if (BICYCLE_BUILD_EXAMPLES)
 endif()
 
 if (BICYCLE_BUILD_TESTS)
-  enable_testing()
-  add_subdirectory(googletest)
+    set(CTEST_OUTPUT_ON_FAILURE ON)
+    enable_testing()
+    include_directories(external/googletest)
+    include_directories(external/googletest/include)
+    add_subdirectory(external/googletest)
+    add_subdirectory(tests)
 endif()
