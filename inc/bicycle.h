@@ -49,9 +49,12 @@ class Bicycle{
         using state_space_map_t = std::unordered_map<state_space_map_key_t,
               state_space_map_value_t, boost::hash<state_space_map_key_t>>;
 
-        Bicycle(const char* param_file, double v, double dt = 0.0,
-                state_space_map_t const* discrete_state_space_map = nullptr);
-        void set_matrices_from_file(const char* param_file);
+        Bicycle(const second_order_matrix_t& M, const second_order_matrix_t& C1,
+                const second_order_matrix_t& K0, const second_order_matrix_t& K2,
+                double v, double dt,
+                const state_space_map_t* discrete_state_space_map = nullptr);
+        Bicycle(const char* param_file, double v, double dt,
+                const state_space_map_t* discrete_state_space_map = nullptr);
 
         state_t x_next(const state_t& x, const input_t& u) const;
         state_t x_integrate(const state_t& x, const input_t& u, double dt) const;
@@ -60,8 +63,6 @@ class Bicycle{
         state_t x_integrate(const state_t& x, double dt) const;
         output_t y(const state_t& x) const;
         void set_v(double v, double dt = 0.0);
-        void set_A(const state_matrix_t& A);
-        void set_B(const input_matrix_t& B);
         void set_C(const output_matrix_t& C);
         void set_D(const feedthrough_matrix_t& D);
 
@@ -117,15 +118,12 @@ class Bicycle{
         mutable boost::numeric::odeint::runge_kutta_dopri5<
             state_t, double, state_t, double,
             boost::numeric::odeint::vector_space_algebra> m_stepper_noinput;
+
+        void set_matrices_from_file(const char* param_file);
+        void initialize_state_space_matrices();
 }; // class Bicycle
 
 // define simple member functions using inline
-inline void Bicycle::set_A(const state_matrix_t& A) {
-    m_A = A;
-}
-inline void Bicycle::set_B(const input_matrix_t& B) {
-    m_B = B;
-}
 inline void Bicycle::set_C(const output_matrix_t& C) {
     m_C = C;
 }

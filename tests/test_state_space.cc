@@ -1,6 +1,7 @@
 #include <Eigen/Dense>
 #include "gtest/gtest.h"
 #include "bicycle.h"
+#include "parameters.h"
 #include "test_utilities.h"
 
 /*
@@ -31,7 +32,8 @@ namespace {
 } // namespace
 
 TEST(StateSpace, ContinuousV1) {
-    model::Bicycle bicycle("benchmark_matrices.txt", 1.0);
+    model::Bicycle bicycle(parameters::benchmark::M, parameters::benchmark::C1,
+            parameters::benchmark::K0, parameters::benchmark::K2, 1.0, 0);
 
     A <<  0.                ,   0.                ,   1.                , 0.                ,
           0.                ,   0.                ,   0.                , 1.                ,
@@ -43,7 +45,8 @@ TEST(StateSpace, ContinuousV1) {
 }
 
 TEST(StateSpace, ContinuousV3) {
-    model::Bicycle bicycle("benchmark_matrices.txt", 3.0);
+    model::Bicycle bicycle(parameters::benchmark::M, parameters::benchmark::C1,
+            parameters::benchmark::K0, parameters::benchmark::K2, 3.0, 0);
 
     A <<  0.                ,   0.                ,   1.                , 0.                ,
           0.                ,   0.                ,   0.                , 1.                ,
@@ -55,7 +58,8 @@ TEST(StateSpace, ContinuousV3) {
 }
 
 TEST(StateSpace, ContinuousV5) {
-    model::Bicycle bicycle("benchmark_matrices.txt", 5.0);
+    model::Bicycle bicycle(parameters::benchmark::M, parameters::benchmark::C1,
+            parameters::benchmark::K0, parameters::benchmark::K2, 5.0, 0);
 
     A <<  0.                ,   0.                ,   1.                , 0.                ,
           0.                ,   0.                ,   0.                , 1.                ,
@@ -67,7 +71,8 @@ TEST(StateSpace, ContinuousV5) {
 }
 
 TEST(StateSpace, DiscreteV1) {
-    model::Bicycle bicycle("benchmark_matrices.txt", 1.0, dt);
+    model::Bicycle bicycle(parameters::benchmark::M, parameters::benchmark::C1,
+            parameters::benchmark::K0, parameters::benchmark::K2, 1.0, dt);
 
     Ad << 1.0001184820643081e+00,  -1.8478167519170527e-05, 4.9988533321204658e-03,  -4.1402267568149167e-06,
           1.4642849817488363e-04,   1.0003596378458957e+00, 4.5963276543359894e-05,   4.9622093457528903e-03,
@@ -83,7 +88,8 @@ TEST(StateSpace, DiscreteV1) {
 }
 
 TEST(StateSpace, DiscreteV3) {
-    model::Bicycle bicycle("benchmark_matrices.txt", 3.0, dt);
+    model::Bicycle bicycle(parameters::benchmark::M, parameters::benchmark::C1,
+            parameters::benchmark::K0, parameters::benchmark::K2, 3.0, dt);
 
     Ad << 1.0001182770323798e+00,  -1.0761577382854053e-04, 4.9960146578785398e-03,  -1.2376061665969063e-05,
           1.4636823146804625e-04,   1.0001599497146791e+00, 1.3595045476592029e-04,   4.8861238841920599e-03,
@@ -99,7 +105,8 @@ TEST(StateSpace, DiscreteV3) {
 }
 
 TEST(StateSpace, DiscreteV5) {
-    model::Bicycle bicycle("benchmark_matrices.txt", 5.0, dt);
+    model::Bicycle bicycle(parameters::benchmark::M, parameters::benchmark::C1,
+            parameters::benchmark::K0, parameters::benchmark::K2, 5.0, dt);
 
     Ad << 1.0001184820643081e+00,  -1.8478167519170527e-05, 4.9988533321204658e-03,  -4.1402267568149167e-06,
           1.4642849817488363e-04,   1.0003596378458957e+00, 4.5963276543359894e-05,   4.9622093457528903e-03,
