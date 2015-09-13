@@ -49,7 +49,7 @@ class Bicycle : public DiscreteLinear<4, 2, 2, 2> {
         state_t x_next(const state_t& x) const;
         state_t x_integrate(const state_t& x, double dt) const;
         output_t y(const state_t& x) const;
-        void set_v(double v, double dt = 0.0);
+        void set_v(double v, double dt);
         void set_C(const output_matrix_t& C);
         void set_D(const feedthrough_matrix_t& D);
 

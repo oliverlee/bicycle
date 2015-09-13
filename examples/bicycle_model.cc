@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
     std::chrono::time_point<std::chrono::system_clock> disc_start, disc_stop;
 
     cont_start = std::chrono::system_clock::now();
-    bicycle.set_v(v0);
+    bicycle.set_v(v0, 0);
     cont_stop = std::chrono::system_clock::now();
 
     disc_start = std::chrono::system_clock::now();
