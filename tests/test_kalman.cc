@@ -1,12 +1,11 @@
 #include <random>
-#include <Eigen/Dense>
 #include "gtest/gtest.h"
 #include "bicycle.h"
 #include "kalman.h"
 #include "parameters.h"
 #include "test_utilities.h"
 
-// TODO: Add more extensive testing.
+// TODO: Add more extensive testing
 namespace {
     const double prec = 0.01;
     const double dt = 1.0/200;
