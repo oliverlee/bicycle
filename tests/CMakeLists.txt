@@ -13,3 +13,7 @@ add_test(NAME test_kalman COMMAND test_kalman)
 add_executable(test_lqr test_lqr.cc ${BICYCLE_SOURCE})
 target_link_libraries(test_lqr gtest_main)
 add_test(NAME test_lqr COMMAND test_lqr)
+
+add_executable(test_lqr_kalman test_lqr_kalman.cc ${BICYCLE_SOURCE})
+target_link_libraries(test_lqr_kalman gtest_main)
+add_test(NAME test_lqr_kalman COMMAND test_lqr_kalman)
