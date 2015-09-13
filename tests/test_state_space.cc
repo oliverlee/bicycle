@@ -29,6 +29,31 @@ namespace {
         );
     Eigen::Matrix<double, 4, 4> Ad;
     Eigen::Matrix<double, 4, 2> Bd;
+
+    const double vw = 4.29238253634111; // forward speed [m/s]
+    const double vc = 6.02426201538837; // forward speed [m/s]
+
+    // These matrices are (obviously) not correct and are used only to
+    // determine if discrete state space matrices are correctly looked up.
+    const model::Bicycle::state_matrix_t Ad_vw(
+            2 * model::Bicycle::state_matrix_t::Identity()
+            );
+    const model::Bicycle::input_matrix_t Bd_vw(
+            3 * model::Bicycle::input_matrix_t::Identity()
+            );
+    const model::Bicycle::state_matrix_t Ad_vc(
+            4 * model::Bicycle::state_matrix_t::Identity()
+            );
+    const model::Bicycle::input_matrix_t Bd_vc(
+            5 * model::Bicycle::input_matrix_t::Identity()
+            );
+
+    const model::Bicycle::state_space_map_t state_space_map {
+        {model::Bicycle::make_state_space_map_key(vw, dt),
+            model::Bicycle::state_space_map_value_t(Ad_vw, Bd_vw)},
+        {model::Bicycle::make_state_space_map_key(vc, dt),
+            model::Bicycle::state_space_map_value_t(Ad_vc, Bd_vc)},
+    };
 } // namespace
 
 TEST(StateSpace, ContinuousV1) {
@@ -127,4 +152,42 @@ TEST(StateSpace, DiscreteV5) {
 
     EXPECT_TRUE(bicycle.Ad().isApprox(Ad)) << output_matrices(bicycle.Ad(), Ad);
     EXPECT_TRUE(bicycle.Bd().isApprox(Bd)) << output_matrices(bicycle.Bd(), Bd);
+}
+
+TEST(StateSpace, LookupFound) {
+    model::Bicycle bicycle0(parameters::benchmark::M, parameters::benchmark::C1,
+            parameters::benchmark::K0, parameters::benchmark::K2, vw, dt, &state_space_map);
+    model::Bicycle bicycle1(parameters::benchmark::M, parameters::benchmark::C1,
+            parameters::benchmark::K0, parameters::benchmark::K2, vw, dt);
+
+    EXPECT_FALSE(bicycle0.Ad().isApprox(bicycle1.Ad())) << output_matrices(bicycle0.Ad(), bicycle1.Ad());
+    EXPECT_FALSE(bicycle0.Bd().isApprox(bicycle1.Bd())) << output_matrices(bicycle0.Bd(), bicycle1.Bd());
+    EXPECT_TRUE(bicycle0.Ad().isApprox(Ad_vw)) << output_matrices(bicycle0.Ad(), Ad_vw);
+    EXPECT_TRUE(bicycle0.Bd().isApprox(Bd_vw)) << output_matrices(bicycle0.Bd(), Bd_vw);
+
+    bicycle0.set_v(vc, dt);
+    bicycle1.set_v(vc, dt);
+
+    EXPECT_FALSE(bicycle0.Ad().isApprox(bicycle1.Ad())) << output_matrices(bicycle0.Ad(), bicycle1.Ad());
+    EXPECT_FALSE(bicycle0.Bd().isApprox(bicycle1.Bd())) << output_matrices(bicycle0.Bd(), bicycle1.Bd());
+    EXPECT_TRUE(bicycle0.Ad().isApprox(Ad_vc)) << output_matrices(bicycle0.Ad(), Ad_vc);
+    EXPECT_TRUE(bicycle0.Bd().isApprox(Bd_vc)) << output_matrices(bicycle0.Bd(), Bd_vc);
+}
+
+TEST(StateSpace, LookupNotFound) {
+    double v = 1.0;
+    model::Bicycle bicycle0(parameters::benchmark::M, parameters::benchmark::C1,
+            parameters::benchmark::K0, parameters::benchmark::K2, v, dt, &state_space_map);
+    model::Bicycle bicycle1(parameters::benchmark::M, parameters::benchmark::C1,
+            parameters::benchmark::K0, parameters::benchmark::K2, v, dt);
+
+    EXPECT_TRUE(bicycle0.Ad().isApprox(bicycle1.Ad())) << output_matrices(bicycle0.Ad(), bicycle1.Ad());
+    EXPECT_TRUE(bicycle0.Bd().isApprox(bicycle1.Bd())) << output_matrices(bicycle0.Bd(), bicycle1.Bd());
+
+    v = 5.0;
+    bicycle0.set_v(v, dt);
+    bicycle1.set_v(v, dt);
+
+    EXPECT_TRUE(bicycle0.Ad().isApprox(bicycle1.Ad())) << output_matrices(bicycle0.Ad(), bicycle1.Ad());
+    EXPECT_TRUE(bicycle0.Bd().isApprox(bicycle1.Bd())) << output_matrices(bicycle0.Bd(), bicycle1.Bd());
 }
