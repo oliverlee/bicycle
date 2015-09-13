@@ -3,9 +3,14 @@
 #include <iostream>
 #include "bicycle.h"
 
-namespace model {
+// TODO: Investigate matrix rank threshold.
+// Current threshold only results in capsize speed as rank deficient, not weave speed.
+namespace {
+    const double rank_threshold = 1e-5;
+    const double g = 9.80665; // gravitational constant [m/s^2]
+} // namespace
 
-const double g = 9.80665; // gravitational constant [m/s^2]
+namespace model {
 
 Bicycle::Bicycle(const char* param_file, double v, double dt,
         state_space_map_t const* discrete_state_space_map) :
@@ -109,9 +114,7 @@ void Bicycle::set_v(double v, double dt) {
         if (!discrete_state_space_lookup(k)) {
             m_expAT.compute(m_Ad);
             Eigen::FullPivHouseholderQR<state_matrix_t> A_qr(m_A);
-            // TODO: Investigate threshold.
-            // Current threshold only results in capsize speed as rank deficient, not weave speed.
-            A_qr.setThreshold(1e-5);
+            A_qr.setThreshold(rank_threshold);
             if (A_qr.rank() < n) {
                 std::cout << "Warning: A is (near) singular and a precomputed Bd has not been " <<
                     "provided in the discrete state space map.\nComputation of Bd may be inaccurate.\n";
