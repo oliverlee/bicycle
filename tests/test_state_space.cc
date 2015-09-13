@@ -33,7 +33,7 @@ namespace {
 
 TEST(StateSpace, ContinuousV1) {
     model::Bicycle bicycle(parameters::benchmark::M, parameters::benchmark::C1,
-            parameters::benchmark::K0, parameters::benchmark::K2, 1.0);
+            parameters::benchmark::K0, parameters::benchmark::K2, 1.0, 0);
 
     A <<  0.                ,   0.                ,   1.                , 0.                ,
           0.                ,   0.                ,   0.                , 1.                ,
@@ -46,7 +46,7 @@ TEST(StateSpace, ContinuousV1) {
 
 TEST(StateSpace, ContinuousV3) {
     model::Bicycle bicycle(parameters::benchmark::M, parameters::benchmark::C1,
-            parameters::benchmark::K0, parameters::benchmark::K2, 3.0);
+            parameters::benchmark::K0, parameters::benchmark::K2, 3.0, 0);
 
     A <<  0.                ,   0.                ,   1.                , 0.                ,
           0.                ,   0.                ,   0.                , 1.                ,
@@ -59,7 +59,7 @@ TEST(StateSpace, ContinuousV3) {
 
 TEST(StateSpace, ContinuousV5) {
     model::Bicycle bicycle(parameters::benchmark::M, parameters::benchmark::C1,
-            parameters::benchmark::K0, parameters::benchmark::K2, 5.0);
+            parameters::benchmark::K0, parameters::benchmark::K2, 5.0, 0);
 
     A <<  0.                ,   0.                ,   1.                , 0.                ,
           0.                ,   0.                ,   0.                , 1.                ,

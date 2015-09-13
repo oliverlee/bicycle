@@ -51,9 +51,9 @@ class Bicycle{
 
         Bicycle(const second_order_matrix_t& M, const second_order_matrix_t& C1,
                 const second_order_matrix_t& K0, const second_order_matrix_t& K2,
-                double v, double dt = 0.0,
+                double v, double dt,
                 const state_space_map_t* discrete_state_space_map = nullptr);
-        Bicycle(const char* param_file, double v, double dt = 0.0,
+        Bicycle(const char* param_file, double v, double dt,
                 const state_space_map_t* discrete_state_space_map = nullptr);
 
         state_t x_next(const state_t& x, const input_t& u) const;
