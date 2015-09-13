@@ -16,7 +16,6 @@ class Lqr {
         using state_cost_t = typename T::state_matrix_t;
         using input_cost_t = typename Eigen::Matrix<double, T::m, T::m>;
 
-        //Lqr(T& system, const Q, R, x, xt)
         Lqr(T& system, const state_cost_t& Q, const input_cost_t& R,
                 const state_t& xt, uint32_t horizon_iterations) :
             m_system(system), m_horizon(horizon_iterations),

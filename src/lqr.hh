@@ -1,5 +1,5 @@
 /*
- * Member function definitions of Lqr template class
+ * Member function definitions of Lqr template class.
  * See lqr.h for template class declaration.
  */
 

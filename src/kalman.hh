@@ -1,5 +1,5 @@
 /*
- * Member function definitions of Kalman template class
+ * Member function definitions of Kalman template class.
  * See kalman.h for template class declaration.
  */
 
