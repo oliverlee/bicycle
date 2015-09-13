@@ -1,8 +1,11 @@
 #pragma once
+#include <unordered_map>
+#include <utility>
 #include <Eigen/Dense>
 #include <unsupported/Eigen/MatrixFunctions>
 #include <boost/numeric/odeint/stepper/runge_kutta_dopri5.hpp>
 #include <boost/numeric/odeint/algebra/vector_space_algebra.hpp>
+#include <boost/functional/hash.hpp>
 
 
 namespace model {
@@ -29,7 +32,25 @@ class Bicycle{
         using feedthrough_matrix_t = Eigen::Matrix<double, l, m>;
         using second_order_matrix_t = Eigen::Matrix<double, o, o>;
 
-        Bicycle(const char* paramfile, double v, double dt = 0.0);
+        /* We normally treat speed v as a double. However to allow for constant
+         * time lookup along with quickly finding a key 'near' the requested
+         * one, we convert speeds to a fixed precision integer.
+         *
+         * Six digits after the decimal defines the precision used.
+         * v = 6.024262 -> 6024262
+         *
+         * The same is done with sample time dt and microsecond precision is used.
+         * dt = 0.005 -> 5000
+         *
+         * Keys are defined as a pair: (round(1000*dt), round(1000000*v)).
+         */
+        using state_space_map_key_t = const std::pair<uint32_t, int32_t>;
+        using state_space_map_value_t = const std::pair<state_matrix_t, input_matrix_t>;
+        using state_space_map_t = std::unordered_map<state_space_map_key_t,
+              state_space_map_value_t, boost::hash<state_space_map_key_t>>;
+
+        Bicycle(const char* param_file, double v, double dt = 0.0,
+                state_space_map_t const* discrete_state_space_map = nullptr);
         void set_matrices_from_file(const char* param_file);
 
         state_t x_next(const state_t& x, const input_t& u) const;
@@ -43,6 +64,9 @@ class Bicycle{
         void set_B(const input_matrix_t& B);
         void set_C(const output_matrix_t& C);
         void set_D(const feedthrough_matrix_t& D);
+
+        static constexpr state_space_map_key_t make_state_space_map_key(double v, double dt);
+        bool discrete_state_space_lookup(const state_space_map_key_t& k);
 
         // (pseudo) parameter accessors
         state_matrix_t A() const;
@@ -79,6 +103,8 @@ class Bicycle{
         state_matrix_t m_AT;
         Eigen::MatrixExponential<state_matrix_t> m_expAT;
 
+        state_space_map_t const* m_discrete_state_space_map;
+
         /* Some steppers have internal state and so none have do_step() defined as const.
          * While internal state may be changed from multiple calls to do_step(), the
          * state is 'reset' when all calls to do_step() are completed and the integration
@@ -105,6 +131,9 @@ inline void Bicycle::set_C(const output_matrix_t& C) {
 }
 inline void Bicycle::set_D(const feedthrough_matrix_t& D) {
     m_D = D;
+}
+inline constexpr Bicycle::state_space_map_key_t Bicycle::make_state_space_map_key(double v, double dt) {
+    return state_space_map_key_t(1000*dt, 1000000*v);
 }
 inline Bicycle::state_matrix_t Bicycle::A() const {
     return m_A;

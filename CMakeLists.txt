@@ -11,9 +11,10 @@ find_package(Boost REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 include_directories(${Boost_INCLUDE_DIR})
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -O3")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y -Wall -O3")
 
 add_executable(test_bicycle bicycle.cc test_bicycle.cc)
 add_executable(test_kalman bicycle.cc test_kalman.cc)
 add_executable(test_lqr bicycle.cc test_lqr.cc)
 add_executable(test_lqr_kalman bicycle.cc test_lqr_kalman.cc)
+add_executable(test_state_space_map bicycle.cc test_state_space_map.cc)
