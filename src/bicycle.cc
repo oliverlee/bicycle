@@ -1,6 +1,7 @@
 #include <array>
 #include <fstream>
 #include <iostream>
+#include <stdexcept>
 #include "bicycle.h"
 #include "constants.h"
 
@@ -36,22 +37,6 @@ Bicycle::Bicycle(const char* param_file, double v, double dt,
     m_B.bottomLeftCorner<o, o>() = m_M.inverse();
     // set forward speed and (optionally sampling time) and update state matrix
     set_v(v, dt);
-}
-
-void Bicycle::set_matrices_from_file(const char* param_file) {
-    const unsigned int num_elem = o*o;
-    std::array<double, 4*num_elem> buffer;
-
-    std::fstream pf(param_file, std::ios_base::in);
-    for (auto& d: buffer) {
-        pf >> d;
-    }
-    pf.close();
-
-    m_M = Eigen::Map<second_order_matrix_t>(buffer.data()).transpose();
-    m_C1 = Eigen::Map<second_order_matrix_t>(buffer.data() + num_elem).transpose();
-    m_K0 = Eigen::Map<second_order_matrix_t>(buffer.data() + 2*num_elem).transpose();
-    m_K2 = Eigen::Map<second_order_matrix_t>(buffer.data() + 3*num_elem).transpose();
 }
 
 Bicycle::state_t Bicycle::x_next(const Bicycle::state_t& x, const Bicycle::input_t& u) const {
@@ -137,6 +122,26 @@ bool Bicycle::discrete_state_space_lookup(const state_space_map_key_t& k) {
     m_Ad = search->second.first;
     m_Bd = search->second.second;
     return true;
+}
+
+void Bicycle::set_matrices_from_file(const char* param_file) {
+    const unsigned int num_elem = o*o;
+    std::array<double, 4*num_elem> buffer;
+
+    std::fstream pf(param_file, std::ios_base::in);
+    if (!pf.good()) {
+        throw std::invalid_argument("Invalid matrix parameter file provided.");
+    }
+
+    for (auto& d: buffer) {
+        pf >> d;
+    }
+    pf.close();
+
+    m_M = Eigen::Map<second_order_matrix_t>(buffer.data()).transpose();
+    m_C1 = Eigen::Map<second_order_matrix_t>(buffer.data() + num_elem).transpose();
+    m_K0 = Eigen::Map<second_order_matrix_t>(buffer.data() + 2*num_elem).transpose();
+    m_K2 = Eigen::Map<second_order_matrix_t>(buffer.data() + 3*num_elem).transpose();
 }
 
 } // namespace model

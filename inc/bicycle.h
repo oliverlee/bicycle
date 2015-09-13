@@ -51,7 +51,6 @@ class Bicycle{
 
         Bicycle(const char* param_file, double v, double dt = 0.0,
                 state_space_map_t const* discrete_state_space_map = nullptr);
-        void set_matrices_from_file(const char* param_file);
 
         state_t x_next(const state_t& x, const input_t& u) const;
         state_t x_integrate(const state_t& x, const input_t& u, double dt) const;
@@ -117,6 +116,8 @@ class Bicycle{
         mutable boost::numeric::odeint::runge_kutta_dopri5<
             state_t, double, state_t, double,
             boost::numeric::odeint::vector_space_algebra> m_stepper_noinput;
+
+        void set_matrices_from_file(const char* param_file);
 }; // class Bicycle
 
 // define simple member functions using inline
