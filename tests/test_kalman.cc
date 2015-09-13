@@ -33,7 +33,8 @@ TEST(Kalman, Convergence) {
     std::normal_distribution<> r0(0, R(0, 0));
     std::normal_distribution<> r1(0, R(1, 1));
 
-    model::Bicycle bicycle("benchmark_matrices.txt", v, dt);
+    model::Bicycle bicycle(parameters::benchmark::M, parameters::benchmark::C1,
+            parameters::benchmark::K0, parameters::benchmark::K2, v, dt);
     bicycle.set_C(C);
     // set x estimate to zero in Kalman filter
     observer::Kalman<model::Bicycle> kalman(bicycle, Q, R, x, P0);

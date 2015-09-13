@@ -3,7 +3,7 @@
 #include <iostream>
 #include "bicycle.h"
 #include "lqr.h"
-#include "constants.h"
+#include "parameters.h"
 
 namespace {
     const double fs = 200; // sample rate [Hz]
@@ -33,8 +33,10 @@ namespace {
 
 int main(int argc, char* argv[]) {
     (void)argc;
+    (void)argv;
 
-    model::Bicycle bicycle(argv[1], v0, dt);
+    model::Bicycle bicycle(parameters::benchmark::M, parameters::benchmark::C1,
+            parameters::benchmark::K0, parameters::benchmark::K2, v0, dt);
     controller::Lqr<model::Bicycle> lqr(bicycle, Q, R, xt, n);
 
     std::cout << "initial state: [" << x0.transpose() * constants::as_degrees << "]' deg" << std::endl;

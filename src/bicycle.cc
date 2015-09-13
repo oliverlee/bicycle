@@ -13,29 +13,26 @@ namespace {
 
 namespace model {
 
+Bicycle::Bicycle(const second_order_matrix_t& M, const second_order_matrix_t& C1,
+        const second_order_matrix_t& K0, const second_order_matrix_t& K2,
+        double v, double dt, const state_space_map_t* discrete_state_space_map) :
+    m_M(M), m_C1(C1), m_K0(K0), m_K2(K2),
+    m_expAT(m_AT), m_discrete_state_space_map(discrete_state_space_map) {
+    initialize_state_space_matrices();
+
+    // set forward speed (and optionally sampling time) and update state matrix
+    set_v(v, dt);
+}
+
 Bicycle::Bicycle(const char* param_file, double v, double dt,
-        state_space_map_t const* discrete_state_space_map) :
+        const state_space_map_t* discrete_state_space_map) :
     m_expAT(m_AT), m_discrete_state_space_map(discrete_state_space_map) {
     // set M, C1, K0, K2 matrices from file
     set_matrices_from_file(param_file);
 
-    // initialize state space matrices to zero
-    m_A.setZero();
-    m_B.setZero();
-    m_C.setZero();
-    m_D.setZero();
-    m_Ad.setZero();
-    m_Bd.setZero();
+    initialize_state_space_matrices();
 
-    // matrix used for calculating discrete time state space matrices
-    // a reference of this matrix must be provided to the MatrixExponential class
-    m_AT.setZero();
-
-    // set top right block to identity
-    m_A.topRightCorner<o, o>().setIdentity();
-    // set lower half of input matrix
-    m_B.bottomLeftCorner<o, o>() = m_M.inverse();
-    // set forward speed and (optionally sampling time) and update state matrix
+    // set forward speed (and optionally sampling time) and update state matrix
     set_v(v, dt);
 }
 
@@ -142,6 +139,23 @@ void Bicycle::set_matrices_from_file(const char* param_file) {
     m_C1 = Eigen::Map<second_order_matrix_t>(buffer.data() + num_elem).transpose();
     m_K0 = Eigen::Map<second_order_matrix_t>(buffer.data() + 2*num_elem).transpose();
     m_K2 = Eigen::Map<second_order_matrix_t>(buffer.data() + 3*num_elem).transpose();
+}
+
+void Bicycle::initialize_state_space_matrices() {
+    m_A.setZero();
+    m_B.setZero();
+    m_C.setZero();
+    m_D.setZero();
+    m_Ad.setZero();
+    m_Bd.setZero();
+
+    // matrix used for calculating discrete time state space matrices
+    // a reference of this matrix must be provided to the MatrixExponential class
+    m_AT.setZero();
+
+    // set constant parts of state and input matrices
+    m_A.topRightCorner<o, o>().setIdentity();
+    m_B.bottomLeftCorner<o, o>() = m_M.inverse();
 }
 
 } // namespace model

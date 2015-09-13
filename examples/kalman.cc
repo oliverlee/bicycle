@@ -35,12 +35,14 @@ namespace {
 
 int main(int argc, char* argv[]) {
     (void)argc;
+    (void)argv;
 
     std::mt19937 gen(rd());
     std::normal_distribution<> r0(0, R(0, 0));
     std::normal_distribution<> r1(0, R(1, 1));
 
-    model::Bicycle bicycle(argv[1], v0, dt);
+    model::Bicycle bicycle(parameters::benchmark::M, parameters::benchmark::C1,
+            parameters::benchmark::K0, parameters::benchmark::K2, v0, dt);
     observer::Kalman<model::Bicycle> kalman(bicycle, Q, R, x, P0);
 
     bicycle.set_C(C); // TODO: Don't hardcode Bicycle output size
