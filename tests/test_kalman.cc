@@ -1,9 +1,9 @@
 #include <random>
 #include <Eigen/Dense>
-#include <boost/math/constants/constants.hpp>
 #include "gtest/gtest.h"
 #include "bicycle.h"
 #include "kalman.h"
+#include "parameters.h"
 #include "test_utilities.h"
 
 // TODO: Add more extensive testing.
@@ -13,33 +13,17 @@ namespace {
     const double v = 4.0;
     const uint32_t N = 1000; // simulation length
 
-    const double as_radians = boost::math::constants::degree<double>(); // convert degrees to radians
-    const double as_degrees = boost::math::constants::radian<double>(); // convert radians to degrees
-
     model::Bicycle::state_t x(
-            model::Bicycle::state_t::Zero()
-            );
+            model::Bicycle::state_t::Zero());
 
-    const model::Bicycle::output_matrix_t C(
-            (model::Bicycle::output_matrix_t() <<
-                0, 1, 0, 0,
-                0, 0, 1, 0
-                ).finished()
-            );
+    const model::Bicycle::output_matrix_t C = parameters::defaultvalue::bicycle::C;
 
-    // numbers given in degrees and then converted to radians
-    const observer::Kalman<model::Bicycle>::error_covariance_t P0(
-            10 * observer::Kalman<model::Bicycle>::error_covariance_t::Identity() * as_radians
-            );
-    const observer::Kalman<model::Bicycle>::process_noise_covariance_t Q(
-           0.1 * observer::Kalman<model::Bicycle>::process_noise_covariance_t::Identity() * as_radians
-            );
-    const observer::Kalman<model::Bicycle>::measurement_noise_covariance_t R(
-            (observer::Kalman<model::Bicycle>::measurement_noise_covariance_t() <<
-                0.04,     0,
-                   0, 0.008
-                ).finished() * as_radians
-            );
+    const observer::Kalman<model::Bicycle>::error_covariance_t P0 =
+        parameters::defaultvalue::kalman::P0;
+    const observer::Kalman<model::Bicycle>::process_noise_covariance_t Q =
+        parameters::defaultvalue::kalman::Q;
+    const observer::Kalman<model::Bicycle>::measurement_noise_covariance_t R =
+        parameters::defaultvalue::kalman::R;
 
     std::random_device rd; // used only to seed rng
 } // namespace

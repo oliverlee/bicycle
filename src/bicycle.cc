@@ -2,12 +2,12 @@
 #include <fstream>
 #include <iostream>
 #include "bicycle.h"
+#include "constants.h"
 
 // TODO: Investigate matrix rank threshold.
 // Current threshold only results in capsize speed as rank deficient, not weave speed.
 namespace {
     const double rank_threshold = 1e-5;
-    const double g = 9.80665; // gravitational constant [m/s^2]
 } // namespace
 
 namespace model {
@@ -101,7 +101,7 @@ void Bicycle::set_v(double v, double dt) {
     m_dt = dt;
 
     // M is positive definite so use the Cholskey decomposition in solving the linear system
-    m_A.bottomLeftCorner<o, o>() = -m_M.llt().solve(g*m_K0 + m_v*m_v*m_K2);
+    m_A.bottomLeftCorner<o, o>() = -m_M.llt().solve(constants::g*m_K0 + m_v*m_v*m_K2);
     m_A.bottomRightCorner<o, o>() = -m_M.llt().solve(m_v*m_C1);
 
     if (m_dt == 0.0) { // discrete time state does not change
