@@ -11,7 +11,7 @@ std::string output_matrices(Eigen::MatrixXd expected, Eigen::MatrixXd actual) {
 
 /*
  * allclose() function to match numpy.allclose
- * https://stackoverflow.com/questions/15051367/how-to-compare-vectors-approximately-in-eige://stackoverflow.com/questions/15051367/how-to-compare-vectors-approximately-in-eigen
+ * https://stackoverflow.com/questions/15051367/how-to-compare-vectors-approximately-in-eigen
  */
 namespace test {
 

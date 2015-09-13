@@ -20,7 +20,7 @@ Bicycle::Bicycle(const second_order_matrix_t& M, const second_order_matrix_t& C1
     m_expAT(m_AT), m_discrete_state_space_map(discrete_state_space_map) {
     initialize_state_space_matrices();
 
-    // set forward speed (and optionally sampling time) and update state matrix
+    // set forward speed, sampling time and update state matrices
     set_v(v, dt);
 }
 
@@ -32,7 +32,7 @@ Bicycle::Bicycle(const char* param_file, double v, double dt,
 
     initialize_state_space_matrices();
 
-    // set forward speed (and optionally sampling time) and update state matrix
+    // set forward speed, sampling time and update state matrices
     set_v(v, dt);
 }
 
@@ -77,7 +77,7 @@ Bicycle::state_t Bicycle::x_integrate(const Bicycle::state_t& x, double dt) cons
 void Bicycle::set_v(double v, double dt) {
     /* system state space is parameterized by forward speed v
      * this function sets forward speed and calculates the state space matrices
-     * additionally, calculates discrete time state space if sampling time is nonzero
+     * and additionally calculates discrete time state space if sampling time is nonzero
      */
     m_v = v;
     m_dt = dt;
@@ -115,7 +115,7 @@ bool Bicycle::discrete_state_space_lookup(const state_space_map_key_t& k) {
         return false;
     }
 
-    // discrete state space matrices Ad, Bd have been provided for speed v.
+    // discrete state space matrices Ad, Bd have been provided for speed v, sample time dt.
     m_Ad = search->second.first;
     m_Bd = search->second.second;
     return true;
