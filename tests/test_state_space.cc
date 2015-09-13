@@ -1,9 +1,7 @@
-#include <iostream>
-#include <string>
-#include <sstream>
 #include <Eigen/Dense>
 #include "gtest/gtest.h"
 #include "bicycle.h"
+#include "test_utilities.h"
 
 /*
  * A and B expected state space matrices generated using dtk.bicycle:
@@ -30,12 +28,6 @@ namespace {
         );
     Eigen::Matrix<double, 4, 4> Ad;
     Eigen::Matrix<double, 4, 2> Bd;
-
-    std::string output_matrices(Eigen::MatrixXd expected, Eigen::MatrixXd actual) {
-        std::stringstream ss;
-        ss << "expected:\n" << expected << "\nactual:\n" << actual << std::endl;
-        return ss.str();
-    }
 } // namespace
 
 TEST(StateSpace, ContinuousV1) {
