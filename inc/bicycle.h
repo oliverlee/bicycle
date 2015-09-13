@@ -6,32 +6,19 @@
 #include <boost/numeric/odeint/stepper/runge_kutta_dopri5.hpp>
 #include <boost/numeric/odeint/algebra/vector_space_algebra.hpp>
 #include <boost/functional/hash.hpp>
-
+#include "discrete_linear.h"
 
 namespace model {
 
 /* State and Input Definitions
  * state: [roll angle, steer angle, roll rate, steer rate]
  * input: [roll torque, steer torque]
- * output: [steer angle]
+ * output: [*, *] - 2 outputs are defined, but must be specified by
+ *                  setting the C and D matrices
  */
 
-class Bicycle{
+class Bicycle : public DiscreteLinear<4, 2, 2, 2> {
     public:
-        static constexpr unsigned int n = 4; // state size
-        static constexpr unsigned int m = 2; // input size
-        static constexpr unsigned int l = 2; // output size
-        static constexpr unsigned int o = n/2; // second order state size
-
-        using state_t = Eigen::Matrix<double, n, 1>;
-        using input_t = Eigen::Matrix<double, m, 1>;
-        using output_t = Eigen::Matrix<double, l, 1>;
-        using state_matrix_t = Eigen::Matrix<double, n, n>;
-        using input_matrix_t = Eigen::Matrix<double, n, m>;
-        using output_matrix_t = Eigen::Matrix<double, l, n>;
-        using feedthrough_matrix_t = Eigen::Matrix<double, l, m>;
-        using second_order_matrix_t = Eigen::Matrix<double, o, o>;
-
         /* We normally treat speed v as a double. However to allow for constant
          * time lookup along with quickly finding a key 'near' the requested
          * one, we convert speeds to a fixed precision integer.
