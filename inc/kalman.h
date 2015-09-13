@@ -1,12 +1,13 @@
 #pragma once
+#include <type_traits>
 #include <Eigen/Dense>
+#include "discrete_linear.h"
 
 namespace observer {
-// TODO: Implement linear system interface instead of assuming Bicycle
-// TODO: Enforce that linear system discrete time matrices are computed
 
 template<typename T>
 class Kalman {
+    static_assert(std::is_base_of<model::DiscreteLinearBase, T>::value, "Invalid template parameter type for Kalman");
     public:
         using state_t = typename T::state_t;
         using input_t = typename T::input_t;

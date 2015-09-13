@@ -1,13 +1,14 @@
 #pragma once
+#include <type_traits>
 #include <Eigen/Dense>
+#include "discrete_linear.h"
 
 namespace controller {
-// TODO: Implement linear system interface instead of assuming Bicycle
-// TODO: Enforce that linear system discrete time matrices are computed
 // TODO: Allow target state to vary in horizon
 
 template<typename T>
 class Lqr {
+    static_assert(std::is_base_of<model::DiscreteLinearBase, T>::value, "Invalid template parameter type for Lqr");
     public:
         using state_t = typename T::state_t;
         using input_t = typename T::input_t;
