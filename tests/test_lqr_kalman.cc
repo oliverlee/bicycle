@@ -7,7 +7,8 @@
 
 // TODO: Add more extensive testing
 namespace {
-    const double prec = 0.1;
+    const double reltol = 1e-2;
+    const double abstol = 1e-1;
     const double dt = 1.0/200;
     const double v = 4.0;
     const uint32_t N = 1000; // simulation length
@@ -68,5 +69,5 @@ TEST(LqrKalman, Convergence) {
         kalman.measurement_update(z);
     }
 
-    EXPECT_TRUE(test::allclose(kalman.x(), x, 0, prec)) << output_matrices(kalman.x().transpose(), x.transpose());
+    EXPECT_TRUE(test::allclose(kalman.x(), x, reltol, abstol)) << output_matrices(kalman.x().transpose(), x.transpose());
 }

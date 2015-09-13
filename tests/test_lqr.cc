@@ -6,7 +6,8 @@
 
 // TODO: Add more extensive testing
 namespace {
-    const double prec = 0.001;
+    const double reltol = 0; // target is zero
+    const double abstol = 1e-3;
     const double dt = 1.0/200;
     const double v = 4.0;
     const uint32_t N = 1000; // simulation length
@@ -36,5 +37,5 @@ TEST(Lqr, Convergence) {
         x = bicycle.x_next(x, u);
     }
 
-    EXPECT_TRUE(x.isApprox(xt, prec)) << output_matrices(x, xt);
+    EXPECT_TRUE(test::allclose(x, xt, reltol, abstol)) << output_matrices(x.transpose(), xt.transpose());
 }
