@@ -71,6 +71,7 @@ Bicycle::state_t Bicycle::x_integrate(const Bicycle::state_t& x, const Bicycle::
 
     xu << x, u;
     m_stepper.do_step([this](const odeint_state_t& xu, odeint_state_t& dxdt, const double t) -> void {
+                (void)t;
                 dxdt.block<n, 1>(0, 0) = m_A*xu.block<n, 1>(0, 0) + m_B*xu.block<m, 1>(n, 0);
             }, xu, 0.0, xout, dt);
     return xout.block<n, 1>(0, 0);
@@ -80,6 +81,7 @@ Bicycle::state_t Bicycle::x_integrate(const Bicycle::state_t& x, double dt) cons
     state_t xout;
 
     m_stepper_noinput.do_step([this](const state_t& x, state_t& dxdt, const double t) -> void {
+                (void)t;
                 dxdt = m_A*x;
             }, x, 0.0, xout, dt);
     return xout;
