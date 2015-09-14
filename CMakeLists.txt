@@ -6,8 +6,14 @@ set(CMAKE_MODULE_PATH
 
 find_package(Eigen3 3.2.4 REQUIRED)
 find_package(Boost 1.58 REQUIRED)
+find_package(FlatBuffers REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 include_directories(${Boost_INCLUDE_DIR})
+include_directories(${FLATBUFFERS_INCLUDE_DIR})
+
+# * FLATBUFFERS_GENERATE_C_HEADERS(Name <files>) creates the C++ headers
+#   for the given flatbuffer schema files.
+#   Returns the header files in ${Name}_OUTPUTS
 
 # debug/release flags
 set(CMAKE_C_FLAGS_DEBUG "-ggdb3 -O0" CACHE
