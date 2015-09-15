@@ -38,12 +38,12 @@ class KalmanConvergenceTest: public ConvergenceTest {
 
 TEST_P(KalmanConvergenceTest, ZeroInput) {
     simulate();
-    test_state_near(kalman->x());
+    test_state_near(kalman->x(), x_true());
 }
 
 TEST_P(KalmanConvergenceTest, RandomInput) {
     simulate_with_random_steer_input();
-    test_state_near(kalman->x());
+    test_state_near(kalman->x(), x_true());
 }
 
 INSTANTIATE_TEST_CASE_P(

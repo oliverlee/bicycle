@@ -10,7 +10,7 @@ add_executable(test_kalman test_kalman.cc test_convergence.cc ${BICYCLE_SOURCE})
 target_link_libraries(test_kalman gtest_main)
 add_test(NAME test_kalman COMMAND test_kalman)
 
-add_executable(test_lqr test_lqr.cc ${BICYCLE_SOURCE})
+add_executable(test_lqr test_lqr.cc test_convergence.cc ${BICYCLE_SOURCE})
 target_link_libraries(test_lqr gtest_main)
 add_test(NAME test_lqr COMMAND test_lqr)
 

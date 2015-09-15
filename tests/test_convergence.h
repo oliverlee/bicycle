@@ -11,7 +11,8 @@ class ConvergenceTest: public ::testing::TestWithParam<double> {
         virtual void SetUp();
         virtual void TearDown();
         virtual void simulate() = 0;
-        void test_state_near(model::Bicycle::state_t actual);
+        void test_state_near(model::Bicycle::state_t actual, model::Bicycle::state_t expected);
+        model::Bicycle::state_t x_true();
 
     protected:
         const double roll_tol = 2.5 * constants::as_radians;
@@ -31,3 +32,7 @@ class ConvergenceTest: public ::testing::TestWithParam<double> {
         std::normal_distribution<> r0;
         std::normal_distribution<> r1;
 };
+
+inline model::Bicycle::state_t ConvergenceTest::x_true() {
+    return x;
+}
