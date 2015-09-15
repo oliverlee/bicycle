@@ -5,6 +5,7 @@
 #include "parameters.h"
 #include "test_utilities.h"
 
+// TODO: test estimation with model error
 class KalmanConvergenceTest: public ::testing::TestWithParam<double> {
     public:
         virtual void SetUp() {
@@ -45,6 +46,33 @@ class KalmanConvergenceTest: public ::testing::TestWithParam<double> {
             }
         }
 
+        void simulate_with_random_steer_input() {
+            // observed steer torques in experiments are between 1 to 3 Nm
+            std::normal_distribution<> ru = std::normal_distribution<>(0, 2); // Nm, steer torque
+            model::Bicycle::input_t u = model::Bicycle::input_t::Zero();
+
+            for (unsigned int i = 0; i < N; ++i) {
+                u(1) = ru(gen);
+                x = bicycle->x_next(x, u);
+
+                auto z = bicycle->y(x, u);
+                z(0) += r0(gen);
+                z(1) += r1(gen);
+
+                kalman->time_update();
+                kalman->measurement_update(z);
+            }
+        }
+
+        void test_estimate_state_near() {
+            auto actual = kalman->x();
+            auto expected = x;
+            EXPECT_NEAR(actual(0), expected(0), roll_tol);
+            EXPECT_NEAR(actual(1), expected(1), steer_tol);
+            EXPECT_NEAR(actual(2), expected(2), roll_rate_tol);
+            EXPECT_NEAR(actual(3), expected(3), steer_rate_tol);
+        }
+
     protected:
         const double roll_tol = 1 * constants::as_radians;
         const double steer_tol = 0.1 * constants::as_degrees;
@@ -71,12 +99,12 @@ class KalmanConvergenceTest: public ::testing::TestWithParam<double> {
 
 TEST_P(KalmanConvergenceTest, ZeroInput) {
     simulate();
-    auto actual = kalman->x();
-    auto expected = x;
-    EXPECT_NEAR(actual(0), expected(0), roll_tol);
-    EXPECT_NEAR(actual(1), expected(1), steer_tol);
-    EXPECT_NEAR(actual(2), expected(2), roll_rate_tol);
-    EXPECT_NEAR(actual(3), expected(3), steer_rate_tol);
+    test_estimate_state_near();
+}
+
+TEST_P(KalmanConvergenceTest, RandomInput) {
+    simulate_with_random_steer_input();
+    test_estimate_state_near();
 }
 
 INSTANTIATE_TEST_CASE_P(
