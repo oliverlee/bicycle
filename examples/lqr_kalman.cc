@@ -1,4 +1,5 @@
 #include <array>
+#include <chrono>
 #include <iostream>
 #include <random>
 #include "bicycle.h"
@@ -69,6 +70,7 @@ int main(int argc, char* argv[]) {
     auto x = x0;
     model::Bicycle::input_t u;
 
+    auto start = std::chrono::system_clock::now();
     for (; it_x != system_state.end(); ++it_x, ++it_xh) {
         // compute control law
         u = lqr.control_calculate(kalman.x());
@@ -86,9 +88,19 @@ int main(int argc, char* argv[]) {
         kalman.time_update(u);
         kalman.measurement_update(z);
 
-        auto error = x - kalman.x();
-        std::cout << error.transpose() * constants::as_degrees << std::endl;
+        //auto error = x - kalman.x();
+        //std::cout << error.transpose() * constants::as_degrees << std::endl;
+        *it_x = x;
+        *it_xh = kalman.x();
     }
+    auto stop = std::chrono::system_clock::now();
+    auto duration = stop - start;
+    std::cout << "duration for simulation: " <<
+        std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() <<
+        " ms" << std::endl;
+    std::cout << "time per iteration: " <<
+        std::chrono::duration_cast<std::chrono::microseconds>(duration/N).count() <<
+        " us" << std::endl << std::endl;
 
     std::cout << "state at end of simulation (" << N << " steps @ " << fs << " Hz)" << std::endl;
     std::cout << "final state:          [" << system_state.back().transpose() * constants::as_degrees << "]' deg" << std::endl;
