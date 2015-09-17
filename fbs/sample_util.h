@@ -2,6 +2,7 @@
 #include "bicycle.h"
 #include "kalman.h"
 #include "lqr.h"
+#include "sample_generated.h"
 
 namespace fbs {
 

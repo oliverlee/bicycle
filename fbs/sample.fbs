@@ -120,10 +120,4 @@ table Sample {
     measurement:Output; // output with noise
 }
 
-table SampleLog {
-    samples:[Sample];
-}
-
-root_type SampleLog;
-
-file_identifier "BICY";
+root_type Sample;

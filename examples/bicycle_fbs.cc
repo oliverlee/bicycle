@@ -7,7 +7,7 @@
 #include "parameters.h"
 
 #include "flatbuffers/flatbuffers.h"
-#include "sample_generated.h"
+#include "sample_log_generated.h"
 #include "sample_util.h"
 
 namespace {
@@ -18,8 +18,17 @@ namespace {
 
     std::array<model::Bicycle::state_t, N> system_state;
     flatbuffers::FlatBufferBuilder builder;
-    flatbuffers::Offset<fbs::Sample> sample_locations[N + 1];
+    flatbuffers::FlatBufferBuilder log_builder;
+    flatbuffers::Offset<fbs::SampleBuffer> sample_locations[N + 1];
 } // namespace
+
+flatbuffers::Offset<fbs::Bicycle> create_bicycle(flatbuffers::FlatBufferBuilder& fbb, const model::Bicycle& bicycle) {
+    auto M = fbs::second_order_matrix(bicycle.M());
+    auto C1 = fbs::second_order_matrix(bicycle.C1());
+    auto K0 = fbs::second_order_matrix(bicycle.K0());
+    auto K2 = fbs::second_order_matrix(bicycle.K2());
+    return fbs::CreateBicycle(fbb, bicycle.v(), bicycle.dt(), &M, &C1, &K0, &K2);
+}
 
 int main(int argc, char* argv[]) {
     (void)argc;
@@ -37,13 +46,6 @@ int main(int argc, char* argv[]) {
     // flatbuffer objects must be serialized in depth first pre-order traversal
     size_t current_sample = 0;
 
-    auto M = fbs::second_order_matrix(bicycle.M());
-    auto C1 = fbs::second_order_matrix(bicycle.C1());
-    auto K0 = fbs::second_order_matrix(bicycle.K0());
-    auto K2 = fbs::second_order_matrix(bicycle.K2());
-    auto bicycle_location = fbs::CreateBicycle(
-            builder, bicycle.v(), bicycle.dt(), &M, &C1, &K0, &K2);
-
     std::cout << "simulating discrete time system at constant speed (" <<
         N << " steps at " << fs << " Hz) ..." << std::endl;
     auto disc_start = std::chrono::system_clock::now();
@@ -51,15 +53,26 @@ int main(int argc, char* argv[]) {
         x = bicycle.x_next(x);
         state = x;
 
-
-        auto sample_builder = fbs::SampleBuilder(builder);
+        builder.Clear();
+        fbs::SampleBuilder sample_builder(builder);
         if (current_sample == 0) {
+            auto bicycle_location = create_bicycle(builder, bicycle);
             sample_builder.add_bicycle(bicycle_location);
         }
         auto fbs_state = fbs::state(x);
         sample_builder.add_state(&fbs_state);
         sample_builder.add_timestamp(current_sample);
-        sample_locations[current_sample++] = sample_builder.Finish();
+        auto location = sample_builder.Finish();
+        builder.Finish(location);
+        // sample is serialized
+
+        unsigned char* p = nullptr;
+        auto data = log_builder.CreateUninitializedVector<unsigned char>(builder.GetSize(), &p);
+        std::memcpy(p, builder.GetBufferPointer(), builder.GetSize());
+
+        fbs::SampleBufferBuilder log_sample_builder(log_builder);
+        log_sample_builder.add_data(data);
+        sample_locations[current_sample++] = log_sample_builder.Finish();
     }
     auto disc_stop = std::chrono::system_clock::now();
     auto disc_time = disc_stop - disc_start;
@@ -69,14 +82,14 @@ int main(int argc, char* argv[]) {
         std::chrono::duration_cast<std::chrono::microseconds>(disc_time).count() <<
         " us" << std::endl;
 
-    auto samples_vector = builder.CreateVector(sample_locations, N);
-    auto log_location = fbs::CreateSampleLog(builder, samples_vector);
-    fbs::FinishSampleLogBuffer(builder, log_location);
+    auto samples_vector = log_builder.CreateVector(sample_locations, N);
+    auto log_location = fbs::CreateSampleLog(log_builder, samples_vector);
+    log_builder.Finish(log_location);
 
     {
         disc_start = std::chrono::system_clock::now();
         auto f = std::fopen("samples.bin", "wb");
-        std::fwrite(builder.GetBufferPointer(), sizeof(char), builder.GetSize(), f);
+        std::fwrite(log_builder.GetBufferPointer(), sizeof(char), log_builder.GetSize(), f);
         std::fclose(f);
         disc_stop = std::chrono::system_clock::now();
         disc_time = disc_stop - disc_start;

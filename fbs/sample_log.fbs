@@ -1,0 +1,15 @@
+include "sample.fbs";
+
+namespace fbs;
+
+table SampleLog {
+    samples:[SampleBuffer];
+}
+
+table SampleBuffer {
+    data:[ubyte] (nested_flatbuffer: "Sample");
+}
+
+root_type SampleLog;
+
+file_identifier "BICY";
