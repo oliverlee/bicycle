@@ -11,10 +11,6 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 include_directories(${Boost_INCLUDE_DIR})
 include_directories(${FLATBUFFERS_INCLUDE_DIR})
 
-# * FLATBUFFERS_GENERATE_C_HEADERS(Name <files>) creates the C++ headers
-#   for the given flatbuffer schema files.
-#   Returns the header files in ${Name}_OUTPUTS
-
 # debug/release flags
 set(CMAKE_C_FLAGS_DEBUG "-ggdb3 -O0" CACHE
     STRING "Flags used by the compiler during debug builds." FORCE)
@@ -38,9 +34,14 @@ endif()
 
 # header files with template definitions are placed in the src directory with
 # the extension .hh
-include_directories(${BICYCLE_SOURCE_DIR}/inc)
-include_directories(${BICYCLE_SOURCE_DIR}/src)
-include_directories(${BICYCLE_SOURCE_DIR}/fbs)
+include_directories(inc)
+include_directories(src)
+include_directories(fbs) # include util file
+add_subdirectory(fbs) # set FLATBUFFER_SCHEMAS
+flatbuffers_generate_c_headers(FLATBUFFER_GENERATED ${FLATBUFFER_SCHEMAS})
+add_custom_target(generate_flatbuffer_headers DEPENDS
+    ${FLATBUFFER_GENERATED_OUTPUTS})
+
 set(BICYCLE_SOURCE ${BICYCLE_SOURCE_DIR}/src/bicycle.cc)
 
 option(BICYCLE_BUILD_TESTS "Build tests." ON)
@@ -51,7 +52,6 @@ if (BICYCLE_BUILD_EXAMPLES)
 endif()
 
 if (BICYCLE_BUILD_TESTS)
-    set(CTEST_OUTPUT_ON_FAILURE ON)
     enable_testing()
     include_directories(external/googletest)
     include_directories(external/googletest/include)
