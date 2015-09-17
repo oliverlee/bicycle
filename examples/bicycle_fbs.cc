@@ -34,17 +34,15 @@ int main(int argc, char* argv[]) {
     std::cout << "initial state: [" << x.transpose() << "]' rad" << std::endl;
     std::cout << "states are: [roll angle, steer angle, roll rate, steer rate]'" << std::endl << std::endl;
 
+    // flatbuffer objects must be serialized in depth first pre-order traversal
     size_t current_sample = 0;
-    {
-        auto M = fbs::second_order_matrix(bicycle.M());
-        auto C1 = fbs::second_order_matrix(bicycle.C1());
-        auto K0 = fbs::second_order_matrix(bicycle.K0());
-        auto K2 = fbs::second_order_matrix(bicycle.K2());
-        auto bicycle_location = fbs::CreateBicycle(
-                builder, bicycle.v(), bicycle.dt(), &M, &C1, &K0, &K2);
-        sample_locations[current_sample] = fbs::CreateSample(
-                builder, 0, bicycle_location, 0, 0, 0, 0, 0, 0);
-    }
+
+    auto M = fbs::second_order_matrix(bicycle.M());
+    auto C1 = fbs::second_order_matrix(bicycle.C1());
+    auto K0 = fbs::second_order_matrix(bicycle.K0());
+    auto K2 = fbs::second_order_matrix(bicycle.K2());
+    auto bicycle_location = fbs::CreateBicycle(
+            builder, bicycle.v(), bicycle.dt(), &M, &C1, &K0, &K2);
 
     std::cout << "simulating discrete time system at constant speed (" <<
         N << " steps at " << fs << " Hz) ..." << std::endl;
@@ -53,10 +51,15 @@ int main(int argc, char* argv[]) {
         x = bicycle.x_next(x);
         state = x;
 
+
+        auto sample_builder = fbs::SampleBuilder(builder);
+        if (current_sample == 0) {
+            sample_builder.add_bicycle(bicycle_location);
+        }
         auto fbs_state = fbs::state(x);
-        ++current_sample;
-        sample_locations[current_sample] = fbs::CreateSample(
-                builder, current_sample, 0, &fbs_state, 0, 0, 0, 0, 0);
+        sample_builder.add_state(&fbs_state);
+        sample_builder.add_timestamp(current_sample);
+        sample_locations[current_sample++] = sample_builder.Finish();
     }
     auto disc_stop = std::chrono::system_clock::now();
     auto disc_time = disc_stop - disc_start;

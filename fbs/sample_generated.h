@@ -358,25 +358,25 @@ inline flatbuffers::Offset<Bicycle> CreateBicycle(flatbuffers::FlatBufferBuilder
 struct Sample FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   uint32_t timestamp() const { return GetField<uint32_t>(4, 0); }
   const Bicycle *bicycle() const { return GetPointer<const Bicycle *>(6); }
-  const State *bicycle_state() const { return GetStruct<const State *>(8); }
-  const Input *bicycle_input() const { return GetStruct<const Input *>(10); }
-  const Output *bicycle_output() const { return GetStruct<const Output *>(12); }
-  const Output *bicycle_measurement() const { return GetStruct<const Output *>(14); }
-  const Lqr *lqr() const { return GetPointer<const Lqr *>(16); }
-  const Kalman *kalman() const { return GetPointer<const Kalman *>(18); }
+  const Kalman *kalman() const { return GetPointer<const Kalman *>(8); }
+  const Lqr *lqr() const { return GetPointer<const Lqr *>(10); }
+  const State *state() const { return GetStruct<const State *>(12); }
+  const Input *input() const { return GetStruct<const Input *>(14); }
+  const Output *output() const { return GetStruct<const Output *>(16); }
+  const Output *measurement() const { return GetStruct<const Output *>(18); }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, 4 /* timestamp */) &&
            VerifyField<flatbuffers::uoffset_t>(verifier, 6 /* bicycle */) &&
            verifier.VerifyTable(bicycle()) &&
-           VerifyField<State>(verifier, 8 /* bicycle_state */) &&
-           VerifyField<Input>(verifier, 10 /* bicycle_input */) &&
-           VerifyField<Output>(verifier, 12 /* bicycle_output */) &&
-           VerifyField<Output>(verifier, 14 /* bicycle_measurement */) &&
-           VerifyField<flatbuffers::uoffset_t>(verifier, 16 /* lqr */) &&
-           verifier.VerifyTable(lqr()) &&
-           VerifyField<flatbuffers::uoffset_t>(verifier, 18 /* kalman */) &&
+           VerifyField<flatbuffers::uoffset_t>(verifier, 8 /* kalman */) &&
            verifier.VerifyTable(kalman()) &&
+           VerifyField<flatbuffers::uoffset_t>(verifier, 10 /* lqr */) &&
+           verifier.VerifyTable(lqr()) &&
+           VerifyField<State>(verifier, 12 /* state */) &&
+           VerifyField<Input>(verifier, 14 /* input */) &&
+           VerifyField<Output>(verifier, 16 /* output */) &&
+           VerifyField<Output>(verifier, 18 /* measurement */) &&
            verifier.EndTable();
   }
 };
@@ -386,12 +386,12 @@ struct SampleBuilder {
   flatbuffers::uoffset_t start_;
   void add_timestamp(uint32_t timestamp) { fbb_.AddElement<uint32_t>(4, timestamp, 0); }
   void add_bicycle(flatbuffers::Offset<Bicycle> bicycle) { fbb_.AddOffset(6, bicycle); }
-  void add_bicycle_state(const State *bicycle_state) { fbb_.AddStruct(8, bicycle_state); }
-  void add_bicycle_input(const Input *bicycle_input) { fbb_.AddStruct(10, bicycle_input); }
-  void add_bicycle_output(const Output *bicycle_output) { fbb_.AddStruct(12, bicycle_output); }
-  void add_bicycle_measurement(const Output *bicycle_measurement) { fbb_.AddStruct(14, bicycle_measurement); }
-  void add_lqr(flatbuffers::Offset<Lqr> lqr) { fbb_.AddOffset(16, lqr); }
-  void add_kalman(flatbuffers::Offset<Kalman> kalman) { fbb_.AddOffset(18, kalman); }
+  void add_kalman(flatbuffers::Offset<Kalman> kalman) { fbb_.AddOffset(8, kalman); }
+  void add_lqr(flatbuffers::Offset<Lqr> lqr) { fbb_.AddOffset(10, lqr); }
+  void add_state(const State *state) { fbb_.AddStruct(12, state); }
+  void add_input(const Input *input) { fbb_.AddStruct(14, input); }
+  void add_output(const Output *output) { fbb_.AddStruct(16, output); }
+  void add_measurement(const Output *measurement) { fbb_.AddStruct(18, measurement); }
   SampleBuilder(flatbuffers::FlatBufferBuilder &_fbb) : fbb_(_fbb) { start_ = fbb_.StartTable(); }
   SampleBuilder &operator=(const SampleBuilder &);
   flatbuffers::Offset<Sample> Finish() {
@@ -403,19 +403,19 @@ struct SampleBuilder {
 inline flatbuffers::Offset<Sample> CreateSample(flatbuffers::FlatBufferBuilder &_fbb,
    uint32_t timestamp = 0,
    flatbuffers::Offset<Bicycle> bicycle = 0,
-   const State *bicycle_state = 0,
-   const Input *bicycle_input = 0,
-   const Output *bicycle_output = 0,
-   const Output *bicycle_measurement = 0,
+   flatbuffers::Offset<Kalman> kalman = 0,
    flatbuffers::Offset<Lqr> lqr = 0,
-   flatbuffers::Offset<Kalman> kalman = 0) {
+   const State *state = 0,
+   const Input *input = 0,
+   const Output *output = 0,
+   const Output *measurement = 0) {
   SampleBuilder builder_(_fbb);
-  builder_.add_kalman(kalman);
+  builder_.add_measurement(measurement);
+  builder_.add_output(output);
+  builder_.add_input(input);
+  builder_.add_state(state);
   builder_.add_lqr(lqr);
-  builder_.add_bicycle_measurement(bicycle_measurement);
-  builder_.add_bicycle_output(bicycle_output);
-  builder_.add_bicycle_input(bicycle_input);
-  builder_.add_bicycle_state(bicycle_state);
+  builder_.add_kalman(kalman);
   builder_.add_bicycle(bicycle);
   builder_.add_timestamp(timestamp);
   return builder_.Finish();

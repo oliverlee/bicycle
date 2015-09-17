@@ -112,12 +112,12 @@ table Bicycle {
 table Sample {
     timestamp:uint;
     bicycle:Bicycle;
-    bicycle_state:State; // true state
-    bicycle_input:Input; // applied input
-    bicycle_output:Output; // output without noise
-    bicycle_measurement:Output; // output with noise
-    lqr:Lqr;
     kalman:Kalman;
+    lqr:Lqr;
+    state:State; // true state
+    input:Input; // applied input
+    output:Output; // output without noise
+    measurement:Output; // output with noise
 }
 
 table SampleLog {
