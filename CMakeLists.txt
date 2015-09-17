@@ -40,6 +40,7 @@ endif()
 # the extension .hh
 include_directories(${BICYCLE_SOURCE_DIR}/inc)
 include_directories(${BICYCLE_SOURCE_DIR}/src)
+include_directories(${BICYCLE_SOURCE_DIR}/fbs)
 set(BICYCLE_SOURCE ${BICYCLE_SOURCE_DIR}/src/bicycle.cc)
 
 option(BICYCLE_BUILD_TESTS "Build tests." ON)
