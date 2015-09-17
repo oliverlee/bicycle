@@ -455,7 +455,11 @@ inline const SampleLog *GetSampleLog(const void *buf) { return flatbuffers::GetR
 
 inline bool VerifySampleLogBuffer(flatbuffers::Verifier &verifier) { return verifier.VerifyBuffer<SampleLog>(); }
 
-inline void FinishSampleLogBuffer(flatbuffers::FlatBufferBuilder &fbb, flatbuffers::Offset<SampleLog> root) { fbb.Finish(root); }
+inline const char *SampleLogIdentifier() { return "BICY"; }
+
+inline bool SampleLogBufferHasIdentifier(const void *buf) { return flatbuffers::BufferHasIdentifier(buf, SampleLogIdentifier()); }
+
+inline void FinishSampleLogBuffer(flatbuffers::FlatBufferBuilder &fbb, flatbuffers::Offset<SampleLog> root) { fbb.Finish(root, SampleLogIdentifier()); }
 
 }  // namespace fbs
 

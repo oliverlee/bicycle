@@ -125,3 +125,5 @@ table SampleLog {
 }
 
 root_type SampleLog;
+
+file_identifier "BICY";
