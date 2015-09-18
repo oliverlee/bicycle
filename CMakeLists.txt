@@ -51,7 +51,7 @@ include_directories(fbs) # include util file
 add_subdirectory(fbs) # set FLATBUFFER_SCHEMAS
 
 flatbuffers_generate_c_headers(FLATBUFFER_GENERATED ${FLATBUFFER_SCHEMAS})
-include_directories(${CMAKE_BINARY_DIR}) # flatbuffer headers generated in CMAKE_CURRENT_BINARY_DIR
+include_directories(${PROJECT_BINARY_DIR}/generated) # location of flatbuffer generated headers
 add_custom_target(generate_flatbuffer_headers DEPENDS ${FLATBUFFER_GENERATED_OUTPUTS})
 
 set(BICYCLE_SOURCE ${BICYCLE_SOURCE_DIR}/src/bicycle.cc)
