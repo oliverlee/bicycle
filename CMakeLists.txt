@@ -11,6 +11,7 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 include_directories(${Boost_INCLUDE_DIR})
 
 add_subdirectory(external/flatbuffers)
+include_directories(external/flatbuffers/include)
 set(FLATBUFFERS_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(FLATBUFFERS_INSTALL OFF CACHE BOOL "" FORCE)
 set(FLATBUFFERS_BUILD_FLATLIB ON CACHE BOOL "" FORCE)
@@ -56,10 +57,15 @@ add_custom_target(generate_flatbuffer_headers DEPENDS ${FLATBUFFER_GENERATED_OUT
 set(BICYCLE_SOURCE ${BICYCLE_SOURCE_DIR}/src/bicycle.cc)
 
 option(BICYCLE_BUILD_TESTS "Build tests." ON)
+option(BICYCLE_BUILD_TOOLS "Build tools." ON)
 option(BICYCLE_BUILD_EXAMPLES "Build examples." ON)
 
 if (BICYCLE_BUILD_EXAMPLES)
     add_subdirectory(examples)
+endif()
+
+if (BICYCLE_BUILD_TOOLS)
+    add_subdirectory(tools)
 endif()
 
 if (BICYCLE_BUILD_TESTS)
