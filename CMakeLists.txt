@@ -3,11 +3,23 @@ project(BICYCLE CXX)
 
 set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake/modules)
+include(cmake/functions.cmake)
 
 find_package(Eigen3 3.2.4 REQUIRED)
 find_package(Boost 1.58 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 include_directories(${Boost_INCLUDE_DIR})
+
+add_subdirectory(external/flatbuffers)
+include_directories(external/flatbuffers/include)
+set(FLATBUFFERS_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(FLATBUFFERS_INSTALL OFF CACHE BOOL "" FORCE)
+set(FLATBUFFERS_BUILD_FLATLIB ON CACHE BOOL "" FORCE)
+set(FLATBUFFERS_BUILD_FLATC ON CACHE BOOL "" FORCE)
+set(FLATBUFFERS_BUILD_FLATHASH OFF CACHE BOOL "" FORCE)
+set(FLATBUFFERS_CODE_COVERAGE OFF CACHE BOOL "" FORCE)
+mark_as_advanced(FORCE FLATBUFFERS_BUILD_TESTS FLATBUFFERS_INSTALL FLATBUFFERS_BUILD_FLATLIB
+    FLATBUFFERS_BUILD_FLATC FLATBUFFERS_BUILD_FLATHASH FLATBUFFERS_CODE_COVERAGE)
 
 # debug/release flags
 set(CMAKE_C_FLAGS_DEBUG "-ggdb3 -O0" CACHE
@@ -30,21 +42,33 @@ if(NOT CMAKE_BUILD_TYPE)
     message("CMAKE_BUILD_TYPE not set. Using ${CMAKE_BUILD_TYPE}.")
 endif()
 
+
 # header files with template definitions are placed in the src directory with
 # the extension .hh
-include_directories(${BICYCLE_SOURCE_DIR}/inc)
-include_directories(${BICYCLE_SOURCE_DIR}/src)
+include_directories(inc)
+include_directories(src)
+include_directories(fbs) # include util file
+add_subdirectory(fbs) # set FLATBUFFER_SCHEMAS
+
+flatbuffers_generate_c_headers(FLATBUFFER_GENERATED ${FLATBUFFER_SCHEMAS})
+include_directories(${PROJECT_BINARY_DIR}/generated) # location of flatbuffer generated headers
+add_custom_target(generate_flatbuffer_headers DEPENDS ${FLATBUFFER_GENERATED_OUTPUTS})
+
 set(BICYCLE_SOURCE ${BICYCLE_SOURCE_DIR}/src/bicycle.cc)
 
 option(BICYCLE_BUILD_TESTS "Build tests." ON)
+option(BICYCLE_BUILD_TOOLS "Build tools." ON)
 option(BICYCLE_BUILD_EXAMPLES "Build examples." ON)
 
 if (BICYCLE_BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
 
+if (BICYCLE_BUILD_TOOLS)
+    add_subdirectory(tools)
+endif()
+
 if (BICYCLE_BUILD_TESTS)
-    set(CTEST_OUTPUT_ON_FAILURE ON)
     enable_testing()
     include_directories(external/googletest)
     include_directories(external/googletest/include)

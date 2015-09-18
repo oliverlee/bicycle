@@ -1,0 +1,3 @@
+add_executable(flatprint flatprint.cc)
+add_dependencies(flatprint generate_flatbuffer_headers)
+target_link_libraries(flatprint flatbuffers)
