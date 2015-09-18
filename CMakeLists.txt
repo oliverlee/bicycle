@@ -3,13 +3,22 @@ project(BICYCLE CXX)
 
 set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake/modules)
+include(cmake/functions.cmake)
 
 find_package(Eigen3 3.2.4 REQUIRED)
 find_package(Boost 1.58 REQUIRED)
-find_package(FlatBuffers REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 include_directories(${Boost_INCLUDE_DIR})
-include_directories(${FLATBUFFERS_INCLUDE_DIR})
+
+add_subdirectory(external/flatbuffers)
+set(FLATBUFFERS_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(FLATBUFFERS_INSTALL OFF CACHE BOOL "" FORCE)
+set(FLATBUFFERS_BUILD_FLATLIB ON CACHE BOOL "" FORCE)
+set(FLATBUFFERS_BUILD_FLATC ON CACHE BOOL "" FORCE)
+set(FLATBUFFERS_BUILD_FLATHASH OFF CACHE BOOL "" FORCE)
+set(FLATBUFFERS_CODE_COVERAGE OFF CACHE BOOL "" FORCE)
+mark_as_advanced(FORCE FLATBUFFERS_BUILD_TESTS FLATBUFFERS_INSTALL FLATBUFFERS_BUILD_FLATLIB
+    FLATBUFFERS_BUILD_FLATC FLATBUFFERS_BUILD_FLATHASH FLATBUFFERS_CODE_COVERAGE)
 
 # debug/release flags
 set(CMAKE_C_FLAGS_DEBUG "-ggdb3 -O0" CACHE
@@ -32,15 +41,17 @@ if(NOT CMAKE_BUILD_TYPE)
     message("CMAKE_BUILD_TYPE not set. Using ${CMAKE_BUILD_TYPE}.")
 endif()
 
+
 # header files with template definitions are placed in the src directory with
 # the extension .hh
 include_directories(inc)
 include_directories(src)
 include_directories(fbs) # include util file
 add_subdirectory(fbs) # set FLATBUFFER_SCHEMAS
+
 flatbuffers_generate_c_headers(FLATBUFFER_GENERATED ${FLATBUFFER_SCHEMAS})
-add_custom_target(generate_flatbuffer_headers DEPENDS
-    ${FLATBUFFER_GENERATED_OUTPUTS})
+include_directories(${CMAKE_BINARY_DIR}) # flatbuffer headers generated in CMAKE_CURRENT_BINARY_DIR
+add_custom_target(generate_flatbuffer_headers DEPENDS ${FLATBUFFER_GENERATED_OUTPUTS})
 
 set(BICYCLE_SOURCE ${BICYCLE_SOURCE_DIR}/src/bicycle.cc)
 
@@ -51,10 +62,10 @@ if (BICYCLE_BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
 
-#if (BICYCLE_BUILD_TESTS)
-#    enable_testing()
-#    include_directories(external/googletest)
-#    include_directories(external/googletest/include)
-#    add_subdirectory(external/googletest)
-#    add_subdirectory(tests)
-#endif()
+if (BICYCLE_BUILD_TESTS)
+    enable_testing()
+    include_directories(external/googletest)
+    include_directories(external/googletest/include)
+    add_subdirectory(external/googletest)
+    add_subdirectory(tests)
+endif()
