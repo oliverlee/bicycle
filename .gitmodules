@@ -1,3 +1,6 @@
 [submodule "external/googletest"]
 	path = external/googletest
 	url = https://chromium.googlesource.com/external/googletest
+[submodule "external/flatbuffers"]
+	path = external/flatbuffers
+	url = git@github.com:google/flatbuffers.git
