@@ -43,12 +43,12 @@ class Bicycle : public DiscreteLinear<4, 2, 2, 2> {
         Bicycle(const char* param_file, double v, double dt,
                 const state_space_map_t* discrete_state_space_map = nullptr);
 
-        state_t x_next(const state_t& x, const input_t& u) const;
+        virtual state_t x_next(const state_t& x, const input_t& u) const;
         state_t x_integrate(const state_t& x, const input_t& u, double dt) const;
-        output_t y(const state_t& x, const input_t& u) const;
-        state_t x_next(const state_t& x) const;
+        virtual output_t y(const state_t& x, const input_t& u) const;
+        virtual state_t x_next(const state_t& x) const;
         state_t x_integrate(const state_t& x, double dt) const;
-        output_t y(const state_t& x) const;
+        virtual output_t y(const state_t& x) const;
         void set_v(double v, double dt);
         void set_C(const output_matrix_t& C);
         void set_D(const feedthrough_matrix_t& D);
@@ -61,16 +61,16 @@ class Bicycle : public DiscreteLinear<4, 2, 2, 2> {
         input_matrix_t B() const;
         output_matrix_t C() const;
         feedthrough_matrix_t D() const;
-        state_matrix_t Ad() const;
-        input_matrix_t Bd() const;
-        output_matrix_t Cd() const;
-        feedthrough_matrix_t Dd() const;
+        virtual state_matrix_t Ad() const;
+        virtual input_matrix_t Bd() const;
+        virtual output_matrix_t Cd() const;
+        virtual feedthrough_matrix_t Dd() const;
         second_order_matrix_t M() const;
         second_order_matrix_t C1() const;
         second_order_matrix_t K0() const;
         second_order_matrix_t K2() const;
         double v() const;
-        double dt() const;
+        virtual double dt() const;
 
     private:
         double m_v; // parameterized forward speed
