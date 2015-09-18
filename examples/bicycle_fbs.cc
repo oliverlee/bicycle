@@ -19,7 +19,7 @@ namespace {
     std::array<model::Bicycle::state_t, N> system_state;
     flatbuffers::FlatBufferBuilder builder;
     flatbuffers::FlatBufferBuilder log_builder;
-    flatbuffers::Offset<fbs::SampleBuffer> sample_locations[N + 1];
+    flatbuffers::Offset<fbs::SampleBuffer> sample_locations[N];
 } // namespace
 
 flatbuffers::Offset<fbs::Bicycle> create_bicycle(flatbuffers::FlatBufferBuilder& fbb, const model::Bicycle& bicycle) {
@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
 
     auto samples_vector = log_builder.CreateVector(sample_locations, N);
     auto log_location = fbs::CreateSampleLog(log_builder, samples_vector);
-    log_builder.Finish(log_location);
+    log_builder.Finish(log_location, fbs::SampleLogIdentifier());
 
     {
         disc_start = std::chrono::system_clock::now();
