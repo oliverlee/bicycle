@@ -27,15 +27,15 @@ class DiscreteLinear : private DiscreteLinearBase {
         using feedthrough_matrix_t = Eigen::Matrix<double, l, m>;
         using second_order_matrix_t = Eigen::Matrix<double, o, o>;
 
-        virtual state_t x_next(const state_t& x, const input_t& u) const;
-        virtual output_t y(const state_t& x, const input_t& u) const;
-        virtual state_t x_next(const state_t& x) const;
-        virtual output_t y(const state_t& x) const;
-        virtual state_matrix_t Ad() const;
-        virtual input_matrix_t Bd() const;
-        virtual output_matrix_t Cd() const;
-        virtual feedthrough_matrix_t Dd() const;
-        virtual double dt() const;
+        virtual state_t x_next(const state_t& x, const input_t& u) const = 0;
+        virtual output_t y(const state_t& x, const input_t& u) const = 0;
+        virtual state_t x_next(const state_t& x) const = 0;
+        virtual output_t y(const state_t& x) const = 0;
+        virtual state_matrix_t Ad() const = 0;
+        virtual input_matrix_t Bd() const = 0;
+        virtual output_matrix_t Cd() const = 0;
+        virtual feedthrough_matrix_t Dd() const = 0;
+        virtual double dt() const = 0;
 };
 
 } // namespace model
