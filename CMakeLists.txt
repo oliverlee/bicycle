@@ -11,6 +11,7 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 include_directories(${Boost_INCLUDE_DIR})
 
 add_subdirectory(external/flatbuffers)
+include_directories(external/flatbuffers/include)
 set(FLATBUFFERS_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(FLATBUFFERS_INSTALL OFF CACHE BOOL "" FORCE)
 set(FLATBUFFERS_BUILD_FLATLIB ON CACHE BOOL "" FORCE)
@@ -50,16 +51,23 @@ include_directories(fbs) # include util file
 add_subdirectory(fbs) # set FLATBUFFER_SCHEMAS
 
 flatbuffers_generate_c_headers(FLATBUFFER_GENERATED ${FLATBUFFER_SCHEMAS})
-include_directories(${CMAKE_BINARY_DIR}) # flatbuffer headers generated in CMAKE_CURRENT_BINARY_DIR
+flatbuffers_generate_binary_schema(FLATBUFFER_BINARY_SCHEMA ${FLATBUFFER_SCHEMAS})
+include_directories(${PROJECT_BINARY_DIR}/generated) # flatbuffer generated files
 add_custom_target(generate_flatbuffer_headers DEPENDS ${FLATBUFFER_GENERATED_OUTPUTS})
+add_custom_target(generate_binary_schema DEPENDS ${FLATBUFFER_BINARY_SCHEMA_OUTPUTS})
 
 set(BICYCLE_SOURCE ${BICYCLE_SOURCE_DIR}/src/bicycle.cc)
 
-option(BICYCLE_BUILD_TESTS "Build tests." ON)
 option(BICYCLE_BUILD_EXAMPLES "Build examples." ON)
+option(BICYCLE_BUILD_TESTS "Build tests." ON)
+option(BICYCLE_BUILD_TOOLS "Build tools." ON)
 
 if (BICYCLE_BUILD_EXAMPLES)
     add_subdirectory(examples)
+endif()
+
+if (BICYCLE_BUILD_TOOLS)
+    add_subdirectory(tools)
 endif()
 
 if (BICYCLE_BUILD_TESTS)
