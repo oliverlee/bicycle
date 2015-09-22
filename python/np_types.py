@@ -9,7 +9,7 @@ input_size = 2
 output_size = 2
 second_order_size = 2
 
-natural_t = np.int32
+natural_t = np.uint32
 real_t = np.float64
 
 state_t = (real_t, (state_size, 1))

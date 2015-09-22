@@ -1,12 +1,14 @@
 #!/usr/in/env python
 # -*- coding: utf-8 -*-
-from collections import namedtuple
 import sys
+import types
 import numpy as np
+import numpy.ma.mrecords as mr
 import flatbuffers
-import flatbuffers.number_types as fbsnt
+from flatbuffers.number_types import Float64Flags as fbfloat64
 import fbs.SampleLog
 import fbs.Sample
+import np_types as npt
 
 
 def load_sample_log(filename):
@@ -24,240 +26,149 @@ def load_sample_log(filename):
     return samples
 
 
-Bicycle = namedtuple('Bicycle',
-        ['v',   # forward speed
-         'dt',  # sample time
-         'M',   # mass matrix
-         'C1',  # v proportional damping matrix
-         'K0',  # speed independent stiffness matrix
-         'K2']) # v**2 proportional stiffness matrix
+def set_masked_record_field(record_field, accessor,
+                            converter=None, masked_value=None):
+    value = accessor()
+    if converter is None:
+        # field type is a scalar value
+        if value == masked_value:
+            record_field[0] = np.ma.masked
+        else:
+            record_field[0] = value
+    else:
+        # field type is flatbuffers struct or table
+        if value is None:
+            record_field[0] = np.ma.masked
+        else:
+            record_field[0] = converter(value)
+    return None
 
-Kalman = namedtuple('Kalman',
-        ['x',   # state estimate
-         'P',   # error covariance
-         'Q',   # process noise covariance
-         'R',   # measurement noise covariance
-         'K'])  # Kalman gain
+# flatbuffers struct converters
+def convert_state(fbs_state):
+    t = fbs_state._tab
+    return np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
+        npt.state_size*fbfloat64.bytewidth], dtype=npt.state_t)
 
-Lqr = namedtuple('Lqr',
-        ['n',   # horizon length
-         'r',   # state reference
-         'Q',   # state cost
-         'R',   # input cost
-         'P',   # horizon cost
-         'K'])  # LQR gain
+def convert_input(fbs_input):
+    t = fbs_input._tab
+    return np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
+        npt.input_size*fbfloat64.bytewidth], dtype=npt.input_t)
 
-Sample = namedtuple('Sample',
-        ['t',       # timestamp
-         'bicycle', # bicycle namedtuple
-         'kalman',  # kalman namedtuple
-         'lqr',     # lqr namedtuple
-         'x',       # state vector
-         'u',       # input vector
-         'y',       # output vector
-         'z'])      # measurement vector
+def convert_output(fbs_output):
+    t = fbs_output._tab
+    return np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
+        npt.output_size*fbfloat64.bytewidth], dtype=npt.output_t)
 
+def convert_second_order_matrix(fbs_second_order_matrix):
+    t = fbs_second_order_matrix._tab
+    return np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
+        (npt.second_order_size**2)*fbfloat64.bytewidth],
+        dtype=npt.second_order_matrix_t)
 
-class Convert(object):
-    # TODO: generate following sizes with templates
-    _n = 4 # state size
-    _m = 2 # input size
-    _l = 2 # output size
-    _o = 2 # second order size
+def convert_symmetric_state_matrix(fbs_symmetric_state_matrix):
+    t = fbs_symmetric_state_matrix._tab
+    a = np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
+        (npt.state_size*(npt.state_size + 1)/2)*fbfloat64.bytewidth],
+        dtype=npt.real_t)
+    b = np.ma.zeros([], dtype=npt.symmetric_state_matrix_t)
+    b[np.triu_indices(npt.state_size)] = a
+    return b + np.triu(b, 1).T
 
-    @staticmethod
-    def __ma(x, mask=False):
-        """Convenience function to create numpy masked array."""
-        if mask:
-            return np.ma.array([x], mask=True)
-        return np.ma.array([x])
+def convert_symmetric_input_matrix(fbs_symmetric_input_matrix):
+    t = fbs_symmetric_input_matrix._tab
+    a = np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
+        (npt.input_size*(npt.input_size + 1)/2)*fbfloat64.bytewidth],
+        dtype=npt.real_t)
+    b = np.ma.zeros([], dtype=npt.symmetric_input_matrix_t)
+    b[np.triu_indices(npt.input_size)] = a
+    return b + np.triu(b, 1).T
 
-    @classmethod
-    def __get_struct_value(cls, accessor, converter, default):
-        value = accessor()
-        if value is not None:
-            return cls.__ma(cls.converter(value))
-        return default
+def convert_symmetric_output_matrix(fbs_symmetric_output_matrix):
+    t = fbs_symmetric_output_matrix._tab
+    a = np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
+        (npt.output_size*(npt.output_size + 1)/2)*fbfloat64.bytewidth],
+        dtype=npt.real_t)
+    b = np.ma.zeros([], dtype=npt.symmetric_output_matrix_t)
+    b[np.triu_indices(npt.output_size)] = a
+    return b + np.triu(b, 1).T
 
-    @classmethod
-    def __get_scalar_value(cls, accessor, default_scalar_value, default):
-        value = accessor()
-        if value != default_scalar_value:
-            return cls.__ma(value)
-        return default
+def convert_kalman_gain_matrix(fbs_kalman_gain_matrix):
+    t = fbs_kalman_gain_matrix._tab
+    return np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
+        (npt.state_size * npt.output_size)*fbfloat64.bytewidth],
+        dtype=npt.kalman_gain_matrix_t)
 
-    @classmethod
-    def convert_state(cls, fbs_state):
-        t = fbs_state._tab
-        return np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
-            cls._n*fbsnt.Float64Flags.bytewidth], dtype=np.float64)
+def convert_lqr_gain_matrix(fbs_lqr_gain_matrix):
+    t = fbs_lqr_gain_matrix._tab
+    return np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
+        (npt.input_size * npt.state_size)*fbfloat64.bytewidth],
+        dtype=npt.lqr_gain_matrix_t)
 
-    @classmethod
-    def convert_input(cls, fbs_input):
-        t = fbs_input._tab
-        return np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
-            cls._m*fbsnt.Float64Flags.bytewidth], dtype=np.float64)
+# flatbuffers table converters
+def convert_bicycle(fbs_bicycle):
+    if fbs_bicycle is None:
+        return mr.mrecarray(1, dtype=npt.bicycle_t, mask=True)
 
-    @classmethod
-    def convert_output(cls, fbs_output):
-        t = fbs_output._tab
-        return np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
-            cls._l*fbsnt.Float64Flags.bytewidth], dtype=np.float64)
+    bicycle = mr.mrecarray(1, dtype=npt.bicycle_t)
+    set_masked_record_field(bicycle.v, fbs_bicycle.V, masked_value=0)
+    set_masked_record_field(bicycle.dt, fbs_bicycle.Dt, masked_value=0)
+    set_masked_record_field(bicycle.M, fbs_bicycle.M, convert_second_order_matrix)
+    set_masked_record_field(bicycle.C1, fbs_bicycle.C1, convert_second_order_matrix)
+    set_masked_record_field(bicycle.K0, fbs_bicycle.K0, convert_second_order_matrix)
+    set_masked_record_field(bicycle.K2, fbs_bicycle.K2, convert_second_order_matrix)
+    return bicycle
 
-    @classmethod
-    def convert_measurement(cls, fbs_measurement):
-        t = fbs_measurement._tab
-        return np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
-            cls._l*fbsnt.Float64Flags.bytewidth], dtype=np.float64)
+def convert_kalman(fbs_kalman):
+    if fbs_kalman is None:
+        return mr.mrecarray(1, dtype=npt.kalman_t, mask=True)
 
-    @classmethod
-    def convert_second_order_matrix(cls, fbs_second_order_matrix):
-        t = fbs_second_order_matrix._tab
-        return np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
-            cls._o*cls._o*fbsnt.Float64Flags.bytewidth],
-            dtype=np.float64).reshape((cls._o, cls._o))
+    kalman = mr.mrecarray(1, dtype=npt.kalman_t)
+    set_masked_record_field(kalman.x, fbs_kalman.StateEstimate, convert_state)
+    set_masked_record_field(kalman.P, fbs_kalman.HorizonCost, convert_symmetric_state_matrix)
+    set_masked_record_field(kalman.Q, fbs_kalman.StateCost, convert_symmetric_state_matrix)
+    set_masked_record_field(kalman.R, fbs_kalman.InputCost, convert_symmetric_output_matrix)
+    set_masked_record_field(kalman.K, fbs_kalman.KalmanGain, convert_kalman_gain_matrix)
+    return kalman
 
-    @classmethod
-    def convert_symmetric_state_matrix(cls, fbs_symmetric_state_matrix):
-        t = fbs_symmetric_state_matrix._tab
-        a = np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
-            (cls._n*(cls._n + 1)/2)*fbsnt.Float64Flags.bytewidth],
-            dtype=np.float64)
-        b = np.zeros((cls._n, cls._n))
-        b[np.triu_indices(cls._n)] = a
-        return b + np.triu(b, 1).T
+def convert_lqr(fbs_lqr):
+    if fbs_lqr is None:
+        return mr.mrecarray(1, dtype=npt.lqr_t, mask=True)
 
-    @classmethod
-    def convert_symmetric_input_matrix(cls, fbs_symmetric_input_matrix):
-        t = fbs_symmetric_input_matrix._tab
-        a = np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
-            (cls._m*(cls._m + 1)/2)*fbsnt.Float64Flags.bytewidth],
-            dtype=np.float64)
-        b = np.zeros((cls._m, cls._m))
-        b[np.triu_indices(cls._m)] = a
-        return b + np.triu(b, 1).T
+    lqr = mr.mrecarray(1, dtype=npt.lqr_t)
+    set_masked_record_field(lqr.n, fbs_lqr.Horizon, masked_value=0)
+    set_masked_record_field(lqr.r, fbs_lqr.StateTarget, convert_state)
+    set_masked_record_field(lqr.Q, fbs_lqr.StateCost, convert_symmetric_state_matrix)
+    set_masked_record_field(lqr.R, fbs_lqr.InputCost, convert_symmetric_input_matrix)
+    set_masked_record_field(lqr.P, fbs_lqr.HorizonCost, convert_symmetric_state_matrix)
+    set_masked_record_field(lqr.K, fbs_lqr.LqrGain, convert_lqr_gain_matrix)
+    return lqr
 
-    @classmethod
-    def convert_symmetric_output_matrix(cls, fbs_symmetric_output_matrix):
-        t = fbs_symmetric_output_matrix._tab
-        a = np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
-            (cls._l*(cls._l + 1)/2)*fbsnt.Float64Flags.bytewidth],
-            dtype=np.float64)
-        b = np.zeros((cls._l, cls._l))
-        b[np.triu_indices(cls._l)] = a
-        return b + np.triu(b, 1).T
+def convert_sample(fbs_sample):
+    # numpy only supports simple (non-nested) masked records
+    sample = types.SimpleNamespace()
+    for t in npt.sample_t:
+        name = t[0]
+        datatype = t[1:]
+        if type(datatype[0]) is list:
+            setattr(sample, name, mr.mrecarray(1, dtype=datatype[0], mask=True))
+        else:
+            if len(datatype) == 1:
+                datatype = datatype[0]
+            setattr(sample, name, np.ma.zeros(1, dtype=datatype))
+            getattr(sample, name).mask = True
 
-    @classmethod
-    def convert_kalman_gain_matrix(cls, fbs_kalman_gain_matrix):
-        t = fbs_kalman_gain_matrix._tab
-        return np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
-            cls._n*cls._l*fbsnt.Float64Flags.bytewidth],
-            dtype=np.float64).reshape((cls._n, cls._l))
+    if fbs_sample is None:
+        return sample
 
-    @classmethod
-    def convert_lqr_gain_matrix(cls, fbs_lqr_gain_matrix):
-        t = fbs_lqr_gain_matrix._tab
-        return np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
-            cls._m*cls._n*fbsnt.Float64Flags.bytewidth],
-            dtype=np.float64).reshape((cls._m, cls._n))
-
-    @classmethod
-    def convert_bicycle(cls, fbs_bicycle):
-        v = cls.__ma(0, True)
-        dt = cls.__ma(0, True)
-        M = cls.__ma(np.zeros((cls._o, cls._o)), True)
-        C1 = cls.__ma(np.zeros((cls._o, cls._o)), True)
-        K0 = cls.__ma(np.zeros((cls._o, cls._o)), True)
-        K2 = cls.__ma(np.zeros((cls._o, cls._o)), True)
-        if fbs_bicycle is None:
-            return Bicycle(v, dt, M, C1, K0, K2)
-
-        # forward velocity must be nonzero
-        # sample period must be greater than zero
-        v = cls.__get_scalar_value(fbs_bicycle.V, 0, v)
-        dt = cls.__get_scalar_value(fbs_bicycle.Dt, 0, dt)
-        M = cls.__get_struct_value(fbs_bicycle.M,
-                                   convert_second_order_matrix, M)
-        C1 = cls.__get_struct_value(fbs_bicycle.C1,
-                                    convert_second_order_matrix, C1)
-        K0 = cls.__get_struct_value(fbs_bicycle.K0,
-                                    convert_second_order_matrix, K0)
-        K2 = cls.__get_struct_value(fbs_bicycle.K2,
-                                    convert_second_order_matrix, K2)
-        return Bicycle(v, dt, M, C1, K0, K2)
-
-    @classmethod
-    def convert_kalman(cls, fbs_kalman):
-        x = cls.__ma(np.zeros((cls._n, 1)), True)
-        P = cls.__ma(np.zeros((cls._n, cls._n)), True)
-        Q = cls.__ma(np.zeros((cls._n, cls._n)), True)
-        R = cls.__ma(np.zeros((cls._l, cls._l)), True)
-        K = cls.__ma(np.zeros((cls._n, cls._l)), True)
-        if fbs_kalman is None:
-            return Kalman(x, P, Q, R, K)
-
-        x = cls.__get_struct_value(fbs_kalman.StateEstimate, convert_state, x)
-        R = cls.__get_struct_value(fbs_kalman.ErrorCovariance,
-                                   convert_symmetric_state_matrix, R)
-        Q = cls.__get_struct_value(fbs_kalman.ProcessNoiseCovariance,
-                                   convert_symmetric_state_matrix, Q)
-        R = cls.__get_struct_value(fbs_kalman.MeasurementNoiseCovariance,
-                                   convert_symmetric_output_matrix, R)
-        K = cls.__get_struct_value(fbs_kalman.KalmanGain,
-                                   convert_kalman_gain_matrix, K)
-        return Kalman(x, P, Q, R, K)
-
-    @classmethod
-    def convert_lqr(cls, fbs_lqr):
-        n = cls.__ma(0, True)
-        r = cls.__ma(np.zeros((cls._n, 1)), True)
-        Q = cls.__ma(np.zeros((cls._n, cls._n)), True)
-        R = cls.__ma(np.zeros((cls._m, cls._m)), True)
-        P = cls.__ma(np.zeros((cls._n, cls._n)), True)
-        K = cls.__ma(np.zeros((cls._m, cls._n)), True)
-        if fbs_lqr is None:
-            return Lqr(n, r, Q, R, P, K)
-
-        # horizon length must be greater than zero
-        n = cls.__get_scalar_value(fbs_lqr.Horizon, 0, n)
-        r = cls.__get_struct_value(fbs_lqr.StateTarget, cls.convert_state, r)
-        Q = cls.__get_struct_value(fbs_lqr.StateCost,
-                                   convert_symmetric_state_matrix, Q)
-        R = cls.__get_struct_value(fbs_lqr.InputCost,
-                                   convert_symmetric_input_matrix, R)
-        P = cls.__get_struct_value(fbs_lqr.HorizonCost,
-                                   convert_symmetric_state_matrix, P)
-        K = cls.__get_struct_value(fbs_lqr.LqrGain, convert_lqr_gain_matrix, K)
-        return Lqr(n, r, Q, R, P, K)
-
-    @classmethod
-    def convert_sample(cls, fbs_sample):
-        t = cls.__ma(0, True)
-        print('none bike')
-        print(cls.convert_bicycle(None))
-        bicycle = cls.__ma(cls.convert_bicycle(None), True)
-        kalman = cls.__ma(cls.convert_kalman(None), True)
-        lqr = cls.__ma(cls.convert_lqr(None), True)
-        x = cls.__ma(np.zeros((cls._n, 1)), True)
-        u = cls.__ma(np.zeros((cls._m, 1)), True)
-        y = cls.__ma(np.zeros((cls._l, 1)), True)
-        z = cls.__ma(np.zeros((cls._l, 1)), True)
-        if fbs_sample is None:
-            return Sample(t, bicycle, kalman, lqr, x, u, y, z)
-
-        # assume timestamp is always serialized
-        t = cls.__ma(fbs_sample.Timestamp())
-        bicycle = cls.__get_struct_value(fbs_sample.Bicycle,
-                                         cls.convert_bicycle, bicycle)
-        kalman = cls.__get_struct_value(fbs_sample.Kalman,
-                                        cls.convert_kalman, kalman)
-        lqr = cls.__get_struct_value(fbs_sample.Lqr, cls.convert_lqr, lqr)
-        x = cls.__get_struct_value(fbs_sample.State, cls.convert_state, x)
-        u = cls.__get_struct_value(fbs_sample.Input, cls.convert_input, u)
-        y = cls.__get_struct_value(fbs_sample.Output, cls.convert_output, y)
-        z = cls.__get_struct_value(fbs_sample.Measurement,
-                                   cls.convert_measurement, z)
-        return Sample(t, bicycle, kalman, lqr, x, u, y, z)
+    sample.ts[0] = fbs_sample.Timestamp() # assume always serialized
+    set_masked_record_field(sample.bicycle, fbs_sample.Bicycle, convert_bicycle)
+    set_masked_record_field(sample.kalman, fbs_sample.Kalman, convert_kalman)
+    set_masked_record_field(sample.lqr, fbs_sample.Lqr, convert_lqr)
+    set_masked_record_field(sample.x, fbs_sample.State, convert_state)
+    set_masked_record_field(sample.u, fbs_sample.Input, convert_input)
+    set_masked_record_field(sample.y, fbs_sample.Output, convert_output)
+    set_masked_record_field(sample.z, fbs_sample.Measurement, convert_output)
+    return sample
 
 
 if __name__ == "__main__":
@@ -268,6 +179,6 @@ if __name__ == "__main__":
 
     samples = load_sample_log(sys.argv[1])
     for s in samples:
-        sample = Convert.convert_sample(s)
+        sample = convert_sample(s)
         print(sample)
     sys.exit(0)
