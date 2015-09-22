@@ -1,5 +1,6 @@
 #!/usr/in/env python
 # -*- coding: utf-8 -*-
+import types
 import numpy as np
 
 
@@ -57,3 +58,66 @@ sample_t = [
         ('u',) + input_t,                   # system input
         ('y',) + output_t,                  # system output
         ('z',) + output_t]                  # system output with noise
+
+
+class Record(types.SimpleNamespace):
+    def __init__(self, dtype, length, mask=False):
+        self.dtype = np.dtype(dtype)
+        self.size = length
+        for name, subtype in self.dtype.fields.items():
+            subtype = subtype[0]
+            if subtype.fields:
+                r = Record(subtype, length)
+            else:
+                r = np.ma.zeros(length, dtype=subtype)
+                if mask:
+                    r.mask = True
+            setattr(self, name, r)
+        self._fill_value = tuple(getattr(self, f).fill_value
+                                 for f in self.dtype.names)
+
+    def __getitem__(self, indx):
+        record = Record(self.dtype, 0)
+        for name in self.dtype.names:
+            setattr(record, name, getattr(self, name)[indx])
+            if not record.size:
+                try:
+                    record.size = len(getattr(record, name))
+                except TypeError:
+                    record.size = 1
+        return record
+
+    def __setitem__(self, indx, value):
+        for name in self.dtype.names:
+            old = getattr(self, name)[indx]
+            new = getattr(value, name)
+            if len(new) == 1:
+                new = new[0]
+            old = new
+        return None
+
+    def __str__(self):
+        if self.size > 1:
+            mstr = ["(%s)" % ",".join([str(i) for i in s])
+                    for s in zip(*[getattr(self, f) for f in self.dtype.names])]
+            return "[%s]" % ", ".join(mstr)
+        else:
+            mstr = ["%s" % ",".join([str(i) for i in s])
+                    for s in zip([getattr(self, f) for f in self.dtype.names])]
+            return "(%s)" % ", ".join(mstr)
+
+    def __repr__(self):
+        _names = self.dtype.names
+        fmt = "%%%is : %%s" % (max([len(n) for n in _names]) + 4,)
+        reprstr = [fmt % (f, getattr(self, f)) for f in self.dtype.names]
+        reprstr.insert(0, 'Record(')
+        reprstr.extend([fmt % ('    fill_value', self.fill_value),
+                         '              )'])
+        return str("\n".join(reprstr))
+
+    def __len__(self):
+        return self.size
+
+    @property
+    def fill_value(self):
+        return self._fill_value
