@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/in/env python
 # -*- coding: utf-8 -*-
 from collections import namedtuple
 import sys
@@ -65,41 +65,62 @@ class Convert(object):
     _l = 2 # output size
     _o = 2 # second order size
 
+    @staticmethod
+    def __ma(x, mask=False):
+        """Convenience function to create numpy masked array."""
+        if mask:
+            return np.ma.array([x], mask=True)
+        return np.ma.array([x])
+
+    @classmethod
+    def __get_struct_value(cls, accessor, converter, default):
+        value = accessor()
+        if value is not None:
+            return cls.__ma(cls.converter(value))
+        return default
+
+    @classmethod
+    def __get_scalar_value(cls, accessor, default_scalar_value, default):
+        value = accessor()
+        if value != default_scalar_value:
+            return cls.__ma(value)
+        return default
+
     @classmethod
     def convert_state(cls, fbs_state):
         t = fbs_state._tab
-        return np.frombuffer(t.Bytes[t.Pos : t.Pos +
+        return np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
             cls._n*fbsnt.Float64Flags.bytewidth], dtype=np.float64)
 
     @classmethod
     def convert_input(cls, fbs_input):
         t = fbs_input._tab
-        return np.frombuffer(t.Bytes[t.Pos : t.Pos +
+        return np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
             cls._m*fbsnt.Float64Flags.bytewidth], dtype=np.float64)
 
     @classmethod
     def convert_output(cls, fbs_output):
         t = fbs_output._tab
-        return np.frombuffer(t.Bytes[t.Pos : t.Pos +
+        return np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
             cls._l*fbsnt.Float64Flags.bytewidth], dtype=np.float64)
 
     @classmethod
     def convert_measurement(cls, fbs_measurement):
         t = fbs_measurement._tab
-        return np.frombuffer(t.Bytes[t.Pos : t.Pos +
+        return np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
             cls._l*fbsnt.Float64Flags.bytewidth], dtype=np.float64)
 
     @classmethod
     def convert_second_order_matrix(cls, fbs_second_order_matrix):
         t = fbs_second_order_matrix._tab
-        return np.frombuffer(t.Bytes[t.Pos : t.Pos +
+        return np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
             cls._o*cls._o*fbsnt.Float64Flags.bytewidth],
             dtype=np.float64).reshape((cls._o, cls._o))
 
     @classmethod
     def convert_symmetric_state_matrix(cls, fbs_symmetric_state_matrix):
         t = fbs_symmetric_state_matrix._tab
-        a = np.frombuffer(t.Bytes[t.Pos : t.Pos +
+        a = np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
             (cls._n*(cls._n + 1)/2)*fbsnt.Float64Flags.bytewidth],
             dtype=np.float64)
         b = np.zeros((cls._n, cls._n))
@@ -109,7 +130,7 @@ class Convert(object):
     @classmethod
     def convert_symmetric_input_matrix(cls, fbs_symmetric_input_matrix):
         t = fbs_symmetric_input_matrix._tab
-        a = np.frombuffer(t.Bytes[t.Pos : t.Pos +
+        a = np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
             (cls._m*(cls._m + 1)/2)*fbsnt.Float64Flags.bytewidth],
             dtype=np.float64)
         b = np.zeros((cls._m, cls._m))
@@ -119,7 +140,7 @@ class Convert(object):
     @classmethod
     def convert_symmetric_output_matrix(cls, fbs_symmetric_output_matrix):
         t = fbs_symmetric_output_matrix._tab
-        a = np.frombuffer(t.Bytes[t.Pos : t.Pos +
+        a = np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
             (cls._l*(cls._l + 1)/2)*fbsnt.Float64Flags.bytewidth],
             dtype=np.float64)
         b = np.zeros((cls._l, cls._l))
@@ -129,143 +150,113 @@ class Convert(object):
     @classmethod
     def convert_kalman_gain_matrix(cls, fbs_kalman_gain_matrix):
         t = fbs_kalman_gain_matrix._tab
-        return np.frombuffer(t.Bytes[t.Pos : t.Pos +
+        return np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
             cls._n*cls._l*fbsnt.Float64Flags.bytewidth],
             dtype=np.float64).reshape((cls._n, cls._l))
 
     @classmethod
     def convert_lqr_gain_matrix(cls, fbs_lqr_gain_matrix):
         t = fbs_lqr_gain_matrix._tab
-        return np.frombuffer(t.Bytes[t.Pos : t.Pos +
+        return np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
             cls._m*cls._n*fbsnt.Float64Flags.bytewidth],
             dtype=np.float64).reshape((cls._m, cls._n))
 
     @classmethod
     def convert_bicycle(cls, fbs_bicycle):
-        v = 0
-        dt = 0
-        M = np.zeros((cls._o, cls._o))
-        C1 = np.zeros((cls._o, cls._o))
-        K0 = np.zeros((cls._o, cls._o))
-        K2 = np.zeros((cls._o, cls._o))
+        v = cls.__ma(0, True)
+        dt = cls.__ma(0, True)
+        M = cls.__ma(np.zeros((cls._o, cls._o)), True)
+        C1 = cls.__ma(np.zeros((cls._o, cls._o)), True)
+        K0 = cls.__ma(np.zeros((cls._o, cls._o)), True)
+        K2 = cls.__ma(np.zeros((cls._o, cls._o)), True)
         if fbs_bicycle is None:
             return Bicycle(v, dt, M, C1, K0, K2)
 
-        value = fbs_bicycle.V()
-        if value != 0:
-            v = value
-        value = fbs_bicycle.Dt()
-        if value != 0:
-            dt = value
-        value = fbs_bicycle.M()
-        if value is not None:
-            M = cls.convert_second_order_matrix(value)
-        value = fbs_bicycle.C1()
-        if value is not None:
-            C1 = cls.convert_second_order_matrix(value)
-        value = fbs_bicycle.K0()
-        if value is not None:
-            K0 = cls.convert_second_order_matrix(value)
-        value = fbs_bicycle.K2()
-        if value is not None:
-            K2 = cls.convert_second_order_matrix(value)
+        # forward velocity must be nonzero
+        # sample period must be greater than zero
+        v = cls.__get_scalar_value(fbs_bicycle.V, 0, v)
+        dt = cls.__get_scalar_value(fbs_bicycle.Dt, 0, dt)
+        M = cls.__get_struct_value(fbs_bicycle.M,
+                                   convert_second_order_matrix, M)
+        C1 = cls.__get_struct_value(fbs_bicycle.C1,
+                                    convert_second_order_matrix, C1)
+        K0 = cls.__get_struct_value(fbs_bicycle.K0,
+                                    convert_second_order_matrix, K0)
+        K2 = cls.__get_struct_value(fbs_bicycle.K2,
+                                    convert_second_order_matrix, K2)
         return Bicycle(v, dt, M, C1, K0, K2)
 
     @classmethod
     def convert_kalman(cls, fbs_kalman):
-        x = np.zeros((cls._n, 1))
-        P = np.zeros((cls._n, cls._n))
-        Q = np.zeros((cls._n, cls._n))
-        R = np.zeros((cls._l, cls._l))
-        K = np.zeros((cls._n, cls._l))
+        x = cls.__ma(np.zeros((cls._n, 1)), True)
+        P = cls.__ma(np.zeros((cls._n, cls._n)), True)
+        Q = cls.__ma(np.zeros((cls._n, cls._n)), True)
+        R = cls.__ma(np.zeros((cls._l, cls._l)), True)
+        K = cls.__ma(np.zeros((cls._n, cls._l)), True)
         if fbs_kalman is None:
             return Kalman(x, P, Q, R, K)
 
-        value = fbs_kalman.StateEstimate()
-        if value is not None:
-            x = cls.convert_state(value)
-        value = fbs_kalman.ErrorCovariance()
-        if value is not None:
-            P = cls.convert_symmetric_state_matrix(value)
-        value = fbs_kalman.ProcessNoiseCovariance()
-        if value is not None:
-            Q = cls.convert_symmetric_state_matrix(value)
-        value = fbs_kalman.MeasurementNoiseCovariance()
-        if value is not None:
-            R = cls.convert_symmetric_output_matrix(value)
-        value = fbs_kalman.KalmanGain()
-        if value is not None:
-            K = cls.convert_kalman_gain_matrix(value)
+        x = cls.__get_struct_value(fbs_kalman.StateEstimate, convert_state, x)
+        R = cls.__get_struct_value(fbs_kalman.ErrorCovariance,
+                                   convert_symmetric_state_matrix, R)
+        Q = cls.__get_struct_value(fbs_kalman.ProcessNoiseCovariance,
+                                   convert_symmetric_state_matrix, Q)
+        R = cls.__get_struct_value(fbs_kalman.MeasurementNoiseCovariance,
+                                   convert_symmetric_output_matrix, R)
+        K = cls.__get_struct_value(fbs_kalman.KalmanGain,
+                                   convert_kalman_gain_matrix, K)
         return Kalman(x, P, Q, R, K)
 
     @classmethod
     def convert_lqr(cls, fbs_lqr):
-        n = 0
-        r = np.zeros((cls._n, 1))
-        Q = np.zeros((cls._n, cls._n))
-        R = np.zeros((cls._m, cls._m))
-        P = np.zeros((cls._n, cls._n))
-        K = np.zeros((cls._m, cls._n))
+        n = cls.__ma(0, True)
+        r = cls.__ma(np.zeros((cls._n, 1)), True)
+        Q = cls.__ma(np.zeros((cls._n, cls._n)), True)
+        R = cls.__ma(np.zeros((cls._m, cls._m)), True)
+        P = cls.__ma(np.zeros((cls._n, cls._n)), True)
+        K = cls.__ma(np.zeros((cls._m, cls._n)), True)
         if fbs_lqr is None:
             return Lqr(n, r, Q, R, P, K)
 
-        value = fbs_lqr.Horizon()
-        if value != 0:
-            n = value
-        value = fbs_lqr.StateTarget()
-        if value is not None:
-            r = cls.convert_state(value)
-        value = fbs_lqr.StateCost()
-        if value is not None:
-            Q = cls.convert_symmetric_state_matrix(value)
-        value = fbs_lqr.InputCost()
-        if value is not None:
-            R = cls.convert_symmetric_input_matrix(value)
-        value = fbs_lqr.HorizonCost()
-        if value is not None:
-            P = cls.convert_symmetric_state_matrix(value)
-        value = fbs_lqr.LqrGain()
-        if value is not None:
-            K = cls.convert_lqr_gain_matrix(value)
+        # horizon length must be greater than zero
+        n = cls.__get_scalar_value(fbs_lqr.Horizon, 0, n)
+        r = cls.__get_struct_value(fbs_lqr.StateTarget, cls.convert_state, r)
+        Q = cls.__get_struct_value(fbs_lqr.StateCost,
+                                   convert_symmetric_state_matrix, Q)
+        R = cls.__get_struct_value(fbs_lqr.InputCost,
+                                   convert_symmetric_input_matrix, R)
+        P = cls.__get_struct_value(fbs_lqr.HorizonCost,
+                                   convert_symmetric_state_matrix, P)
+        K = cls.__get_struct_value(fbs_lqr.LqrGain, convert_lqr_gain_matrix, K)
         return Lqr(n, r, Q, R, P, K)
 
     @classmethod
     def convert_sample(cls, fbs_sample):
-        t = 0
-        bicycle = cls.convert_bicycle(None)
-        kalman = cls.convert_kalman(None)
-        lqr = cls.convert_lqr(None)
-        x = np.zeros((cls._n, 1))
-        u = np.zeros((cls._m, 1))
-        y = np.zeros((cls._l, 1))
-        z = np.zeros((cls._l, 1))
+        t = cls.__ma(0, True)
+        print('none bike')
+        print(cls.convert_bicycle(None))
+        bicycle = cls.__ma(cls.convert_bicycle(None), True)
+        kalman = cls.__ma(cls.convert_kalman(None), True)
+        lqr = cls.__ma(cls.convert_lqr(None), True)
+        x = cls.__ma(np.zeros((cls._n, 1)), True)
+        u = cls.__ma(np.zeros((cls._m, 1)), True)
+        y = cls.__ma(np.zeros((cls._l, 1)), True)
+        z = cls.__ma(np.zeros((cls._l, 1)), True)
         if fbs_sample is None:
             return Sample(t, bicycle, kalman, lqr, x, u, y, z)
 
-        value = fbs_sample.Timestamp()
-        if value != 0:
-            t = value
-        value = fbs_sample.Bicycle()
-        if value is not None:
-            bicycle = cls.convert_bicycle(value)
-        value = fbs_sample.Kalman()
-        if value is not None:
-            kalman = cls.convert_kalman(value)
-        value = fbs_sample.Lqr()
-        if value is not None:
-            lqr = cls.convert_lqr(value)
-        value = fbs_sample.State()
-        if value is not None:
-            x = cls.convert_state(value)
-        value = fbs_sample.Input()
-        if value is not None:
-            u = cls.convert_input(value)
-        value = fbs_sample.Output()
-        if value is not None:
-            y = cls.convert_output(value)
-        value = fbs_sample.Measurement()
-        if value is not None:
-            z = cls.convert_measurement(value)
+        # assume timestamp is always serialized
+        t = cls.__ma(fbs_sample.Timestamp())
+        bicycle = cls.__get_struct_value(fbs_sample.Bicycle,
+                                         cls.convert_bicycle, bicycle)
+        kalman = cls.__get_struct_value(fbs_sample.Kalman,
+                                        cls.convert_kalman, kalman)
+        lqr = cls.__get_struct_value(fbs_sample.Lqr, cls.convert_lqr, lqr)
+        x = cls.__get_struct_value(fbs_sample.State, cls.convert_state, x)
+        u = cls.__get_struct_value(fbs_sample.Input, cls.convert_input, u)
+        y = cls.__get_struct_value(fbs_sample.Output, cls.convert_output, y)
+        z = cls.__get_struct_value(fbs_sample.Measurement,
+                                   cls.convert_measurement, z)
         return Sample(t, bicycle, kalman, lqr, x, u, y, z)
 
 
