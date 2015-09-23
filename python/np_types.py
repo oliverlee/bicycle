@@ -77,23 +77,26 @@ class Record(types.SimpleNamespace):
                                  for f in self.dtype.names)
 
     def __getitem__(self, indx):
+        if not isinstance(indx, (slice, list)):
+            indx = [indx]
         record = Record(self.dtype, 0)
         for name in self.dtype.names:
             setattr(record, name, getattr(self, name)[indx])
             if not record.size:
-                try:
-                    record.size = len(getattr(record, name))
-                except TypeError:
-                    record.size = 1
+                record.size = len(getattr(record, name))
         return record
 
     def __setitem__(self, indx, value):
         for name in self.dtype.names:
-            old = getattr(self, name)[indx]
-            new = getattr(value, name)
-            if len(new) == 1:
-                new = new[0]
-            old = new
+            attr = getattr(self, name)
+            if value is np.ma.masked:
+                value_attr = value
+            else:
+                value_attr = getattr(value, name)
+            if isinstance(attr, Record):
+                attr.__setitem(indx, value_attr)
+            else:
+                attr[indx] = value_attr
         return None
 
     def __str__(self):
