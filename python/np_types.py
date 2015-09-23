@@ -60,6 +60,36 @@ sample_t = [
         ('z',) + output_t]                  # system output with noise
 
 
+def flatten_dtype(dtype):
+    if not isinstance(dtype, list):
+        return dtype
+
+    def flatten_dtype_helper(dtype):
+        """Returns a list of datatype lists. The datatype lists must be
+        converted to tuples to be valid for np.dtype().
+        """
+        if not isinstance(dtype, list):
+            return None
+
+        flat_fields = []
+        for field in dtype:
+            name = field[0]
+            subtype = field[1]
+            flat_subtypes = flatten_dtype_helper(subtype)
+            if flat_subtypes is None:
+                # set the named datatype to a list for now as we may need to
+                # modify the name later
+                flat_fields.append(list(field))
+            else:
+                for ff in flat_subtypes:
+                    ff[0] = name + '.' + ff[0] # prepend super field name
+                    flat_fields.append(ff)
+        return flat_fields
+
+    flat_fields = [tuple(f) for f in flatten_dtype_helper(dtype)]
+    return flat_fields
+
+
 class Record(types.SimpleNamespace):
     def __init__(self, dtype, length, mask=False):
         self.dtype = np.dtype(dtype)
