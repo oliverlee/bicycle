@@ -1,7 +1,10 @@
 # build directory
 *build/
-*__pycache__/
 
 # vim swap files
 *.swo
 *.swp
+
+# cached python files
+*__pycache__/
+*.pyc
