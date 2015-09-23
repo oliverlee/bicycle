@@ -29,13 +29,21 @@ class NestedMaskedRecords(MaskedRecords):
             self.__class__.__name__, attr))
 
     def __getitem__(self, index):
-        obj = super().__getitem__(index)
+        _mask = np.ndarray.__getattribute__(self, '_mask')
+        _data = np.ndarray.view(self, self.__dict__['_baseclass'])
+        obj = np.array(_data[index], copy=False).view(nmrecarray)
+        obj._mask = np.array(_mask[index], copy=False).view(np.recarray)
         obj._fill_value = np.array(self.fill_value, dtype=obj.dtype)
-        obj = obj.view(nmrecarray)
         return obj
 
-    def __setitem__(self, index, value):
-        MaskedRecords.__setitem__(self, indx, value)
+    def __setattr__(self, attr, value):
+        if value is np.ma.masked:
+            obj = self.__getattr__(attr) # only subrecords
+            if isinstance(obj, NestedMaskedRecords):
+                for name in obj.dtype.names:
+                    obj[name] = value
+                return
+        MaskedRecords.__setattr__(self, attr, value)
 
     def _subfield_view(self, fields):
         ndtype_dict = {}
