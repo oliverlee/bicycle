@@ -60,7 +60,7 @@ sample_t = [
         ('z',) + output_t]                  # system output with noise
 
 
-def flatten_dtype(dtype):
+def _flatten_dtype(dtype):
     if not isinstance(dtype, list):
         return dtype
 

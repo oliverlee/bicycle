@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.ma.mrecords import MaskedRecords
-from np_types import flatten_dtype
+from np_types import _flatten_dtype
 
 
 class NestedMaskedRecords(MaskedRecords):
@@ -8,7 +8,7 @@ class NestedMaskedRecords(MaskedRecords):
                 formats=None, names=None, titles=None, byteorder=None,
                 aligned=False, mask=np.ma.nomask, hard_mask=False,
                 fill_value=None, keep_mask=True, copy=False, **options):
-        flattened_dtype = flatten_dtype(dtype)
+        flattened_dtype = _flatten_dtype(dtype)
         self = MaskedRecords.__new__(cls, shape, dtype=flattened_dtype, buf=buf,
                                  offset=offset, strides=strides,
                                  formats=formats, names=names,
