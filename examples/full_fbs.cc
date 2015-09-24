@@ -68,15 +68,7 @@ int main(int argc, char* argv[]) {
     std::cout << "with kalman filter and lqr controller..." << std::endl;
 
     /* flatbuffer objects must be serialized in depth first pre-order traversal
-     * order is:
-     *   - timestamp
-     *   - bicycle
-     *   - kalman
-     *   - lqr
-     *   - state
-     *   - input
-     *   - output
-     *   - measurement
+     * bicycle, kalman, and lqr objects must be serialized first
      */
 
     size_t current_sample = 0;
@@ -99,28 +91,40 @@ int main(int argc, char* argv[]) {
         kalman.measurement_update(z);
 
         builder.Clear();
-        fbs::SampleBuilder sample_builder(builder);
-        sample_builder.add_timestamp(current_sample);
+
+        flatbuffers::Offset<::fbs::Bicycle> bicycle_location;
+        flatbuffers::Offset<::fbs::Kalman> kalman_location;
+        flatbuffers::Offset<::fbs::Lqr> lqr_location;
         if (current_sample == 0) {
             // only include the whole object with the first sample as the
             // parameters and state/input noise/costs do not change
-            sample_builder.add_bicycle(fbs::create_bicycle(builder, bicycle));
-            sample_builder.add_kalman(fbs::create_kalman(builder, kalman));
-            sample_builder.add_lqr(fbs::create_lqr(builder, lqr));
+            bicycle_location = fbs::create_bicycle(builder, bicycle);
+            kalman_location = fbs::create_kalman(builder, kalman);
+            lqr_location = fbs::create_lqr(builder, lqr);
+
         } else {
-            sample_builder.add_kalman(fbs::create_kalman_no_state_input_cost(builder, kalman));
-            sample_builder.add_lqr(fbs::create_lqr_no_horizon_state_input_cost(builder, lqr));
+            kalman_location = fbs::create_kalman(builder, kalman,
+                    true, true, false, false, true);
+            lqr_location = fbs::create_lqr(builder, lqr,
+                    false, false, true, false, false, true);
         }
+
         // skip output as we can get it from state
         auto fbs_state = fbs::state(x);
-        sample_builder.add_state(&fbs_state);
         auto fbs_input = fbs::input(u);
-        sample_builder.add_input(&fbs_input);
         auto fbs_measurement = fbs::output(z);
-        sample_builder.add_measurement(&fbs_measurement);
-        auto location = sample_builder.Finish();
 
-        builder.Finish(location);
+        fbs::SampleBuilder sample_builder(builder);
+        sample_builder.add_measurement(&fbs_measurement);
+        sample_builder.add_input(&fbs_input);
+        sample_builder.add_state(&fbs_state);
+        if (current_sample == 0) {
+            sample_builder.add_bicycle(bicycle_location);
+        }
+        sample_builder.add_kalman(kalman_location);
+        sample_builder.add_lqr(lqr_location);
+        sample_builder.add_timestamp(current_sample);
+        builder.Finish(sample_builder.Finish());
         // sample is serialized
 
         unsigned char* p = nullptr;
