@@ -1,6 +1,8 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import numpy as np
 from numpy.ma.mrecords import MaskedRecords
-from np_types import _flatten_dtype
+from nptypes import _flatten_dtype
 
 
 class NestedMaskedRecords(MaskedRecords):

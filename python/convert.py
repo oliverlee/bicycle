@@ -1,11 +1,11 @@
-#!/usr/in/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import numpy as np
 from flatbuffers.number_types import Float64Flags as fbfloat64
 from flatbuffers.number_types import UOffsetTFlags as fbuoffset
 from fbs.SampleLog import SampleLog as FbsSampleLog
 from fbs.Sample import Sample as FbsSample
-import np_types as npt
+import nptypes as npt
 from nmrecords import nmrecarray
 
 
