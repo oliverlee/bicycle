@@ -24,11 +24,12 @@ namespace fbs {
             m(1, 1), m(1, 2), m(1, 3), m(2, 2), m(2, 3), m(3, 3));
 }
 
-::fbs::SymmetricInputMatrix symmetric_input_matrix(const model::Bicycle::input_matrix_t& m) {
+::fbs::SymmetricInputMatrix symmetric_input_matrix(const controller::Lqr<model::Bicycle>::input_cost_t& m) {
     return ::fbs::SymmetricInputMatrix(m(0, 0), m(0, 1), m(1, 1));
 }
 
-::fbs::SymmetricOutputMatrix symmetric_output_matrix(const model::Bicycle::output_matrix_t& m) {
+::fbs::SymmetricOutputMatrix symmetric_output_matrix(
+        const observer::Kalman<model::Bicycle>::measurement_noise_covariance_t& m) {
     return ::fbs::SymmetricOutputMatrix(m(0, 0), m(0, 1), m(1, 1));
 }
 
