@@ -3,6 +3,7 @@
 import os
 import sys
 from itertools import product
+import numpy as np
 import matplotlib as mpl
 import matplotlib.pylab as plt
 import seaborn as sns
@@ -41,12 +42,15 @@ def plot_state(samples, filename=None, degrees=True):
         x = samples.x[:, n]
         x_state = state[n]
         x_unit = unit(x_state, degrees)
+        x_hat = samples.kalman.x[:, n]
+        if degrees and '°' in x_unit:
+            x = np.rad2deg(x);
+            x_hat = np.rad2deg(x_hat)
 
         ax.set_xlabel('{} [{}]'.format('time', unit('time')))
         ax.set_ylabel('{} [{}]'.format(x_state, x_unit))
         ax.plot(t, x, color=color[2*n + 1], label='true')
 
-        x_hat = samples.kalman.x[:, n]
         if not x_hat.mask.all():
             ax.plot(t, x_hat, color=color[2*n], label='estimate')
             ax.legend()
