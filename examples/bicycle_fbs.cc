@@ -2,7 +2,6 @@
 #include <chrono>
 #include <cstdio>
 #include <iostream>
-#include <boost/math/constants/constants.hpp>
 #include "bicycle.h"
 #include "parameters.h"
 
@@ -39,7 +38,7 @@ int main(int argc, char* argv[]) {
 
     model::Bicycle::state_t x; // roll rate, steer rate, roll angle, steer angle
     x << 0, 10, 10, 0; // define x0 in degrees
-    x *= boost::math::constants::degree<double>(); // convert to radians
+    x *= constants::as_radians; // convert to radians
     std::cout << "initial state: [" << x.transpose() << "]' rad" << std::endl;
     std::cout << "states are: [roll angle, steer angle, roll rate, steer rate]'" << std::endl << std::endl;
 
