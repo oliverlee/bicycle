@@ -2,7 +2,6 @@
 #include <chrono>
 #include <cstdio>
 #include <iostream>
-#include <boost/math/constants/constants.hpp>
 #include "bicycle.h"
 #include "parameters.h"
 
@@ -22,13 +21,6 @@ namespace {
     flatbuffers::Offset<fbs::SampleBuffer> sample_locations[N];
 } // namespace
 
-flatbuffers::Offset<fbs::Bicycle> create_bicycle(flatbuffers::FlatBufferBuilder& fbb, const model::Bicycle& bicycle) {
-    auto M = fbs::second_order_matrix(bicycle.M());
-    auto C1 = fbs::second_order_matrix(bicycle.C1());
-    auto K0 = fbs::second_order_matrix(bicycle.K0());
-    auto K2 = fbs::second_order_matrix(bicycle.K2());
-    return fbs::CreateBicycle(fbb, bicycle.v(), bicycle.dt(), &M, &C1, &K0, &K2);
-}
 
 int main(int argc, char* argv[]) {
     (void)argc;
@@ -39,7 +31,7 @@ int main(int argc, char* argv[]) {
 
     model::Bicycle::state_t x; // roll rate, steer rate, roll angle, steer angle
     x << 0, 10, 10, 0; // define x0 in degrees
-    x *= boost::math::constants::degree<double>(); // convert to radians
+    x *= constants::as_radians; // convert to radians
     std::cout << "initial state: [" << x.transpose() << "]' rad" << std::endl;
     std::cout << "states are: [roll angle, steer angle, roll rate, steer rate]'" << std::endl << std::endl;
 
@@ -56,7 +48,7 @@ int main(int argc, char* argv[]) {
         builder.Clear();
         fbs::SampleBuilder sample_builder(builder);
         if (current_sample == 0) {
-            auto bicycle_location = create_bicycle(builder, bicycle);
+            auto bicycle_location = fbs::create_bicycle(builder, bicycle);
             sample_builder.add_bicycle(bicycle_location);
         }
         auto fbs_state = fbs::state(x);

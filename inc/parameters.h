@@ -25,8 +25,8 @@ namespace parameters {
         namespace bicycle {
             const model::Bicycle::output_matrix_t C(
                     (model::Bicycle::output_matrix_t() <<
-                     0, 1, 0, 0,
-                     0, 0, 1, 0).finished());
+                     1, 0, 0, 0,                // roll rate
+                     0, 0, 0, 1).finished());   // steer angle
         } // namespace bicycle
 
         namespace kalman {
