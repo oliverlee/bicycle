@@ -44,9 +44,14 @@ def plot_state(samples, filename=None, degrees=True):
 
         ax.set_xlabel('{} [{}]'.format('time', unit('time')))
         ax.set_ylabel('{} [{}]'.format(x_state, x_unit))
-        ax.plot(t, x, color=color[2*n + 1])
+        ax.plot(t, x, color=color[2*n + 1], label='true')
 
-    title = 'system_state'
+        x_hat = samples.kalman.x[:, n]
+        if not x_hat.mask.all():
+            ax.plot(t, x_hat, color=color[2*n], label='estimate')
+            ax.legend()
+
+    title = 'system state'
     if filename is not None:
         title += ' for file {}'.format(filename)
     fig.suptitle(title, size=mpl.rcParams['font.size'] + 2)
