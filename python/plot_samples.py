@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import os
 import sys
 from itertools import product
 import matplotlib as mpl
@@ -24,7 +25,7 @@ def unit(value, degrees=True):
     return u
 
 
-def plot_state(samples, degrees=True):
+def plot_state(samples, filename=None, degrees=True):
     # get time from timestamp and sample time
     t = samples.bicycle.dt.mean() * samples.ts
 
@@ -44,7 +45,11 @@ def plot_state(samples, degrees=True):
         ax.set_xlabel('{} [{}]'.format('time', unit('time')))
         ax.set_ylabel('{} [{}]'.format(x_state, x_unit))
         ax.plot(t, x, color=color[2*n + 1])
-    fig.suptitle('system state', size=mpl.rcParams['font.size'] + 2)
+
+    title = 'system_state'
+    if filename is not None:
+        title += ' for file {}'.format(filename)
+    fig.suptitle(title, size=mpl.rcParams['font.size'] + 2)
     plt.show()
 
 
@@ -65,6 +70,6 @@ if __name__ == "__main__":
     sns.set(palette='muted')
 
     samples = convert.load_sample_log(sys.argv[1])
-    plot_state(samples)
+    plot_state(samples, os.path.basename(sys.argv[1]))
 
     sys.exit(0)
