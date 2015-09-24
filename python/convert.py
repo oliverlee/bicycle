@@ -79,11 +79,12 @@ def convert_bicycle(rec_bicycle, fbs_bicycle):
 def convert_kalman(rec_kalman, fbs_kalman):
     convert_record_subfield(rec_kalman.x, fbs_kalman.StateEstimate(),
                             convert_state)
-    convert_record_subfield(rec_kalman.P, fbs_kalman.HorizonCost(),
+    convert_record_subfield(rec_kalman.P, fbs_kalman.ErrorCovariance(),
                             convert_symmetric_state_matrix)
-    convert_record_subfield(rec_kalman.Q, fbs_kalman.StateCost(),
+    convert_record_subfield(rec_kalman.Q, fbs_kalman.ProcessNoiseCovariance(),
                             convert_symmetric_state_matrix)
-    convert_record_subfield(rec_kalman.R, fbs_kalman.InputCost(),
+    convert_record_subfield(rec_kalman.R,
+                            fbs_kalman.MeasurementNoiseCovariance(),
                             convert_symmetric_output_matrix)
     convert_record_subfield(rec_kalman.K, fbs_kalman.KalmanGain(),
                             convert_kalman_gain_matrix)
@@ -136,7 +137,7 @@ def convert_second_order_matrix(rec_field, fbs_second_order_matrix):
 def convert_symmetric_state_matrix(rec_field, fbs_symmetric_state_matrix):
     t = fbs_symmetric_state_matrix._tab
     a = np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
-        (npt.state_size*(npt.state_size + 1)/2)*fbfloat64.bytewidth],
+        (npt.state_size*(npt.state_size + 1)//2)*fbfloat64.bytewidth],
         dtype=npt.real_t)
     b = np.ma.zeros([], dtype=npt.symmetric_state_matrix_t)
     b[np.triu_indices(npt.state_size)] = a
@@ -147,7 +148,7 @@ def convert_symmetric_state_matrix(rec_field, fbs_symmetric_state_matrix):
 def convert_symmetric_input_matrix(rec_field, fbs_symmetric_input_matrix):
     t = fbs_symmetric_input_matrix._tab
     a = np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
-        (npt.input_size*(npt.input_size + 1)/2)*fbfloat64.bytewidth],
+        (npt.input_size*(npt.input_size + 1)//2)*fbfloat64.bytewidth],
         dtype=npt.real_t)
     b = np.ma.zeros([], dtype=npt.symmetric_input_matrix_t)
     b[np.triu_indices(npt.input_size)] = a
@@ -158,7 +159,7 @@ def convert_symmetric_input_matrix(rec_field, fbs_symmetric_input_matrix):
 def convert_symmetric_output_matrix(rec_field, fbs_symmetric_output_matrix):
     t = fbs_symmetric_output_matrix._tab
     a = np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
-        (npt.output_size*(npt.output_size + 1)/2)*fbfloat64.bytewidth],
+        (npt.output_size*(npt.output_size + 1)//2)*fbfloat64.bytewidth],
         dtype=npt.real_t)
     b = np.ma.zeros([], dtype=npt.symmetric_output_matrix_t)
     b[np.triu_indices(npt.output_size)] = a
