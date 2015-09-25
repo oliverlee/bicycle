@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
     model::Bicycle bicycle(parameters::benchmark::M, parameters::benchmark::C1,
             parameters::benchmark::K0, parameters::benchmark::K2, v0, dt);
 
-    model::Bicycle::state_t x; // roll rate, steer rate, roll angle, steer angle
+    model::Bicycle::state_t x; // roll angle, steer angle, roll rate, steer rate
     x << 0, 10, 10, 0; // define x0 in degrees
     x *= constants::as_radians; // convert to radians
     std::cout << "initial state: [" << x.transpose() << "]' rad" << std::endl;
