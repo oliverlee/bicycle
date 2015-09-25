@@ -82,7 +82,56 @@ def plot_state(samples, filename=None, degrees=True, confidence=True):
     if filename is not None:
         title += ' for file {}'.format(filename)
     fig.suptitle(title, size=mpl.rcParams['font.size'] + 2)
-    plt.show()
+    return fig, axes
+
+
+def plot_entries(samples, field, filename=None):
+    # TODO: Fill masked values with previous valid values
+    # get time from timestamp and sample time
+    t = samples.bicycle.dt.mean() * samples.ts
+
+    X = samples.__getattribute__(field)
+    _, rows, cols = X.shape
+
+    n = rows*cols
+    if n > 6:
+        color = sns.color_palette('husl', n_colors=n)
+    else:
+        color = sns.color_palette('muted', n)
+    fig, axes = plt.subplots(rows, cols, sharex=True)
+
+    vector_type = False
+    if len(axes.shape) == 1:
+        vector_type = True
+
+    fields = field.split('.')
+    for n, (i, j) in enumerate(product(range(rows), range(cols))):
+        if vector_type:
+            ax = axes[n]
+            x = X[:, n]
+        else:
+            ax = axes[i, j]
+            x = X[:, i, j]
+
+        # small entries in Kalman gain K break plots
+        small_indices = np.abs(x) < 10*np.finfo(x.dtype).eps
+        if small_indices.any():
+            # copy data (maybe we should modify in place?
+            x = np.array(x)
+            x[small_indices] = 0
+
+        ax.set_xlabel('{} [{}]'.format('time', unit('time')))
+        if vector_type:
+            ax.set_title('{}[{}]'.format(fields[-1], n))
+        else:
+            ax.set_title('{}[{}, {}]'.format(fields[-1], i, j))
+        ax.plot(t, x, color=color[n])
+
+    title = ' '.join([f.title() for f in fields[:-1]] + fields[-1:])
+    if filename is not None:
+        title += ' for file {}'.format(filename)
+    fig.suptitle(title, size=mpl.rcParams['font.size'] + 2)
+    return fig, axes
 
 
 if __name__ == "__main__":
