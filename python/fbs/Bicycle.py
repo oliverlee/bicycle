@@ -69,11 +69,59 @@ class Bicycle(object):
             return obj
         return None
 
-def BicycleStart(builder): builder.StartObject(6)
+    # Bicycle
+    def Ad(self):
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(16))
+        if o != 0:
+            x = o + self._tab.Pos
+            from .StateMatrix import StateMatrix
+            obj = StateMatrix()
+            obj.Init(self._tab.Bytes, x)
+            return obj
+        return None
+
+    # Bicycle
+    def Bd(self):
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(18))
+        if o != 0:
+            x = o + self._tab.Pos
+            from .InputMatrix import InputMatrix
+            obj = InputMatrix()
+            obj.Init(self._tab.Bytes, x)
+            return obj
+        return None
+
+    # Bicycle
+    def Cd(self):
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(20))
+        if o != 0:
+            x = o + self._tab.Pos
+            from .OutputMatrix import OutputMatrix
+            obj = OutputMatrix()
+            obj.Init(self._tab.Bytes, x)
+            return obj
+        return None
+
+    # Bicycle
+    def Dd(self):
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(22))
+        if o != 0:
+            x = o + self._tab.Pos
+            from .FeedthroughMatrix import FeedthroughMatrix
+            obj = FeedthroughMatrix()
+            obj.Init(self._tab.Bytes, x)
+            return obj
+        return None
+
+def BicycleStart(builder): builder.StartObject(10)
 def BicycleAddV(builder, v): builder.PrependFloat64Slot(0, v, 0)
 def BicycleAddDt(builder, dt): builder.PrependFloat64Slot(1, dt, 0)
 def BicycleAddM(builder, M): builder.PrependStructSlot(2, flatbuffers.number_types.UOffsetTFlags.py_type(M), 0)
 def BicycleAddC1(builder, C1): builder.PrependStructSlot(3, flatbuffers.number_types.UOffsetTFlags.py_type(C1), 0)
 def BicycleAddK0(builder, K0): builder.PrependStructSlot(4, flatbuffers.number_types.UOffsetTFlags.py_type(K0), 0)
 def BicycleAddK2(builder, K2): builder.PrependStructSlot(5, flatbuffers.number_types.UOffsetTFlags.py_type(K2), 0)
+def BicycleAddAd(builder, Ad): builder.PrependStructSlot(6, flatbuffers.number_types.UOffsetTFlags.py_type(Ad), 0)
+def BicycleAddBd(builder, Bd): builder.PrependStructSlot(7, flatbuffers.number_types.UOffsetTFlags.py_type(Bd), 0)
+def BicycleAddCd(builder, Cd): builder.PrependStructSlot(8, flatbuffers.number_types.UOffsetTFlags.py_type(Cd), 0)
+def BicycleAddDd(builder, Dd): builder.PrependStructSlot(9, flatbuffers.number_types.UOffsetTFlags.py_type(Dd), 0)
 def BicycleEnd(builder): return builder.EndObject()

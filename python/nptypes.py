@@ -18,6 +18,10 @@ input_t = (real_t, (input_size, 1))
 output_t = (real_t, (output_size, 1))
 
 state_matrix_t = (real_t, (state_size, state_size))
+input_matrix_t = (real_t, (state_size, input_size))
+output_matrix_t = (real_t, (output_size, state_size))
+feedthrough_matrix_t = (real_t, (output_size, input_size))
+
 second_order_matrix_t = (real_t, (second_order_size, second_order_size))
 lqr_gain_matrix_t = (real_t, (input_size, state_size))
 kalman_gain_matrix_t = (real_t, (state_size, output_size))
@@ -32,7 +36,11 @@ bicycle_t = [
         ('M',) + second_order_matrix_t,     # mass matrix
         ('C1',) + second_order_matrix_t,    # v proportional damping matrix
         ('K0',) + second_order_matrix_t,    # v independent stiffness matrix
-        ('K2',) + second_order_matrix_t]    # v**2 prop. stiffness matrix
+        ('K2',) + second_order_matrix_t,    # v**2 prop. stiffness matrix
+        ('Ad',) + state_matrix_t,           # discrete time state matrix
+        ('Bd',) + input_matrix_t,           # discrete time input matrix
+        ('Cd',) + output_matrix_t,          # discrete time output matrix
+        ('Dd',) + feedthrough_matrix_t]     # discrete time feedthrough matrix
 
 kalman_t = [
         ('x',) + state_t,                   # state estimate

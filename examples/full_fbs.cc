@@ -98,7 +98,9 @@ int main(int argc, char* argv[]) {
         if (current_sample == 0) {
             // only include the whole object with the first sample as the
             // parameters and state/input noise/costs do not change
-            bicycle_location = fbs::create_bicycle(builder, bicycle);
+            bicycle_location = fbs::create_bicycle(builder, bicycle,
+                    true, true, true, true, true, true,
+                    true, true, true, false);
             kalman_location = fbs::create_kalman(builder, kalman);
             lqr_location = fbs::create_lqr(builder, lqr);
 
