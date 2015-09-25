@@ -1,6 +1,8 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import numpy as np
 from numpy.ma.mrecords import MaskedRecords
-from np_types import _flatten_dtype
+from nptypes import _flatten_dtype
 
 
 class NestedMaskedRecords(MaskedRecords):
@@ -21,7 +23,8 @@ class NestedMaskedRecords(MaskedRecords):
         return self
 
     def __getattr__(self, attr):
-        attributes = [name for name in self.dtype.names
+        fieldnames = np.ndarray.__getattribute__(self, 'dtype').names
+        attributes = [name for name in fieldnames
                       if name.startswith(attr + '.')]
         if attributes:
             return self._subfield_view(attributes)
@@ -45,23 +48,24 @@ class NestedMaskedRecords(MaskedRecords):
                 return
         MaskedRecords.__setattr__(self, attr, value)
 
+    def _mask_view(self, mask_dtype):
+        return np.ndarray(self._mask.shape, mask_dtype, self._mask, 0,
+                          self._mask.strides)
+
     def _subfield_view(self, fields):
         ndtype_dict = {}
-        nmdtype_dict = {}
+        mask_ndtype_dict = {}
         for name in fields:
             subname = name.split('.', 1)[1]
             ndtype_dict[subname] = self.dtype.fields[name]
-            nmdtype_dict[subname] = self._mask.dtype.fields[name]
+            mask_ndtype_dict[subname] = self._mask.dtype.fields[name]
         ndtype = np.dtype(ndtype_dict)
         fill_value = np.array(self.fill_value, dtype=ndtype)
         obj = self.__class__(self.shape, dtype=ndtype, buf=self, offset=0,
-                strides=self.strides, fill_value=fill_value)
+                             strides=self.strides, fill_value=fill_value)
 
         # set subview mask to be a view of self mask
-        nmdtype = np.dtype(nmdtype_dict)
-        mask = np.ndarray(self._mask.shape, nmdtype, self._mask, 0,
-                self._mask.strides)
-        obj._mask = mask
+        obj._mask = self._mask_view(np.dtype(mask_ndtype_dict))
         return obj
 
 nmrecarray = NestedMaskedRecords

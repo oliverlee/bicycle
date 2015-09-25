@@ -20,7 +20,7 @@ namespace {
     const size_t N = 1000; // length of simulation in samples
     const size_t n = 100;  // length of horizon in samples
 
-    model::Bicycle::state_t x; // roll rate, steer rate, roll angle, steer angle
+    model::Bicycle::state_t x; // roll angle, steer angle, roll rate, steer rate
 
     // used for serializing/logging
     flatbuffers::FlatBufferBuilder builder;

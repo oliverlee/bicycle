@@ -1,11 +1,11 @@
-#!/usr/in/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import numpy as np
 from flatbuffers.number_types import Float64Flags as fbfloat64
 from flatbuffers.number_types import UOffsetTFlags as fbuoffset
 from fbs.SampleLog import SampleLog as FbsSampleLog
 from fbs.Sample import Sample as FbsSample
-import np_types as npt
+import nptypes as npt
 from nmrecords import nmrecarray
 
 
@@ -74,6 +74,14 @@ def convert_bicycle(rec_bicycle, fbs_bicycle):
                             convert_second_order_matrix)
     convert_record_subfield(rec_bicycle.K2, fbs_bicycle.K2(),
                             convert_second_order_matrix)
+    convert_record_subfield(rec_bicycle.Ad, fbs_bicycle.Ad(),
+                            convert_state_matrix)
+    convert_record_subfield(rec_bicycle.Bd, fbs_bicycle.Bd(),
+                            convert_input_matrix)
+    convert_record_subfield(rec_bicycle.Cd, fbs_bicycle.Cd(),
+                            convert_output_matrix)
+    convert_record_subfield(rec_bicycle.Dd, fbs_bicycle.Dd(),
+                            convert_feedthrough_matrix)
 
 
 def convert_kalman(rec_kalman, fbs_kalman):
@@ -180,4 +188,32 @@ def convert_lqr_gain_matrix(rec_field, fbs_lqr_gain_matrix):
     ma = np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
         (npt.input_size * npt.state_size)*fbfloat64.bytewidth],
         dtype=npt.lqr_gain_matrix_t)
+    rec_field[0] = ma
+
+def convert_state_matrix(rec_field, fbs_state_matrix):
+    t = fbs_state_matrix._tab
+    ma = np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
+        (npt.state_size * npt.state_size)*fbfloat64.bytewidth],
+        dtype=npt.state_matrix_t)
+    rec_field[0] = ma
+
+def convert_input_matrix(rec_field, fbs_input_matrix):
+    t = fbs_input_matrix._tab
+    ma = np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
+        (npt.state_size * npt.input_size)*fbfloat64.bytewidth],
+        dtype=npt.input_matrix_t)
+    rec_field[0] = ma
+
+def convert_output_matrix(rec_field, fbs_output_matrix):
+    t = fbs_output_matrix._tab
+    ma = np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
+        (npt.output_size * npt.state_size)*fbfloat64.bytewidth],
+        dtype=npt.output_matrix_t)
+    rec_field[0] = ma
+
+def convert_feedthrough_matrix(rec_field, fbs_feedthrough_matrix):
+    t = fbs_feedthrough_matrix._tab
+    ma = np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
+        (npt.output_size * npt.input_size)*fbfloat64.bytewidth],
+        dtype=npt.feedthrough_matrix_t)
     rec_field[0] = ma

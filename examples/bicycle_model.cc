@@ -53,7 +53,7 @@ int main(int argc, char* argv[]) {
     std::cout << "Ad: " << std::endl << bicycle.Ad() << std::endl;
     std::cout << "Bd: " << std::endl << bicycle.Bd() << std::endl << std::endl;
 
-    model::Bicycle::state_t x, x0, x0_deg; // roll rate, steer rate, roll angle, steer angle
+    model::Bicycle::state_t x, x0, x0_deg; // roll angle, steer angle, roll rate, steer rate
     x0_deg << 0, 10, 10, 0; // define x0 in degrees
     x0 = boost::math::constants::degree<double>() * x0_deg; // convert to radians
     std::cout << "initial state: [" << x0.transpose() << "]' rad" << std::endl;

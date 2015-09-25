@@ -58,6 +58,59 @@ struct KalmanGainMatrix {
     k31:double;
 }
 
+// n, n (4, 4) matrix
+struct StateMatrix {
+    a00:double;
+    a01:double;
+    a02:double;
+    a03:double;
+    a10:double;
+    a11:double;
+    a12:double;
+    a13:double;
+    a20:double;
+    a21:double;
+    a22:double;
+    a23:double;
+    a30:double;
+    a31:double;
+    a32:double;
+    a33:double;
+}
+
+// n, m (4, 2) matrix
+struct InputMatrix {
+    b00:double;
+    b01:double;
+    b10:double;
+    b11:double;
+    b20:double;
+    b21:double;
+    b30:double;
+    b31:double;
+}
+
+// l, n (2, 4) matrix
+struct OutputMatrix {
+    c00:double;
+    c01:double;
+    c02:double;
+    c03:double;
+    c10:double;
+    c11:double;
+    c12:double;
+    c13:double;
+}
+
+// l, l (2, 2) matrix
+struct FeedthroughMatrix {
+    d00:double;
+    d01:double;
+    d10:double;
+    d11:double;
+}
+
+// n, n (4, 4) symmetric matrix
 struct SymmetricStateMatrix {
     q00:double;
     q01:double;
@@ -71,12 +124,14 @@ struct SymmetricStateMatrix {
     q33:double;
 }
 
+// m, m (2, 2) symmetric matrix
 struct SymmetricInputMatrix {
     r00:double;
     r01:double;
     r11:double;
 }
 
+// l, l (2, 2) symmetric matrix
 struct SymmetricOutputMatrix {
     r00:double;
     r01:double;
@@ -107,6 +162,10 @@ table Bicycle {
     C1:SecondOrderMatrix;
     K0:SecondOrderMatrix;
     K2:SecondOrderMatrix;
+    Ad:StateMatrix;
+    Bd:InputMatrix;
+    Cd:OutputMatrix;
+    Dd:FeedthroughMatrix;
 }
 
 table Sample {
