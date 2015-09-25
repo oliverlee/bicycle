@@ -3,6 +3,7 @@
 from functools import reduce
 from itertools import product
 from operator import mul
+import math
 import os
 import sys
 import numpy as np
@@ -39,7 +40,7 @@ def plot_state(samples, degrees=True, confidence=True, filename=None):
     t = samples.bicycle.dt.mean() * samples.ts
 
     cols = 2
-    rows = samples.x.shape[1] // cols
+    rows = math.ceil(samples.x.shape[1] / cols)
     fig, axes = plt.subplots(rows, cols, sharex=True)
 
     color = sns.color_palette('Paired', 10)
@@ -53,6 +54,10 @@ def plot_state(samples, degrees=True, confidence=True, filename=None):
     x_meas = np.dot(samples.z.transpose(0, 2, 1), C).transpose(0, 2, 1)
     for n, (i, j) in enumerate(product(range(rows), range(cols))):
         ax = axes[i, j]
+        if n >= samples.x.shape[1]:
+            ax.axis('off')
+            continue
+
         x_state = state[n]
         x_unit = unit(x_state, degrees)
 
@@ -193,8 +198,10 @@ def plot_norm(samples, fields=None, filename=None):
         color = sns.color_palette('muted', n)
 
     if n > 1:
-        fig, axes = plt.subplots(round(n/2), 2)
+        fig, axes = plt.subplots(math.ceil(n/2), 2)
         axes = np.ravel(axes)
+        if len(axes) > n:
+            axes[-1].axis('off')
     else:
         fig, ax = plt.subplots()
         axes = [ax]
@@ -219,6 +226,13 @@ def plot_norm(samples, fields=None, filename=None):
         axes = ax
     _set_suptitle(fig, title, filename)
     return fig, axes
+
+
+def plot_all(samples):
+    filename = None
+    plot_state(samples, confidence=False, filename=filename)
+    plot_error_covariance(samples, filename=filename)
+    plot_norm(samples, filename=filename)
 
 
 if __name__ == "__main__":

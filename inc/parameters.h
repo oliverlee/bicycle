@@ -32,13 +32,13 @@ namespace parameters {
         namespace kalman {
             // numbers given in degrees and then converted to radians
             const observer::Kalman<model::Bicycle>::error_covariance_t P0(
-                    10 * observer::Kalman<model::Bicycle>::error_covariance_t::Identity() * constants::as_radians);
+                    0.5 * observer::Kalman<model::Bicycle>::error_covariance_t::Identity());
             const observer::Kalman<model::Bicycle>::process_noise_covariance_t Q(
-                   0.1 * observer::Kalman<model::Bicycle>::process_noise_covariance_t::Identity() * constants::as_radians);
+                   0.1 * observer::Kalman<model::Bicycle>::process_noise_covariance_t::Identity());
             const observer::Kalman<model::Bicycle>::measurement_noise_covariance_t R(
                     (observer::Kalman<model::Bicycle>::measurement_noise_covariance_t() <<
-                        0.04,     0,
-                           0, 0.008).finished() * constants::as_radians);
+                        0.008,     0,
+                           0, 0.01).finished() * constants::as_radians);
         } // namespace kalman
     } // namespace defaultvalue
 } // namespace parameters
