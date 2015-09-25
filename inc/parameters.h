@@ -37,8 +37,8 @@ namespace parameters {
                    0.1 * observer::Kalman<model::Bicycle>::process_noise_covariance_t::Identity() * constants::as_radians);
             const observer::Kalman<model::Bicycle>::measurement_noise_covariance_t R(
                     (observer::Kalman<model::Bicycle>::measurement_noise_covariance_t() <<
-                        0.04,     0,
-                           0, 0.008).finished() * constants::as_radians);
+                        0.008,     0,
+                           0, 0.01).finished() * constants::as_radians);
         } // namespace kalman
     } // namespace defaultvalue
 } // namespace parameters
