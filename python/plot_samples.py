@@ -25,6 +25,11 @@ def unit(value, degrees=True):
         u = u.replace('rad', '°')
     return u
 
+def _set_suptitle(fig, title, filename):
+    if filename is not None:
+        title += ' for file {}'.format(filename)
+    fig.suptitle(title, size=mpl.rcParams['font.size'] + 2)
+
 
 def plot_state(samples, filename=None, degrees=True, confidence=True):
     # TODO: Fill masked values with previous valid values
@@ -79,9 +84,7 @@ def plot_state(samples, filename=None, degrees=True, confidence=True):
             ax.legend()
 
     title = 'system state'
-    if filename is not None:
-        title += ' for file {}'.format(filename)
-    fig.suptitle(title, size=mpl.rcParams['font.size'] + 2)
+    _set_suptitle(fig, title, filename)
     return fig, axes
 
 
@@ -89,10 +92,9 @@ def plot_entries(samples, field, filename=None):
     # TODO: Fill masked values with previous valid values
     # get time from timestamp and sample time
     t = samples.bicycle.dt.mean() * samples.ts
-
     X = samples.__getattribute__(field)
-    _, rows, cols = X.shape
 
+    _, rows, cols = X.shape
     n = rows*cols
     if n > 6:
         color = sns.color_palette('husl', n_colors=n)
@@ -128,9 +130,35 @@ def plot_entries(samples, field, filename=None):
         ax.plot(t, x, color=color[n])
 
     title = ' '.join([f.title() for f in fields[:-1]] + fields[-1:])
-    if filename is not None:
-        title += ' for file {}'.format(filename)
-    fig.suptitle(title, size=mpl.rcParams['font.size'] + 2)
+    _set_suptitle(fig, title, filename)
+    return fig, axes
+
+
+def plot_error_covariance(samples, filename=None):
+    # TODO: Fill masked values with previous valid values
+    # get time from timestamp and sample time
+    t = samples.bicycle.dt.mean() * samples.ts
+    P = samples.kalman.P
+    e = samples.x - samples.kalman.x
+
+    # calculate outer product of error at each timestep
+    E = e * e.transpose(0, 2, 1)
+
+    _, rows, cols = P.shape
+    color_calc = sns.husl_palette(rows*cols)
+    color_true = sns.husl_palette(rows*cols, l=0.4)
+    fig, axes = plt.subplots(rows, cols, sharex=True)
+
+    for n, (i, j) in enumerate(product(range(rows), range(cols))):
+        ax = axes[i, j]
+        ax.set_xlabel('{} [{}]'.format('time', unit('time')))
+        ax.set_title('P[{}, {}]'.format(i, j))
+        ax.plot(t, P[:, i, j], color=color_calc[n], label='calculated')
+        ax.plot(t, E[:, i, j], color=color_true[n], label='true')
+        ax.legend()
+
+    title = 'Kalman error covariance P'
+    _set_suptitle(fig, title, filename)
     return fig, axes
 
 
