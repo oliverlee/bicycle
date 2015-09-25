@@ -29,11 +29,11 @@ def unit(value, degrees=True):
 
 def _set_suptitle(fig, title, filename):
     if filename is not None:
-        title += ' for file {}'.format(filename)
+        title += " (file '{}')".format(filename)
     fig.suptitle(title, size=mpl.rcParams['font.size'] + 2)
 
 
-def plot_state(samples, filename=None, degrees=True, confidence=True):
+def plot_state(samples, degrees=True, confidence=True, filename=None):
     # TODO: Fill masked values with previous valid values
     # get time from timestamp and sample time
     t = samples.bicycle.dt.mean() * samples.ts
@@ -232,10 +232,11 @@ if __name__ == "__main__":
     mpl.rcParams['font.weight'] = 'light'
     mpl.rcParams['axes.labelweight'] = 'light'
 
-    # use a muted color palette
-    sns.set(palette='muted')
-
     samples = convert.load_sample_log(sys.argv[1])
-    plot_state(samples, os.path.basename(sys.argv[1]))
+    filename = os.path.basename(sys.argv[1])
+    plot_state(samples, confidence=False, filename=filename)
+    plot_error_covariance(samples, filename=filename)
+    plot_norm(samples, filename=filename)
+    plt.show()
 
     sys.exit(0)
