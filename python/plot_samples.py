@@ -226,6 +226,13 @@ def plot_norm(samples, fields=None, filename=None):
     return fig, axes
 
 
+def plot_all(samples):
+    filename = None
+    plot_state(samples, confidence=False, filename=filename)
+    plot_error_covariance(samples, filename=filename)
+    plot_norm(samples, filename=filename)
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print(("Usage: {} <sample_log_file>\n\nPlot sample log " +
