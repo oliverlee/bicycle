@@ -90,87 +90,88 @@ flatbuffers::Offset<::fbs::Bicycle> create_bicycle(
         bool Ad = true, bool Bd = true, bool Cd = true, bool Dd = true) {
     double v_ = 0;
     double dt_ = 0;
-    ::fbs::SecondOrderMatrix* M_ = nullptr;
-    ::fbs::SecondOrderMatrix* C1_ = nullptr;
-    ::fbs::SecondOrderMatrix* K0_ = nullptr;
-    ::fbs::SecondOrderMatrix* K2_ = nullptr;
-    ::fbs::StateMatrix* Ad_ = nullptr;
-    ::fbs::InputMatrix* Bd_ = nullptr;
-    ::fbs::OutputMatrix* Cd_ = nullptr;
-    ::fbs::FeedthroughMatrix* Dd_ = nullptr;
+    auto M_ = second_order_matrix(bicycle.M());
+    auto C1_ = second_order_matrix(bicycle.C1());
+    auto K0_ = second_order_matrix(bicycle.K0());
+    auto K2_ = second_order_matrix(bicycle.K2());
+    auto Ad_ = state_matrix(bicycle.Ad());
+    auto Bd_ = input_matrix(bicycle.Bd());
+    auto Cd_ = output_matrix(bicycle.Cd());
+    auto Dd_ = feedthrough_matrix(bicycle.Dd());
+    auto Mp = &M_;
+    auto C1p = &C1_;
+    auto K0p = &K0_;
+    auto K2p = &K2_;
+    auto Adp = &Ad_;
+    auto Bdp = &Bd_;
+    auto Cdp = &Cd_;
+    auto Ddp = &Dd_;
 
-    if (v == true) {
+    if (v) {
         v_ = bicycle.v();
     }
-    if (dt == true) {
+    if (dt) {
         dt_ = bicycle.dt();
     }
-    if (M == true) {
-        auto M__ = second_order_matrix(bicycle.M());
-        M_ = &M__;
+    if (!M) {
+        Mp = nullptr;
     }
-    if (C1 == true) {
-        auto C1__ = second_order_matrix(bicycle.C1());
-        C1_ = &C1__;
+    if (!C1) {
+        C1p = nullptr;
     }
-    if (K0 == true) {
-        auto K0__ = second_order_matrix(bicycle.K0());
-        K0_ = &K0__;
+    if (!K0) {
+        K0p = nullptr;
     }
-    if (K2 == true) {
-        auto K2__ = second_order_matrix(bicycle.K2());
-        K2_ = &K2__;
+    if (!K2) {
+        K2p = nullptr;
     }
-    if (Ad == true) {
-        auto Ad__ = state_matrix(bicycle.Ad());
-        Ad_ = &Ad__;
+    if (!Ad) {
+        Adp = nullptr;
     }
-    if (Bd == true) {
-        auto Bd__ = input_matrix(bicycle.Bd());
-        Bd_ = &Bd__;
+    if (!Bd) {
+        Bdp = nullptr;
     }
-    if (Cd == true) {
-        auto Cd__ = output_matrix(bicycle.Cd());
-        Cd_ = &Cd__;
+    if (!Cd) {
+        Cdp = nullptr;
     }
-    if (Dd == true) {
-        auto Dd__ = feedthrough_matrix(bicycle.Dd());
-        Dd_ = &Dd__;
+    if (!Dd) {
+        Ddp = nullptr;
     }
-    return CreateBicycle(fbb, v_, dt_, M_, C1_, K0_, K2_, Ad_, Bd_, Cd_, Dd_);
+    return CreateBicycle(fbb, v_, dt_, Mp, C1p, K0p, K2p,
+            Adp, Bdp, Cdp, Ddp);
 }
 
 flatbuffers::Offset<::fbs::Kalman> create_kalman(
         flatbuffers::FlatBufferBuilder& fbb,
         const observer::Kalman<model::Bicycle>& kalman, bool x = true,
         bool P = true, bool Q = true, bool R = true, bool K = true) {
-    ::fbs::State* x_ = nullptr;
-    ::fbs::SymmetricStateMatrix* P_ = nullptr;
-    ::fbs::SymmetricStateMatrix* Q_ = nullptr;
-    ::fbs::SymmetricOutputMatrix* R_ = nullptr;
-    ::fbs::KalmanGainMatrix* K_ = nullptr;
+    auto x_ = state(kalman.x());
+    auto P_ = symmetric_state_matrix(kalman.P());
+    auto Q_ = symmetric_state_matrix(kalman.Q());
+    auto R_ = symmetric_output_matrix(kalman.R());
+    auto K_ = kalman_gain_matrix(kalman.K());
+    auto xp = &x_;
+    auto Pp = &P_;
+    auto Qp = &Q_;
+    auto Rp = &R_;
+    auto Kp = &K_;
 
-    if (K == true) {
-        auto K__ = kalman_gain_matrix(kalman.K());
-        K_ = &K__;
+    if (!x) {
+        xp = nullptr;
     }
-    if (R == true) {
-        auto R__ = symmetric_output_matrix(kalman.R());
-        R_ = &R__;
+    if (!P) {
+        Pp = nullptr;
     }
-    if (Q == true) {
-        auto Q__ = symmetric_state_matrix(kalman.Q());
-        Q_ = &Q__;
+    if (!Q) {
+        Qp = nullptr;
     }
-    if (P == true) {
-        auto P__ = symmetric_state_matrix(kalman.P());
-        P_ = &P__;
+    if (!R) {
+        Rp = nullptr;
     }
-    if (x == true) {
-        auto x__ = state(kalman.x());
-        x_ = &x__;
+    if (!K) {
+        Kp = nullptr;
     }
-    return CreateKalman(fbb, x_, P_, Q_, R_, K_);
+    return CreateKalman(fbb, xp, Pp, Qp, Rp, Kp);
 }
 
 
@@ -180,36 +181,36 @@ flatbuffers::Offset<::fbs::Lqr> create_lqr(
         bool r = true, bool P = true, bool Q = true, bool R = true,
         bool K = true) {
     uint32_t n_ = 0;
-    ::fbs::State* r_ = nullptr;
-    ::fbs::SymmetricStateMatrix* P_ = nullptr;
-    ::fbs::SymmetricStateMatrix* Q_ = nullptr;
-    ::fbs::SymmetricInputMatrix* R_ = nullptr;
-    ::fbs::LqrGainMatrix* K_ = nullptr;
+    auto r_ = state(lqr.xt());
+    auto Q_ = symmetric_state_matrix(lqr.Q());
+    auto R_ = symmetric_input_matrix(lqr.R());
+    auto P_ = symmetric_state_matrix(lqr.P());
+    auto K_ = lqr_gain_matrix(lqr.K());
+    auto rp = &r_;
+    auto Qp = &Q_;
+    auto Rp = &R_;
+    auto Pp = &P_;
+    auto Kp = &K_;
 
-    if (K == true) {
-        auto K__ = lqr_gain_matrix(lqr.K());
-        K_ = &K__;
-    }
-    if (P == true) {
-        auto P__ = symmetric_state_matrix(lqr.P());
-        P_ = &P__;
-    }
-    if (R == true) {
-        auto R__ = symmetric_input_matrix(lqr.R());
-        R_ = &R__;
-    }
-    if (Q == true) {
-        auto Q__ = symmetric_state_matrix(lqr.Q());
-        Q_ = &Q__;
-    }
-    if (r == true) {
-        auto r__ = state(lqr.xt());
-        r_ = &r__;
-    }
-    if (n == true) {
+    if (n) {
         n_ = lqr.horizon_iterations();
     }
-    return CreateLqr(fbb, n_, r_, Q_, R_, P_, K_);
+    if (!r) {
+        rp = nullptr;
+    }
+    if (!Q) {
+        Qp = nullptr;
+    }
+    if (!R) {
+        Rp = nullptr;
+    }
+    if (!P) {
+        Pp = nullptr;
+    }
+    if (!K) {
+        Kp = nullptr;
+    }
+    return CreateLqr(fbb, n_, rp, Qp, Rp, Pp, Kp);
 }
 
 } // namespace fbs
