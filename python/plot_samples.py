@@ -26,7 +26,8 @@ def unit(value, degrees=True):
     return u
 
 
-def plot_state(samples, filename=None, degrees=True):
+def plot_state(samples, filename=None, degrees=True, confidence=True):
+    # TODO: Fill masked values with previous valid values
     # get time from timestamp and sample time
     t = samples.bicycle.dt.mean() * samples.ts
 
@@ -37,7 +38,6 @@ def plot_state(samples, filename=None, degrees=True):
     color = sns.color_palette('Paired', 10)
     state = ['roll angle', 'steer angle', 'roll rate', 'steer rate']
 
-    # TODO: Fill masked values with previous valid values
     # We want C'*z so we have the measured state with noise at every timestep
     # (some states will be zero).
     # (C'*z)' = z'*C
@@ -63,6 +63,14 @@ def plot_state(samples, filename=None, degrees=True):
 
         if not x_hat.mask.all():
             ax.plot(t, x_hat, color=color[2*n], label='estimate', zorder=3)
+            if confidence:
+                std_dev = np.sqrt(samples.kalman.P[:, n, n])
+                if degrees and '°' in x_unit:
+                    np.rad2deg(std_dev, out=std_dev) # in-place conversion
+                # plot confidence interval of 2 standard deviations
+                low = x_hat.ravel() - 2*std_dev
+                high = x_hat.ravel() + 2*std_dev
+                ax.fill_between(t, low, high, alpha=0.2, color=color[2*n])
             ax.legend()
 
         if not z.mask.all() and z.any():
