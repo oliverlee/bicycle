@@ -127,9 +127,12 @@ int main(int argc, char* argv[]) {
         builder.Finish(sample_builder.Finish());
         // sample is serialized
 
-        unsigned char* p = nullptr;
-        auto data = log_builder.CreateUninitializedVector<unsigned char>(builder.GetSize(), &p);
-        std::memcpy(p, builder.GetBufferPointer(), builder.GetSize());
+        //uint8_t* p = nullptr;
+        //auto data = log_builder.CreateUninitializedVector<uint8_t>(builder.GetSize(), &p);
+        //std::memcpy(p, builder.GetBufferPointer(), builder.GetSize());
+        // Using CreateUninitializedVector occasionally causes the sample to be
+        // written incorrectly.
+        auto data = log_builder.CreateVector(builder.GetBufferPointer(), builder.GetSize());
 
         fbs::SampleBufferBuilder log_sample_builder(log_builder);
         log_sample_builder.add_data(data);
