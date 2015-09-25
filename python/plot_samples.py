@@ -81,8 +81,10 @@ def plot_state(samples, degrees=True, confidence=True, filename=None):
             ax.legend()
 
         if not z.mask.all() and z.any():
-            dark_color = sns.dark_palette(color[2*n + 1])[-3]
-            ax.plot(t, z, color=dark_color, label='measurement', zorder=1)
+            flatgrey = '#95a5a6'
+            cmap = sns.blend_palette([color[2*n + 1], flatgrey], 6)
+            grey_color = sns.color_palette(cmap)[4]
+            ax.plot(t, z, color=grey_color, label='measurement', zorder=1)
             ax.legend()
 
     title = 'system state'
