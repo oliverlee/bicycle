@@ -37,22 +37,37 @@ def plot_state(samples, filename=None, degrees=True):
     color = sns.color_palette('Paired', 10)
     state = ['roll angle', 'steer angle', 'roll rate', 'steer rate']
 
+    # TODO: Fill masked values with previous valid values
+    # We want C'*z so we have the measured state with noise at every timestep
+    # (some states will be zero).
+    # (C'*z)' = z'*C
+    C = samples.bicycle.Cd[0] # C = Cd
+
+    x_meas = np.dot(samples.z.transpose(0, 2, 1), C).transpose(0, 2, 1)
     for n, (i, j) in enumerate(product(range(rows), range(cols))):
         ax = axes[i, j]
-        x = samples.x[:, n]
         x_state = state[n]
         x_unit = unit(x_state, degrees)
+
+        x = samples.x[:, n]
         x_hat = samples.kalman.x[:, n]
+        z = x_meas[:, n]
         if degrees and '°' in x_unit:
-            x = np.rad2deg(x);
+            x = np.rad2deg(x)
             x_hat = np.rad2deg(x_hat)
+            z = np.rad2deg(z)
 
         ax.set_xlabel('{} [{}]'.format('time', unit('time')))
         ax.set_ylabel('{} [{}]'.format(x_state, x_unit))
-        ax.plot(t, x, color=color[2*n + 1], label='true')
+        ax.plot(t, x, color=color[2*n + 1], label='true', zorder=2)
 
         if not x_hat.mask.all():
-            ax.plot(t, x_hat, color=color[2*n], label='estimate')
+            ax.plot(t, x_hat, color=color[2*n], label='estimate', zorder=3)
+            ax.legend()
+
+        if not z.mask.all() and z.any():
+            dark_color = sns.dark_palette(color[2*n + 1])[-3]
+            ax.plot(t, z, color=dark_color, label='measurement', zorder=1)
             ax.legend()
 
     title = 'system state'
