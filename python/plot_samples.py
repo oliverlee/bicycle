@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from functools import reduce
+from itertools import product
+from operator import mul
 import os
 import sys
-from itertools import product
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pylab as plt
@@ -97,7 +99,7 @@ def plot_entries(samples, field, filename=None):
     _, rows, cols = X.shape
     n = rows*cols
     if n > 6:
-        color = sns.color_palette('husl', n_colors=n)
+        color = sns.husl_palette(n)
     else:
         color = sns.color_palette('muted', n)
     fig, axes = plt.subplots(rows, cols, sharex=True)
@@ -158,6 +160,61 @@ def plot_error_covariance(samples, filename=None):
         ax.legend()
 
     title = 'Kalman error covariance P'
+    _set_suptitle(fig, title, filename)
+    return fig, axes
+
+
+def plot_norm(samples, fields=None, filename=None):
+    # TODO: Fill masked values with previous valid values
+    # get time from timestamp and sample time
+    t = samples.bicycle.dt.mean() * samples.ts
+    n = t.shape[0]
+
+    if fields is None:
+        # Set default to be fields that are not scalar with data available for
+        # at least 10% of the timerange
+        fields = []
+        for name in samples.dtype.names:
+            mask = samples.mask[name]
+            if len(mask.shape) < 2:
+                continue
+            if reduce(mul, mask.shape[1:], 1) == 1:
+                continue
+            if np.count_nonzero(mask) < n/10:
+                fields.append(name)
+    if isinstance(fields, str):
+        fields = (fields,)
+    n = len(fields)
+    if n > 6:
+        color = sns.husl_palette(n)
+    else:
+        color = sns.color_palette('muted', n)
+
+    if n > 1:
+        fig, axes = plt.subplots(round(n/2), 2)
+        axes = np.ravel(axes)
+    else:
+        fig, ax = plt.subplots()
+        axes = [ax]
+
+    for n, f in enumerate(fields):
+        ax = axes[n]
+        X = samples.__getattribute__(f)
+        x = np.linalg.norm(X, axis=(1, 2))
+
+        ax.set_xlabel('{} [{}]'.format('time', unit('time')))
+        ax.plot(t, x, color=color[n], label=f)
+        ax.legend()
+
+    if n > 0:
+        title = 'Norms'
+    else:
+        ax.legend().remove()
+        field_parts = fields[0].split('.')
+        title = ' '.join([f.title() for f in field_parts[:-1]] +
+                         field_parts[-1:])
+        title = 'Norm of ' + title
+        axes = ax
     _set_suptitle(fig, title, filename)
     return fig, axes
 
