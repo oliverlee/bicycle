@@ -1,6 +1,6 @@
 #pragma once
 #include <type_traits>
-#include <Eigen/Dense>
+#include <Eigen/Core>
 #include "discrete_linear.h"
 
 namespace controller {

@@ -1,7 +1,8 @@
 #pragma once
 #include <unordered_map>
 #include <utility>
-#include <Eigen/Dense>
+#include <Eigen/Core>
+#include <Eigen/Cholesky>
 #include <unsupported/Eigen/MatrixFunctions>
 #include <boost/numeric/odeint/stepper/runge_kutta_dopri5.hpp>
 #include <boost/numeric/odeint/algebra/vector_space_algebra.hpp>
@@ -81,7 +82,8 @@ class Bicycle : public DiscreteLinear<4, 2, 2, 2> {
         second_order_matrix_t m_K2;
 
         state_matrix_t m_A;
-        input_matrix_t m_B;
+        //input_matrix_t m_B; Use Cholesky decomposition of M
+        Eigen::LLT<second_order_matrix_t> m_M_llt;
         output_matrix_t m_C;
         feedthrough_matrix_t m_D;
 
@@ -124,7 +126,15 @@ inline Bicycle::state_matrix_t Bicycle::A() const {
     return m_A;
 }
 inline Bicycle::input_matrix_t Bicycle::B() const {
-    return m_B;
+    // Calculate M^-1 as we have explicitly asked for B
+    input_matrix_t B;
+    B.topRows<o>() = second_order_matrix_t::Zero();
+    if (o < 5) {
+        B.bottomRows<o>() = m_M.inverse();
+    } else {
+        B.bottomRows<o>() = m_M_llt.solve(second_order_matrix_t::Identity());
+    }
+    return B;
 }
 inline Bicycle::output_matrix_t Bicycle::C() const {
     return m_C;
