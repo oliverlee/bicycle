@@ -5,8 +5,8 @@
 #include "bicycle.h"
 #include "constants.h"
 
-// TODO: Investigate matrix rank threshold.
-// Current threshold only results in capsize speed as rank deficient, not weave speed.
+// Note: Rank will drop with given threshold at capsize speed as there is a zero
+// eigenvalue. Weave speed eigenvalues has nonzero imaginary components.
 namespace {
     const double rank_threshold = 1e-5;
 } // namespace
@@ -101,7 +101,7 @@ void Bicycle::set_v(double v, double dt) {
                 std::cout << "Warning: A is (near) singular and a precomputed Bd has not been " <<
                     "provided in the discrete state space map.\nComputation of Bd may be inaccurate.\n";
             }
-            m_Bd = A_qr.solve((m_Ad - state_matrix_t::Identity())*m_B);
+            m_Bd.noalias() = A_qr.solve((m_Ad - state_matrix_t::Identity())*m_B);
         }
     }
 }
@@ -155,6 +155,7 @@ void Bicycle::initialize_state_space_matrices() {
 
     // set constant parts of state and input matrices
     m_A.topRightCorner<o, o>().setIdentity();
+    // TODO: Do NOT set m_B to M.inverse()
     m_B.bottomLeftCorner<o, o>() = m_M.inverse();
 }
 

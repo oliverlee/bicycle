@@ -65,12 +65,12 @@ void Kalman<T>::time_update_error_covariance(const process_noise_covariance_t& Q
 
 template<typename T>
 void Kalman<T>::measurement_update_kalman_gain() {
-    m_K = m_P*m_system.Cd().transpose()*(m_system.Cd()*m_P*m_system.Cd().transpose() + m_R);
+    m_K.noalias() = m_P*m_system.Cd().transpose()*(m_system.Cd()*m_P*m_system.Cd().transpose() + m_R);
 }
 
 template<typename T>
 void Kalman<T>::measurement_update_kalman_gain(const measurement_noise_covariance_t& R) {
-    m_K = m_P*m_system.Cd().transpose()*(m_system.Cd()*m_P*m_system.Cd().transpose() + R);
+    m_K.noalias() = m_P*m_system.Cd().transpose()*(m_system.Cd()*m_P*m_system.Cd().transpose() + R);
 }
 
 template<typename T>
