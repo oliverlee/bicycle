@@ -9,11 +9,10 @@
 // Note: Rank will drop with given threshold at capsize speed as there is a zero
 // eigenvalue. Weave speed eigenvalues has nonzero imaginary components.
 namespace {
-    const double rank_threshold = 1e-5;
+    constexpr double rank_threshold = 1e-5;
 } // namespace
 
 namespace model {
-
 Bicycle::Bicycle(const second_order_matrix_t& M, const second_order_matrix_t& C1,
         const second_order_matrix_t& K0, const second_order_matrix_t& K2,
         double v, double dt, const state_space_map_t* discrete_state_space_map) :
