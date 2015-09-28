@@ -16,8 +16,8 @@
 namespace {
     const double fs = 200;              // sample rate [Hz]
     const double dt = 1.0/fs;           // sample time [s]
-    const double v0 = 4.0;              // forward speed [m/s]
-    const size_t N = 10;                // length of simulation in samples
+    const double v0 = 5.0;              // forward speed [m/s]
+    const size_t N = 1000;                // length of simulation in samples
     //const size_t n = 100;               // length of horizon in samples
 
     model::Bicycle::state_t x; // roll angle, steer angle, roll rate, steer rate
@@ -73,9 +73,21 @@ int main(int argc, char* argv[]) {
      */
 
     size_t current_sample = 0;
+    auto bicycle_location = fbs::create_bicycle(builder, bicycle);
+    auto kalman_location = fbs::create_kalman(builder, kalman);
+    //auto lqr_location = fbs::create_lqr(builder, lqr);
+    auto fbs_state = fbs::state(x);
+    //auto fbs_input = fbs::input(model::Bicycle::input_t::Zero());
+    auto fbs_measurement = fbs::output(model::Bicycle::output_t::Zero());
+    builder.Finish(fbs::CreateSample(builder, current_sample,
+                bicycle_location, kalman_location, 0,
+                &fbs_state, 0, 0, &fbs_measurement));
+
+    auto data = log_builder.CreateVector(builder.GetBufferPointer(), builder.GetSize());
+    sample_locations[current_sample++] = fbs::CreateSampleBuffer(log_builder, data);
 
     auto disc_start = std::chrono::system_clock::now();
-    for (size_t i = 0; i < N; ++i) {
+    for (; current_sample < N; ++current_sample) {
         /* compute control law */
         //auto u = lqr.control_calculate(kalman.x());
 
@@ -95,41 +107,18 @@ int main(int argc, char* argv[]) {
 
         builder.Clear();
 
-        flatbuffers::Offset<::fbs::Bicycle> bicycle_location;
-        flatbuffers::Offset<::fbs::Kalman> kalman_location;
-        //flatbuffers::Offset<::fbs::Lqr> lqr_location;
-        if (current_sample == 0) {
-            /*
-             * only include the whole object with the first sample as the
-             * parameters and state/input noise/costs do not change
-             */
-            bicycle_location = fbs::create_bicycle(builder, bicycle);
-            kalman_location = fbs::create_kalman(builder, kalman);
-            //lqr_location = fbs::create_lqr(builder, lqr);
-
-        } else {
-            kalman_location = fbs::create_kalman(builder, kalman,
-                    true, true, false, false, true);
-            //lqr_location = fbs::create_lqr(builder, lqr,
-            //        false, false, true, false, false, true);
-        }
+        kalman_location = fbs::create_kalman(builder, kalman,
+                true, true, false, false, true);
+        //lqr_location = fbs::create_lqr(builder, lqr,
+        //        false, false, true, false, false, true);
 
         /* skip output as we can get it from state */
-        auto fbs_state = fbs::state(x);
-        //auto fbs_input = fbs::input(u);
-        auto fbs_measurement = fbs::output(z);
+        fbs_state = fbs::state(x);
+        //fbs_input = fbs::input(u);
+        fbs_measurement = fbs::output(z);
 
-        fbs::SampleBuilder sample_builder(builder);
-        sample_builder.add_measurement(&fbs_measurement);
-        //sample_builder.add_input(&fbs_input);
-        sample_builder.add_state(&fbs_state);
-        if (current_sample == 0) {
-            sample_builder.add_bicycle(bicycle_location);
-        }
-        sample_builder.add_kalman(kalman_location);
-        //sample_builder.add_lqr(lqr_location);
-        sample_builder.add_timestamp(current_sample);
-        builder.Finish(sample_builder.Finish());
+        builder.Finish(fbs::CreateSample(builder, current_sample,
+                    0, kalman_location, 0, &fbs_state, 0, 0, &fbs_measurement));
         /* sample is serialized */
 
         //uint8_t* p = nullptr;
@@ -138,11 +127,9 @@ int main(int argc, char* argv[]) {
         // Using CreateUninitializedVector occasionally causes the sample to be
         // written incorrectly.
         auto data = log_builder.CreateVector(builder.GetBufferPointer(), builder.GetSize());
-
-        fbs::SampleBufferBuilder log_sample_builder(log_builder);
-        log_sample_builder.add_data(data);
-        sample_locations[current_sample++] = log_sample_builder.Finish();
+        sample_locations[current_sample] = fbs::CreateSampleBuffer(log_builder, data);
     }
+
     auto disc_stop = std::chrono::system_clock::now();
     auto disc_time = disc_stop - disc_start;
 

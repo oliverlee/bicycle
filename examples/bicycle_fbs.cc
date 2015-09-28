@@ -32,30 +32,32 @@ int main(int argc, char* argv[]) {
     model::Bicycle::state_t x; // roll angle, steer angle, roll rate, steer rate
     x << 0, 10, 10, 0; // define x0 in degrees
     x *= constants::as_radians; // convert to radians
+    system_state[0] = x;
     std::cout << "initial state: [" << x.transpose() << "]' rad" << std::endl;
     std::cout << "states are: [roll angle, steer angle, roll rate, steer rate]'" << std::endl << std::endl;
 
     // flatbuffer objects must be serialized in depth first pre-order traversal
     size_t current_sample = 0;
+    auto bicycle_location = fbs::create_bicycle(builder, bicycle);
+    auto fbs_state = fbs::state(x);
+    builder.Finish(fbs::CreateSample(builder, current_sample,
+                bicycle_location, 0, 0, &fbs_state, 0, 0, 0));
+
+    auto data = log_builder.CreateVector(builder.GetBufferPointer(), builder.GetSize());
+    sample_locations[current_sample++] = fbs::CreateSampleBuffer(log_builder, data);
 
     std::cout << "simulating discrete time system at constant speed (" <<
         N << " steps at " << fs << " Hz) ..." << std::endl;
     auto disc_start = std::chrono::system_clock::now();
-    for (auto& state: system_state) {
+    for (; current_sample < N; ++current_sample) {
         x = bicycle.x_next(x);
-        state = x;
+        system_state[current_sample] = x;
+        system_state[current_sample] = x;
 
         builder.Clear();
-        fbs::SampleBuilder sample_builder(builder);
-        if (current_sample == 0) {
-            auto bicycle_location = fbs::create_bicycle(builder, bicycle);
-            sample_builder.add_bicycle(bicycle_location);
-        }
-        auto fbs_state = fbs::state(x);
-        sample_builder.add_state(&fbs_state);
-        sample_builder.add_timestamp(current_sample);
-        auto location = sample_builder.Finish();
-        builder.Finish(location);
+        fbs_state = fbs::state(x);
+        builder.Finish(fbs::CreateSample(builder,
+                    current_sample, 0, 0, 0, &fbs_state, 0, 0, 0));
         // sample is serialized
 
         unsigned char* p = nullptr;
@@ -64,7 +66,7 @@ int main(int argc, char* argv[]) {
 
         fbs::SampleBufferBuilder log_sample_builder(log_builder);
         log_sample_builder.add_data(data);
-        sample_locations[current_sample++] = log_sample_builder.Finish();
+        sample_locations[current_sample] = log_sample_builder.Finish();
     }
     auto disc_stop = std::chrono::system_clock::now();
     auto disc_time = disc_stop - disc_start;
