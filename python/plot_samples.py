@@ -162,7 +162,7 @@ def plot_error_covariance(samples, filename=None):
         ax = axes[i, j]
         ax.set_xlabel('{} [{}]'.format('time', unit('time')))
         ax.set_title('P[{}, {}]'.format(i, j))
-        ax.plot(t, P[:, i, j], color=color_calc[n], label='calculated')
+        ax.plot(t, P[:, i, j], color=color_calc[n], label='estimate')
         ax.plot(t, E[:, i, j], color=color_true[n], label='true')
         ax.legend()
 
