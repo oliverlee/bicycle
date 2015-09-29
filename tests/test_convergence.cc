@@ -1,17 +1,17 @@
 #include "test_convergence.h"
 #include "parameters.h"
 
-const double ConvergenceTest::m_roll_tol = 2.5 * constants::as_radians;
-const double ConvergenceTest::m_steer_tol = 0.1 * constants::as_degrees;
+const double ConvergenceTest::m_roll_tol = 0.1 * constants::as_radians;
+const double ConvergenceTest::m_steer_tol = 0.1 * constants::as_radians;
 const double ConvergenceTest::m_roll_rate_tol = 10 * ConvergenceTest::m_roll_tol;
-const double ConvergenceTest::m_steer_rate_tol = ConvergenceTest::m_steer_tol;
+const double ConvergenceTest::m_steer_rate_tol = 10 * ConvergenceTest::m_steer_tol;
 const double ConvergenceTest::m_dt = 1.0/200;
 const uint32_t ConvergenceTest::m_N = 1000;
 const uint32_t ConvergenceTest::m_n = 100;
 
 void ConvergenceTest::SetUp() {
     // set initial state
-    m_x << 0, 10, 10, 0; // define x in degrees
+    m_x << 5, 5, 0, 0; // define x in degrees
     m_x *= constants::as_radians;
 
     m_bicycle = new model::Bicycle(parameters::benchmark::M, parameters::benchmark::C1,
