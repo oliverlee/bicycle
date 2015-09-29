@@ -1,7 +1,8 @@
 #pragma once
 #include <unordered_map>
 #include <utility>
-#include <Eigen/Dense>
+#include <Eigen/Core>
+#include <Eigen/Cholesky>
 #include <unsupported/Eigen/MatrixFunctions>
 #include <boost/numeric/odeint/stepper/runge_kutta_dopri5.hpp>
 #include <boost/numeric/odeint/algebra/vector_space_algebra.hpp>
@@ -23,13 +24,15 @@ class Bicycle : public DiscreteLinear<4, 2, 2, 2> {
          * time lookup along with quickly finding a key 'near' the requested
          * one, we convert speeds to a fixed precision integer.
          *
-         * Six digits after the decimal defines the precision used.
+         * For example, if six digits after the decimal defines the precision used:
          * v = 6.024262 -> 6024262
          *
-         * The same is done with sample time dt and microsecond precision is used.
+         * And the same is done with sample time dt and microsecond precision is used.
          * dt = 0.005 -> 5000
          *
-         * Keys are defined as a pair: (round(1000*dt), round(1000000*v)).
+         * Keys are defined as a pair:
+         * (round(m_dt_key_precision*dt), round(m_v_key_precision*v)).
+         * Where precision is set with m_dt_key_precision and m_v_key_precision.
          */
         using state_space_map_key_t = const std::pair<uint32_t, int32_t>;
         using state_space_map_value_t = const std::pair<state_matrix_t, input_matrix_t>;
@@ -81,7 +84,8 @@ class Bicycle : public DiscreteLinear<4, 2, 2, 2> {
         second_order_matrix_t m_K2;
 
         state_matrix_t m_A;
-        input_matrix_t m_B;
+        //input_matrix_t m_B; Use Cholesky decomposition of M
+        Eigen::LLT<second_order_matrix_t> m_M_llt;
         output_matrix_t m_C;
         feedthrough_matrix_t m_D;
 
@@ -90,6 +94,9 @@ class Bicycle : public DiscreteLinear<4, 2, 2, 2> {
 
         state_matrix_t m_AT;
         Eigen::MatrixExponential<state_matrix_t> m_expAT;
+
+        static constexpr uint32_t m_dt_key_precision = 1000;
+        static constexpr int32_t m_v_key_precision = 1000000;
 
         state_space_map_t const* m_discrete_state_space_map;
 
@@ -118,13 +125,21 @@ inline void Bicycle::set_D(const feedthrough_matrix_t& D) {
     m_D = D;
 }
 inline constexpr Bicycle::state_space_map_key_t Bicycle::make_state_space_map_key(double v, double dt) {
-    return state_space_map_key_t(1000*dt, 1000000*v);
+    return state_space_map_key_t(m_dt_key_precision*dt, m_v_key_precision*v);
 }
 inline Bicycle::state_matrix_t Bicycle::A() const {
     return m_A;
 }
 inline Bicycle::input_matrix_t Bicycle::B() const {
-    return m_B;
+    // Calculate M^-1 as we have explicitly asked for B
+    input_matrix_t B;
+    B.topRows<o>() = second_order_matrix_t::Zero();
+    if (o < 5) {
+        B.bottomRows<o>() = m_M.inverse();
+    } else {
+        B.bottomRows<o>() = m_M_llt.solve(second_order_matrix_t::Identity());
+    }
+    return B;
 }
 inline Bicycle::output_matrix_t Bicycle::C() const {
     return m_C;

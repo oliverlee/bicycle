@@ -1,3 +1,4 @@
+#include <Eigen/Cholesky>
 /*
  * Member function definitions of Kalman template class.
  * See kalman.h for template class declaration.
@@ -65,12 +66,20 @@ void Kalman<T>::time_update_error_covariance(const process_noise_covariance_t& Q
 
 template<typename T>
 void Kalman<T>::measurement_update_kalman_gain() {
-    m_K = m_P*m_system.Cd().transpose()*(m_system.Cd()*m_P*m_system.Cd().transpose() + m_R);
+    // S = C*P*C' + R
+    // K = P*C'*S^-1 - > K' = S^-1*C*P'
+    Eigen::LDLT<measurement_noise_covariance_t> S_ldlt(
+            m_system.Cd()*m_P*m_system.Cd().transpose() + m_R);
+    m_K.noalias() = S_ldlt.solve(m_system.Cd()*m_P.transpose()).transpose();
 }
 
 template<typename T>
 void Kalman<T>::measurement_update_kalman_gain(const measurement_noise_covariance_t& R) {
-    m_K = m_P*m_system.Cd().transpose()*(m_system.Cd()*m_P*m_system.Cd().transpose() + R);
+    // S = C*P*C' + R
+    // K = P*C'*S^-1 - > K' = S^-1*C*P'
+    Eigen::LDLT<measurement_noise_covariance_t> S_ldlt(
+            m_system.Cd()*m_P*m_system.Cd().transpose() + R);
+    m_K.noalias() = S_ldlt.solve(m_system.Cd()*m_P.transpose()).transpose();
 }
 
 template<typename T>

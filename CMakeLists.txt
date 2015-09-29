@@ -54,7 +54,9 @@ flatbuffers_generate_c_headers(FLATBUFFER_GENERATED ${FLATBUFFER_SCHEMAS})
 include_directories(${PROJECT_BINARY_DIR}/generated) # location of flatbuffer generated headers
 add_custom_target(generate_flatbuffer_headers DEPENDS ${FLATBUFFER_GENERATED_OUTPUTS})
 
-set(BICYCLE_SOURCE ${BICYCLE_SOURCE_DIR}/src/bicycle.cc)
+set(BICYCLE_SOURCE
+    ${BICYCLE_SOURCE_DIR}/src/bicycle.cc
+    ${BICYCLE_SOURCE_DIR}/src/parameters.cc)
 
 option(BICYCLE_BUILD_TESTS "Build tests." ON)
 option(BICYCLE_BUILD_TOOLS "Build tools." ON)

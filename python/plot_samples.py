@@ -34,8 +34,44 @@ def _set_suptitle(fig, title, filename):
     fig.suptitle(title, size=mpl.rcParams['font.size'] + 2)
 
 
+def hold_masked_values(masked_array):
+    """Fill in masked values using previous valid value. Returns a numpy
+    array."""
+    mask = masked_array.mask
+    if len(mask.shape) > 1:
+        mask = mask[:, 0, 0]
+    if not mask.any():
+        return masked_array.data
+
+    edges = np.nonzero(mask - np.roll(mask, 1))[0]
+    if not len(edges):
+        return masked_array.data
+
+    if not edges[0]:
+        # we cannot have a rising edge on the first value
+        edges = edges[1:]
+
+    data = masked_array.data
+
+    if not mask[edges[0]]:
+        # first edge is falling and beginning of array is masked
+        start = edges[0]
+        data[slice(None, start)] = data[start]
+        edges = edges[1:]
+
+    while edges:
+        start = edges[0]
+        try:
+            stop = edges[1]
+            edges = edges[2:]
+        except IndexError:
+            stop = None
+            edges = []
+        data[slice(start, stop)] = data[start - 1]
+    return data
+
+
 def plot_state(samples, degrees=True, confidence=True, filename=None):
-    # TODO: Fill masked values with previous valid values
     # get time from timestamp and sample time
     t = samples.bicycle.dt.mean() * samples.ts
 
@@ -73,6 +109,14 @@ def plot_state(samples, degrees=True, confidence=True, filename=None):
         ax.set_ylabel('{} [{}]'.format(x_state, x_unit))
         ax.plot(t, x, color=color[2*n + 1], label='true', zorder=2)
 
+        if not z.mask.all() and z.any():
+            flatgrey = '#95a5a6'
+            cmap = sns.blend_palette([color[2*n + 1], flatgrey], 6)
+            grey_color = sns.color_palette(cmap)[4]
+            ax.plot(t[1:], z[1:], color=grey_color,
+                    label='measurement', zorder=1)
+            ax.legend()
+
         if not x_hat.mask.all():
             ax.plot(t, x_hat, color=color[2*n], label='estimate', zorder=3)
             if confidence:
@@ -82,14 +126,9 @@ def plot_state(samples, degrees=True, confidence=True, filename=None):
                 # plot confidence interval of 2 standard deviations
                 low = x_hat.ravel() - 2*std_dev
                 high = x_hat.ravel() + 2*std_dev
+                limits = ax.get_ylim()
                 ax.fill_between(t, low, high, alpha=0.2, color=color[2*n])
-            ax.legend()
-
-        if not z.mask.all() and z.any():
-            flatgrey = '#95a5a6'
-            cmap = sns.blend_palette([color[2*n + 1], flatgrey], 6)
-            grey_color = sns.color_palette(cmap)[4]
-            ax.plot(t, z, color=grey_color, label='measurement', zorder=1)
+                ax.set_ylim(limits)
             ax.legend()
 
     title = 'system state'
@@ -98,7 +137,6 @@ def plot_state(samples, degrees=True, confidence=True, filename=None):
 
 
 def plot_entries(samples, field, filename=None):
-    # TODO: Fill masked values with previous valid values
     # get time from timestamp and sample time
     t = samples.bicycle.dt.mean() * samples.ts
     X = samples.__getattribute__(field)
@@ -144,7 +182,6 @@ def plot_entries(samples, field, filename=None):
 
 
 def plot_error_covariance(samples, filename=None):
-    # TODO: Fill masked values with previous valid values
     # get time from timestamp and sample time
     t = samples.bicycle.dt.mean() * samples.ts
     P = samples.kalman.P
@@ -162,7 +199,7 @@ def plot_error_covariance(samples, filename=None):
         ax = axes[i, j]
         ax.set_xlabel('{} [{}]'.format('time', unit('time')))
         ax.set_title('P[{}, {}]'.format(i, j))
-        ax.plot(t, P[:, i, j], color=color_calc[n], label='calculated')
+        ax.plot(t, P[:, i, j], color=color_calc[n], label='estimate')
         ax.plot(t, E[:, i, j], color=color_true[n], label='true')
         ax.legend()
 
@@ -172,7 +209,6 @@ def plot_error_covariance(samples, filename=None):
 
 
 def plot_norm(samples, fields=None, filename=None):
-    # TODO: Fill masked values with previous valid values
     # get time from timestamp and sample time
     t = samples.bicycle.dt.mean() * samples.ts
     n = t.shape[0]

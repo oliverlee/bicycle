@@ -2,17 +2,17 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
+#include <Eigen/QR>
 #include "bicycle.h"
 #include "constants.h"
 
-// TODO: Investigate matrix rank threshold.
-// Current threshold only results in capsize speed as rank deficient, not weave speed.
+// Note: Rank will drop with given threshold at capsize speed as there is a zero
+// eigenvalue. Weave speed eigenvalues has nonzero imaginary components.
 namespace {
-    const double rank_threshold = 1e-5;
+    constexpr double rank_threshold = 1e-5;
 } // namespace
 
 namespace model {
-
 Bicycle::Bicycle(const second_order_matrix_t& M, const second_order_matrix_t& C1,
         const second_order_matrix_t& K0, const second_order_matrix_t& K2,
         double v, double dt, const state_space_map_t* discrete_state_space_map) :
@@ -29,7 +29,6 @@ Bicycle::Bicycle(const char* param_file, double v, double dt,
     m_expAT(m_AT), m_discrete_state_space_map(discrete_state_space_map) {
     // set M, C1, K0, K2 matrices from file
     set_matrices_from_file(param_file);
-
     initialize_state_space_matrices();
 
     // set forward speed, sampling time and update state matrices
@@ -59,9 +58,14 @@ Bicycle::state_t Bicycle::x_integrate(const Bicycle::state_t& x, const Bicycle::
     xu << x, u;
     m_stepper.do_step([this](const odeint_state_t& xu, odeint_state_t& dxdt, const double t) -> void {
                 (void)t;
-                dxdt.block<n, 1>(0, 0) = m_A*xu.block<n, 1>(0, 0) + m_B*xu.block<m, 1>(n, 0);
+                dxdt.head<n>() = m_A*xu.head<n>();
+                // Normally we would write dxdt = A*x + B*u but B is not stored
+                // explicitly as that would require the calculation of
+                // M.inverse(). As B = [   0  ], the product Bu = [      0   ]
+                //                     [ M^-1 ]                   [ M^-1 * u ]
+                dxdt.segment<o>(o) += m_M_llt.solve(xu.segment<o>(n));
             }, xu, 0.0, xout, dt);
-    return xout.block<n, 1>(0, 0);
+    return xout.head<n>();
 }
 
 Bicycle::state_t Bicycle::x_integrate(const Bicycle::state_t& x, double dt) const {
@@ -83,8 +87,8 @@ void Bicycle::set_v(double v, double dt) {
     m_dt = dt;
 
     // M is positive definite so use the Cholskey decomposition in solving the linear system
-    m_A.bottomLeftCorner<o, o>() = -m_M.llt().solve(constants::g*m_K0 + m_v*m_v*m_K2);
-    m_A.bottomRightCorner<o, o>() = -m_M.llt().solve(m_v*m_C1);
+    m_A.bottomLeftCorner<o, o>() = -m_M_llt.solve(constants::g*m_K0 + m_v*m_v*m_K2);
+    m_A.bottomRightCorner<o, o>() = -m_M_llt.solve(m_v*m_C1);
 
     if (m_dt == 0.0) { // discrete time state does not change
         m_AT.setZero();
@@ -101,7 +105,15 @@ void Bicycle::set_v(double v, double dt) {
                 std::cout << "Warning: A is (near) singular and a precomputed Bd has not been " <<
                     "provided in the discrete state space map.\nComputation of Bd may be inaccurate.\n";
             }
-            m_Bd = A_qr.solve((m_Ad - state_matrix_t::Identity())*m_B);
+            // B isn't stored so to calculate the term T = (Ad - I)*B before applying A_qr
+            // T = (Ad - I) * [   0  ] = [ (Ad - I).rightCols<o> * M^-1 ]
+            //                [ M^-1 ]
+            // As we need to calculate the transpose in order to use a linear solver ]
+            // T' = M^-1 * (Ad' - I).bottomRows<o>
+            // since M is symmetric
+            m_Bd.transpose() = m_M_llt.solve(
+                    (Ad().transpose() - state_matrix_t::Identity()).bottomRows<o>());
+            m_Bd = A_qr.solve(m_Bd).eval();
         }
     }
 }
@@ -143,7 +155,7 @@ void Bicycle::set_matrices_from_file(const char* param_file) {
 
 void Bicycle::initialize_state_space_matrices() {
     m_A.setZero();
-    m_B.setZero();
+    // m_B.setZero(); B is not explicitly calculated!
     m_C.setZero();
     m_D.setZero();
     m_Ad.setZero();
@@ -155,7 +167,13 @@ void Bicycle::initialize_state_space_matrices() {
 
     // set constant parts of state and input matrices
     m_A.topRightCorner<o, o>().setIdentity();
-    m_B.bottomLeftCorner<o, o>() = m_M.inverse();
+
+    // We can write B in block matrix form as:
+    // B.transpose() = [0 |  M.inverse().transpose()]
+    // As M is positive definite, the Cholesky decomposition of M is stored and
+    // used when necessary
+    // m_B.bottomLeftCorner<o, o>() = m_M.inverse();
+    m_M_llt.compute(m_M);
 }
 
 } // namespace model

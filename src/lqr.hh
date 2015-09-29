@@ -13,7 +13,7 @@ typename Lqr<T>::input_t Lqr<T>::control_calculate(const state_t& x) {
         update_lqr_gain();
         update_horizon_cost();
     }
-    m_u = m_K*(x - m_x);
+    m_u.noalias() = m_K*(x - m_x);
     m_x = x;
     return u();
 }
@@ -21,14 +21,14 @@ typename Lqr<T>::input_t Lqr<T>::control_calculate(const state_t& x) {
 template<typename T>
 void Lqr<T>::update_target() {
     if (!m_x.isZero()) {
-        m_x = m_system.Ad().fullPivHouseholderQr().solve(m_x);
+        m_x = m_system.Ad().fullPivHouseholderQr().solve(m_x).eval();
     }
 }
 
 template<typename T>
 void Lqr<T>::update_lqr_gain() {
     input_cost_t M = m_R  + m_system.Bd().transpose()*m_P*m_system.Bd();
-    m_K = -M.fullPivHouseholderQr().solve(m_system.Bd().transpose()*m_P*m_system.Ad());
+    m_K.noalias() = -M.fullPivHouseholderQr().solve(m_system.Bd().transpose()*m_P*m_system.Ad());
 }
 
 template<typename T>

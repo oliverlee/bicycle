@@ -5,23 +5,23 @@
 class LqrKalmanConvergenceTest: public ConvergenceTest {
     public:
         void simulate() {
-            for(unsigned int i = 0; i < N; ++i) {
-                auto u = lqr->control_calculate(x);
-                x = bicycle->x_next(x, u);
+            for(unsigned int i = 0; i < m_N; ++i) {
+                auto u = m_lqr->control_calculate(m_x);
+                m_x = m_bicycle->x_next(m_x, u);
 
-                auto z = bicycle->y(x);
-                z(0) += r0(gen);
-                z(1) += r1(gen);
+                auto z = m_bicycle->y(m_x);
+                z(0) += m_r0(m_gen);
+                z(1) += m_r1(m_gen);
 
-                kalman->time_update(u);
-                kalman->measurement_update(z);
+                m_kalman->time_update(u);
+                m_kalman->measurement_update(z);
             }
         }
 };
 
 TEST_P(LqrKalmanConvergenceTest, ZeroReference) {
     simulate();
-    test_state_near(kalman->x(), x_true());
+    test_state_near(m_kalman->x(), x_true());
 }
 
 INSTANTIATE_TEST_CASE_P(

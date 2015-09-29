@@ -31,14 +31,15 @@ int main(int argc, char* argv[]) {
 
     model::Bicycle bicycle(parameters::benchmark::M, parameters::benchmark::C1,
             parameters::benchmark::K0, parameters::benchmark::K2, v0, dt);
-    observer::Kalman<model::Bicycle> kalman(bicycle,
-            parameters::defaultvalue::kalman::Q,
-            parameters::defaultvalue::kalman::R,
-            model::Bicycle::state_t::Zero(),
-            parameters::defaultvalue::kalman::P0);
-
     bicycle.set_C(parameters::defaultvalue::bicycle::C);
     x << 0, 10, 10, 0; // define x in degrees
+    x *= constants::as_radians; // convert degrees to radians
+
+    observer::Kalman<model::Bicycle> kalman(bicycle,
+            parameters::defaultvalue::kalman::Q(dt),
+            parameters::defaultvalue::kalman::R,
+            model::Bicycle::state_t::Zero(),
+            std::pow(x[0]/2, 2) * model::Bicycle::state_matrix_t::Identity());
 
     std::cout << "simulating bicycle model with measurement noise (equal to R)" << std::endl;
     std::cout << "initial state:          [" << x.transpose() << "] deg" << std::endl;
@@ -52,7 +53,6 @@ int main(int argc, char* argv[]) {
     auto it_z = system_measurement.begin();
     auto it_xh = system_state_estimate.begin();
 
-    x *= constants::as_radians; // convert degrees to radians
     *it_x++ = x;
     *it_y++ = bicycle.y(x);
     *it_z++ = bicycle.y(x); // first measurement isn't used
