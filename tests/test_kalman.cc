@@ -30,7 +30,7 @@ class KalmanConvergenceTest: public ConvergenceTest {
                 z(0) += m_r0(m_gen);
                 z(1) += m_r1(m_gen);
 
-                m_kalman->time_update();
+                m_kalman->time_update(u);
                 m_kalman->measurement_update(z);
             }
         }
