@@ -19,11 +19,11 @@ class Lqr {
         Lqr(T& system, const state_cost_t& Q, const input_cost_t& R,
                 const state_t& r, uint32_t horizon_iterations) :
             m_system(system), m_horizon(horizon_iterations),
-            m_r(r), m_Q(Q), m_R(R) { }
+            m_r(r), m_Q(Q), m_R(R),
+            m_steady_state(false), m_Ad(system.Ad()), m_Bd(system.Bd()) { }
 
         input_t control_calculate(const state_t& x);
 
-        // TODO: maybe just use public member variables?
         void set_horizon(uint32_t horizon_iterations);
         void set_reference(const state_t& r);
         void set_Q(const state_cost_t& Q);
@@ -51,6 +51,9 @@ class Lqr {
         state_cost_t m_P; // running horizon cost
         state_cost_t m_Q;
         input_cost_t m_R;
+        bool m_steady_state;
+        typename T::state_matrix_t m_Ad;
+        typename T::input_matrix_t m_Bd;
 
         void update_reference();
         void update_lqr_gain();
@@ -59,21 +62,25 @@ class Lqr {
 
 template<typename T>
 inline void Lqr<T>::set_horizon(uint32_t horizon_iterations) {
+    m_steady_state = false;
     m_horizon = horizon_iterations;
 }
 
 template<typename T>
 inline void Lqr<T>::set_reference(const state_t& r) {
+    m_steady_state = false;
     m_r = r;
 }
 
 template<typename T>
 inline void Lqr<T>::set_Q(const state_cost_t& Q) {
+    m_steady_state = false;
     m_Q = Q;
 }
 
 template<typename T>
 inline void Lqr<T>::set_R(const input_cost_t& R) {
+    m_steady_state = false;
     m_R = R;
 }
 

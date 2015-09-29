@@ -7,15 +7,30 @@ namespace controller {
 
 template<typename T>
 typename Lqr<T>::input_t Lqr<T>::control_calculate(const state_t& x) {
-    m_x = m_r; // m_x will be updated backwards in time to adjust reference
-    for (unsigned int i = 0; i < m_horizon; ++i) {
-        update_reference();
-        update_lqr_gain();
-        update_horizon_cost();
+    if (!m_system.Ad().isApprox(m_Ad) || !m_system.Bd().isApprox(m_Bd)) {
+        // check if system has changed
+        m_Ad = m_system.Ad();
+        m_Bd = m_system.Bd();
+        m_steady_state = false;
     }
+
+    if (!m_steady_state) {
+        lqr_gain_t K = m_K;
+        state_cost_t P = m_P;
+        m_x = m_r; // m_x will be updated backwards in time to adjust reference
+        for (unsigned int i = 0; i < m_horizon; ++i) {
+            update_reference();
+            update_lqr_gain();
+            update_horizon_cost();
+        }
+        if (K.isApprox(m_K) && P.isApprox(m_P)) {
+            m_steady_state = true;
+        }
+    }
+
     m_u.noalias() = m_K*(x - m_x);
     m_x = x;
-    return u();
+    return m_u;
 }
 
 template<typename T>
