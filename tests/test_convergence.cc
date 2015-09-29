@@ -1,14 +1,18 @@
 #include "test_convergence.h"
 
 void ConvergenceTest::SetUp() {
+    // set initial state
+    x << 0, 10, 10, 0; // define x in degrees
+    x *= constants::as_radians;
+
     bicycle = new model::Bicycle(parameters::benchmark::M, parameters::benchmark::C1,
             parameters::benchmark::K0, parameters::benchmark::K2, GetParam(), dt);
     bicycle->set_C(parameters::defaultvalue::bicycle::C);
     kalman = new observer::Kalman<model::Bicycle>(*bicycle,
-            parameters::defaultvalue::kalman::Q,
+            parameters::defaultvalue::kalman::Q(dt),
             parameters::defaultvalue::kalman::R,
             model::Bicycle::state_t::Zero(),
-            parameters::defaultvalue::kalman::P0);
+            std::pow(x[0]/2, 2) * model::Bicycle::state_matrix_t::Identity());
     lqr = new controller::Lqr<model::Bicycle>(*bicycle,
             controller::Lqr<model::Bicycle>::state_cost_t::Identity(),
             0.1 * controller::Lqr<model::Bicycle>::input_cost_t::Identity(),
@@ -16,10 +20,6 @@ void ConvergenceTest::SetUp() {
     gen = std::mt19937(rd());
     r0 = std::normal_distribution<>(0, parameters::defaultvalue::kalman::R(0, 0));
     r1 = std::normal_distribution<>(0, parameters::defaultvalue::kalman::R(1, 1));
-
-    // set initial state
-    x << 0, 10, 10, 0; // define x in degrees
-    x *= constants::as_radians;
 }
 
 void ConvergenceTest::TearDown() {

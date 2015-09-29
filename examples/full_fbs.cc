@@ -1,5 +1,6 @@
 #include <array>
 #include <chrono>
+#include <cmath>
 #include <cstdio>
 #include <iostream>
 #include <random>
@@ -43,21 +44,20 @@ int main(int argc, char* argv[]) {
     model::Bicycle bicycle(parameters::benchmark::M, parameters::benchmark::C1,
             parameters::benchmark::K0, parameters::benchmark::K2, v0, dt);
     bicycle.set_C(parameters::defaultvalue::bicycle::C);
+    x << 5, 5, 0, 0; // define x0 in degrees
+    x *= constants::as_radians; // convert to radians
 
     observer::Kalman<model::Bicycle> kalman(bicycle,
-            parameters::defaultvalue::kalman::Q,
+            parameters::defaultvalue::kalman::Q(dt),
             parameters::defaultvalue::kalman::R,
             model::Bicycle::state_t::Zero(), // starts at zero state
-            parameters::defaultvalue::kalman::P0);
+            std::pow(x[0]/2, 2) * model::Bicycle::state_matrix_t::Identity());
 
 //    controller::Lqr<model::Bicycle> lqr(bicycle,
 //            controller::Lqr<model::Bicycle>::state_cost_t::Identity(),
 //            0.1 * controller::Lqr<model::Bicycle>::input_cost_t::Identity(),
 //            model::Bicycle::state_t::Zero(),
 //            n);
-
-    x << 0, 10, 10, 0; // define x0 in degrees
-    x *= constants::as_radians; // convert to radians
 
     std::cout << "initial state: [" << x.transpose() << "]' rad" << std::endl;
     std::cout << "initial state estimate: [" << kalman.x().transpose() * constants::as_degrees << "]' deg" << std::endl;

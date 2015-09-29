@@ -14,7 +14,7 @@ namespace {
     const size_t N = 1000; // length of simulation in samples
     const size_t n = 100;  // length of horizon in samples
 
-    const model::Bicycle::state_t x0(
+    model::Bicycle::state_t x(
             (model::Bicycle::state_t() <<
                 0, 10, 10, 0).finished() * constants::as_radians);
 
@@ -29,13 +29,6 @@ namespace {
     const controller::Lqr<model::Bicycle>::input_cost_t R(
             0.1 * controller::Lqr<model::Bicycle>::input_cost_t::Identity());
 
-    const observer::Kalman<model::Bicycle>::error_covariance_t P0 =
-        parameters::defaultvalue::kalman::P0;
-    const observer::Kalman<model::Bicycle>::process_noise_covariance_t Qn =
-        parameters::defaultvalue::kalman::Q;
-    const observer::Kalman<model::Bicycle>::measurement_noise_covariance_t Rn =
-        parameters::defaultvalue::kalman::R;
-
     std::array<model::Bicycle::state_t, N> system_state;
     std::array<model::Bicycle::state_t, N> system_state_estimate;
 
@@ -47,27 +40,32 @@ int main(int argc, char* argv[]) {
     (void)argv;
 
     std::mt19937 gen(rd());
-    std::normal_distribution<> rn0(0, Rn(0, 0));
-    std::normal_distribution<> rn1(0, Rn(1, 1));
+    std::normal_distribution<> rn0(0,
+            parameters::defaultvalue::kalman::R(0, 0));
+    std::normal_distribution<> rn1(0,
+            parameters::defaultvalue::kalman::R(1, 1));
 
     model::Bicycle bicycle(parameters::benchmark::M, parameters::benchmark::C1,
             parameters::benchmark::K0, parameters::benchmark::K2, v0, dt);
-    controller::Lqr<model::Bicycle> lqr(bicycle, Q, R, xt, n);
-    observer::Kalman<model::Bicycle> kalman(bicycle, Qn, Rn, xt, P0);
-
     bicycle.set_C(C);
 
-    std::cout << "initial state:          [" << x0.transpose() * constants::as_degrees << "]' deg" << std::endl;
+    controller::Lqr<model::Bicycle> lqr(bicycle, Q, R, xt, n);
+    observer::Kalman<model::Bicycle> kalman(bicycle,
+            parameters::defaultvalue::kalman::Q(dt),
+            parameters::defaultvalue::kalman::R,
+            model::Bicycle::state_t::Zero(), // starts at zero state
+            std::pow(x[0]/2, 2) * model::Bicycle::state_matrix_t::Identity());
+
+    std::cout << "initial state:          [" << x.transpose() * constants::as_degrees << "]' deg" << std::endl;
     std::cout << "initial state estimate: [" << kalman.x().transpose() * constants::as_degrees << "]' deg" << std::endl;
 
     std::cout << std::endl << "simulating with observer and controller..." << std::endl;
 
     auto it_x = system_state.begin();
     auto it_xh =  system_state_estimate.begin();
-    *it_x++ = x0;
+    *it_x++ = x;
     *it_xh++ = xt;
 
-    auto x = x0;
     model::Bicycle::input_t u;
 
     auto start = std::chrono::system_clock::now();
