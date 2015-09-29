@@ -183,7 +183,7 @@ def plot_entries(samples, field, filename=None):
 
 def plot_error_covariance(samples, filename=None):
     # get time from timestamp and sample time
-    t = samples.bicycle.dt.mean() * samples.ts
+    t = samples.bicycle.dt.mean() * samples.ts[1:]
     P = samples.kalman.P
     e = samples.x - samples.kalman.x
 
@@ -199,8 +199,8 @@ def plot_error_covariance(samples, filename=None):
         ax = axes[i, j]
         ax.set_xlabel('{} [{}]'.format('time', unit('time')))
         ax.set_title('P[{}, {}]'.format(i, j))
-        ax.plot(t, P[:, i, j], color=color_calc[n], label='estimate')
-        ax.plot(t, E[:, i, j], color=color_true[n], label='true')
+        ax.plot(t, P[1:, i, j], color=color_calc[n], label='estimate')
+        ax.plot(t, E[1:, i, j], color=color_true[n], label='true')
         ax.legend()
 
     title = 'Kalman error covariance P'
@@ -261,6 +261,96 @@ def plot_norm(samples, fields=None, filename=None):
         title = 'Norm of ' + title
         axes = ax
     _set_suptitle(fig, title, filename)
+    return fig, axes
+
+
+def kalman_innovations(samples):
+    # TODO: Don't assume values are constant
+    Q = samples.kalman.Q[0]
+    R = samples.kalman.R[0]
+    A = samples.bicycle.Ad[0]
+    B = samples.bicycle.Bd[0]
+    C = samples.bicycle.Cd[0]
+
+    # calculate predicted (a priori) error covariance in order to calculate
+    # innovation covariance
+    # P_[k] = A*P[k-1]+*A' + Q[k]
+    # S[k] = C*P_[k]*C' + R[k]
+
+    # Note: (A*P*A')' = (P*A')'*A' which is also symmetric
+    PA = np.dot(samples.kalman.P[:-1], A.T)
+    P_ = np.dot(PA.transpose(0, 2, 1), A.T) + Q
+
+    PC = np.dot(P_, C.T)
+    S = np.dot(PC.transpose(0, 2, 1), C.T) + R
+
+    # calculate predicted (a priori) state estimate in order to calculate
+    # innovation
+    # x_[k] = A*x[k-1] + B*u[k]
+    # v[k] = z[k] - C*x_[k]
+    x_ = np.dot(samples.kalman.x[:-1].transpose(0, 2, 1),
+                A.T).transpose(0, 2, 1)
+    x_ += np.dot(samples.u[1:].transpose(0, 2, 1), B.T).transpose(0, 2, 1)
+    v = samples.z[1:] - np.dot(x_.transpose(0, 2, 1), C.T).transpose(0, 2, 1)
+    return v, S
+
+
+def plot_innovation_sequences(samples, filename=None):
+    # get time from timestamp and sample time
+    t = samples.bicycle.dt.mean() * samples.ts[1:]
+    v, S = kalman_innovations(samples)
+    N = len(v)
+
+    # innovation standard deviation
+#    Sd = S.diagonal(axis1=1, axis2=2)
+#    sigma = np.std(Sd, axis=0)
+    Snorm = np.linalg.norm(S, axis=(1, 2))
+    sigma = np.std(Snorm)
+    np.set_printoptions(precision=16)
+    print(v)
+
+    # normalized innovations squared
+    # q = v'*S^-1*v
+    q = np.ma.zeros(N)
+    for i in range(N):
+        q[i] = np.dot(v[i].T, np.linalg.solve(S[i], v[i]))
+
+    # innovation autocorrelation
+    ## r = np.zeros(N)
+    ## for i in range(N):
+    # E = e * e.transpose(0, 2, 1)
+    ##     r[i] = sum(np.dot(v[k].T, v[k]) for k in range(N - i - 1)) / N
+    ## r /= r[0]
+
+    color = sns.color_palette('Paired', 10)
+    fig, axes = plt.subplots(2, 2, sharex=True)
+    x_hat = samples.kalman.x
+    state = ['roll angle', 'steer angle', 'roll rate', 'steer rate']
+    for i in range(x_hat.shape[1]):
+        ax = axes[0, 0]
+        ax.plot(t, x_hat[1:, i], color=color[2*i + 1], label=state[i])
+        ax.set_xlabel('{} [{}]'.format('time', unit('time')))
+        ax.set_title('state estimate')
+        ax.legend()
+
+#    for i in range(len(sigma)):
+#        ax.plot(t, Sd[:, i], color=color[2*i + 1])
+#        ax = axes[0, 1]
+#        ax.set_xlabel('{} [{}]'.format('time', unit('time')))
+#        ax.set_title('innovation sequence')
+
+    ax = axes[0, 1]
+    ax.plot(t, Snorm)
+    low = np.mean(Snorm) - 2*sigma
+    high = np.mean(Snorm) + 2*sigma
+    ax.fill_between(t, low, high, alpha=0.2)
+    ax.set_xlabel('{} [{}]'.format('time', unit('time')))
+    ax.set_title('innovation sequence')
+
+    ax = axes[1, 0]
+    ax.plot(t, q)
+    ax.set_xlabel('{} [{}]'.format('time', unit('time')))
+    ax.set_title('normalized innovations squared')
     return fig, axes
 
 
