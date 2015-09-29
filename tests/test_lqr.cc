@@ -5,9 +5,9 @@
 class LqrConvergenceTest: public ConvergenceTest {
     public:
         void simulate() {
-            for(unsigned int i = 0; i < N; ++i) {
-                auto u = lqr->control_calculate(x);
-                x = bicycle->x_next(x, u);
+            for(unsigned int i = 0; i < m_N; ++i) {
+                auto u = m_lqr->control_calculate(m_x);
+                m_x = m_bicycle->x_next(m_x, u);
             }
         }
 };

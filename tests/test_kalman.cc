@@ -5,15 +5,15 @@
 class KalmanConvergenceTest: public ConvergenceTest {
     public:
         void simulate() {
-            for (unsigned int i = 0; i < N; ++i) {
-                x = bicycle->x_next(x);
+            for (unsigned int i = 0; i < m_N; ++i) {
+                m_x = m_bicycle->x_next(m_x);
 
-                auto z = bicycle->y(x);
-                z(0) += r0(gen);
-                z(1) += r1(gen);
+                auto z = m_bicycle->y(m_x);
+                z(0) += m_r0(m_gen);
+                z(1) += m_r1(m_gen);
 
-                kalman->time_update();
-                kalman->measurement_update(z);
+                m_kalman->time_update();
+                m_kalman->measurement_update(z);
             }
         }
 
@@ -22,28 +22,28 @@ class KalmanConvergenceTest: public ConvergenceTest {
             std::normal_distribution<> ru = std::normal_distribution<>(0, 2); // Nm, steer torque
             model::Bicycle::input_t u = model::Bicycle::input_t::Zero();
 
-            for (unsigned int i = 0; i < N; ++i) {
-                u(1) = ru(gen);
-                x = bicycle->x_next(x, u);
+            for (unsigned int i = 0; i < m_N; ++i) {
+                u(1) = ru(m_gen);
+                m_x = m_bicycle->x_next(m_x, u);
 
-                auto z = bicycle->y(x, u);
-                z(0) += r0(gen);
-                z(1) += r1(gen);
+                auto z = m_bicycle->y(m_x, u);
+                z(0) += m_r0(m_gen);
+                z(1) += m_r1(m_gen);
 
-                kalman->time_update();
-                kalman->measurement_update(z);
+                m_kalman->time_update();
+                m_kalman->measurement_update(z);
             }
         }
 };
 
 TEST_P(KalmanConvergenceTest, ZeroInput) {
     simulate();
-    test_state_near(kalman->x(), x_true());
+    test_state_near(m_kalman->x(), x_true());
 }
 
 TEST_P(KalmanConvergenceTest, RandomInput) {
     simulate_with_random_steer_input();
-    test_state_near(kalman->x(), x_true());
+    test_state_near(m_kalman->x(), x_true());
 }
 
 INSTANTIATE_TEST_CASE_P(
