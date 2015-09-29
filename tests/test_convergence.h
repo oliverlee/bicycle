@@ -10,7 +10,8 @@ class ConvergenceTest: public ::testing::TestWithParam<double> {
         virtual void SetUp();
         virtual void TearDown();
         virtual void simulate() = 0;
-        void test_state_near(model::Bicycle::state_t actual, model::Bicycle::state_t expected);
+        void test_state_near(model::Bicycle::state_t actual,
+                model::Bicycle::state_t expected, double tol_multiplier = 1.0);
         model::Bicycle::state_t x_true();
 
     protected:

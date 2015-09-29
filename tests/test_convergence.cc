@@ -40,9 +40,10 @@ void ConvergenceTest::TearDown() {
     m_lqr = nullptr;
 }
 
-void ConvergenceTest::test_state_near(model::Bicycle::state_t actual, model::Bicycle::state_t expected) {
-    EXPECT_NEAR(actual(0), expected(0), m_roll_tol);
-    EXPECT_NEAR(actual(1), expected(1), m_steer_tol);
-    EXPECT_NEAR(actual(2), expected(2), m_roll_rate_tol);
-    EXPECT_NEAR(actual(3), expected(3), m_steer_rate_tol);
+void ConvergenceTest::test_state_near(model::Bicycle::state_t actual,
+        model::Bicycle::state_t expected, double tol_multiplier) {
+    EXPECT_NEAR(actual(0), expected(0), tol_multiplier * m_roll_tol);
+    EXPECT_NEAR(actual(1), expected(1), tol_multiplier * m_steer_tol);
+    EXPECT_NEAR(actual(2), expected(2), tol_multiplier * m_roll_rate_tol);
+    EXPECT_NEAR(actual(3), expected(3), tol_multiplier * m_steer_rate_tol);
 }

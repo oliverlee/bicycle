@@ -14,7 +14,7 @@ class LqrConvergenceTest: public ConvergenceTest {
 
 TEST_P(LqrConvergenceTest, ZeroReference) {
     simulate();
-    test_state_near(x_true(), model::Bicycle::state_t::Zero());
+    test_state_near(x_true(), model::Bicycle::state_t::Zero(), 10.0);
 }
 
 INSTANTIATE_TEST_CASE_P(
