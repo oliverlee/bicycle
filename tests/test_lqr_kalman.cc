@@ -6,7 +6,7 @@ class LqrKalmanConvergenceTest: public ConvergenceTest {
     public:
         void simulate() {
             for(unsigned int i = 0; i < m_N; ++i) {
-                auto u = m_lqr->control_calculate(m_x);
+                auto u = m_lqr->control_calculate(m_kalman->x());
                 m_x = m_bicycle->x_next(m_x, u);
 
                 auto z = m_bicycle->y(m_x);
