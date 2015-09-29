@@ -4,7 +4,7 @@
 #include "discrete_linear.h"
 
 namespace controller {
-// TODO: Allow target state to vary in horizon
+// TODO: Allow reference state to vary in horizon
 
 template<typename T>
 class Lqr {
@@ -17,22 +17,22 @@ class Lqr {
         using input_cost_t = typename Eigen::Matrix<double, T::m, T::m>;
 
         Lqr(T& system, const state_cost_t& Q, const input_cost_t& R,
-                const state_t& xt, uint32_t horizon_iterations) :
+                const state_t& r, uint32_t horizon_iterations) :
             m_system(system), m_horizon(horizon_iterations),
-            m_xt(xt), m_Q(Q), m_R(R) { }
+            m_r(r), m_Q(Q), m_R(R) { }
 
         input_t control_calculate(const state_t& x);
 
         // TODO: maybe just use public member variables?
         void set_horizon(uint32_t horizon_iterations);
-        void set_xt(const state_t& xt);
+        void set_reference(const state_t& r);
         void set_Q(const state_cost_t& Q);
         void set_R(const input_cost_t& R);
 
         // accessors
         T& system() const;
         uint32_t horizon_iterations() const;
-        state_t xt() const;
+        state_t r() const;
         lqr_gain_t K() const;
         state_cost_t P() const;
         state_cost_t Q() const;
@@ -45,14 +45,14 @@ class Lqr {
         T& m_system;
         uint32_t m_horizon;
         state_t m_x; // starting state
-        state_t m_xt; // target state
+        state_t m_r; // reference state
         input_t m_u; // starting state
         lqr_gain_t m_K;
         state_cost_t m_P; // running horizon cost
         state_cost_t m_Q;
         input_cost_t m_R;
 
-        void update_target();
+        void update_reference();
         void update_lqr_gain();
         void update_horizon_cost();
 }; // class Lqr
@@ -63,8 +63,8 @@ inline void Lqr<T>::set_horizon(uint32_t horizon_iterations) {
 }
 
 template<typename T>
-inline void Lqr<T>::set_xt(const state_t& xt) {
-    m_xt = xt;
+inline void Lqr<T>::set_reference(const state_t& r) {
+    m_r = r;
 }
 
 template<typename T>
@@ -88,8 +88,8 @@ inline uint32_t Lqr<T>::horizon_iterations() const {
 }
 
 template<typename T>
-inline typename Lqr<T>::state_t Lqr<T>::xt() const {
-    return m_xt;
+inline typename Lqr<T>::state_t Lqr<T>::r() const {
+    return m_r;
 }
 
 template<typename T>

@@ -181,7 +181,7 @@ flatbuffers::Offset<::fbs::Lqr> create_lqr(
         bool r = true, bool P = true, bool Q = true, bool R = true,
         bool K = true) {
     uint32_t n_ = 0;
-    auto r_ = state(lqr.xt());
+    auto r_ = state(lqr.r());
     auto Q_ = symmetric_state_matrix(lqr.Q());
     auto R_ = symmetric_input_matrix(lqr.R());
     auto P_ = symmetric_state_matrix(lqr.P());

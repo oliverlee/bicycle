@@ -7,9 +7,9 @@ namespace controller {
 
 template<typename T>
 typename Lqr<T>::input_t Lqr<T>::control_calculate(const state_t& x) {
-    m_x = m_xt; // m_x will be updated backwards in time to adjust target
+    m_x = m_r; // m_x will be updated backwards in time to adjust reference
     for (unsigned int i = 0; i < m_horizon; ++i) {
-        update_target();
+        update_reference();
         update_lqr_gain();
         update_horizon_cost();
     }
@@ -19,7 +19,7 @@ typename Lqr<T>::input_t Lqr<T>::control_calculate(const state_t& x) {
 }
 
 template<typename T>
-void Lqr<T>::update_target() {
+void Lqr<T>::update_reference() {
     if (!m_x.isZero()) {
         m_x = m_system.Ad().fullPivHouseholderQr().solve(m_x).eval();
     }

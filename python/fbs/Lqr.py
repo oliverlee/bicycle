@@ -19,7 +19,7 @@ class Lqr(object):
         return 0
 
     # Lqr
-    def StateTarget(self):
+    def Reference(self):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(6))
         if o != 0:
             x = o + self._tab.Pos
@@ -75,7 +75,7 @@ class Lqr(object):
 
 def LqrStart(builder): builder.StartObject(6)
 def LqrAddHorizon(builder, horizon): builder.PrependUint32Slot(0, horizon, 0)
-def LqrAddStateTarget(builder, stateTarget): builder.PrependStructSlot(1, flatbuffers.number_types.UOffsetTFlags.py_type(stateTarget), 0)
+def LqrAddReference(builder, reference): builder.PrependStructSlot(1, flatbuffers.number_types.UOffsetTFlags.py_type(reference), 0)
 def LqrAddStateCost(builder, stateCost): builder.PrependStructSlot(2, flatbuffers.number_types.UOffsetTFlags.py_type(stateCost), 0)
 def LqrAddInputCost(builder, inputCost): builder.PrependStructSlot(3, flatbuffers.number_types.UOffsetTFlags.py_type(inputCost), 0)
 def LqrAddHorizonCost(builder, horizonCost): builder.PrependStructSlot(4, flatbuffers.number_types.UOffsetTFlags.py_type(horizonCost), 0)

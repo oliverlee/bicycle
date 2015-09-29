@@ -15,15 +15,7 @@ namespace {
     const model::Bicycle::state_t x0(
             (model::Bicycle::state_t() <<
                 0, 10, 10, 0).finished() * constants::as_radians);
-
-    model::Bicycle::state_t xt(
-            model::Bicycle::state_t::Zero());
-
-    const controller::Lqr<model::Bicycle>::state_cost_t Q(
-            controller::Lqr<model::Bicycle>::state_cost_t::Identity());
-
-    const controller::Lqr<model::Bicycle>::input_cost_t R(
-            0.1 * controller::Lqr<model::Bicycle>::input_cost_t::Identity());
+    model::Bicycle::state_t x;
 
     std::array<model::Bicycle::state_t, N> system_state;
     std::array<model::Bicycle::input_t, N> system_control_input;
@@ -37,35 +29,35 @@ int main(int argc, char* argv[]) {
 
     model::Bicycle bicycle(parameters::benchmark::M, parameters::benchmark::C1,
             parameters::benchmark::K0, parameters::benchmark::K2, v0, dt);
-    controller::Lqr<model::Bicycle> lqr(bicycle, Q, R, xt, n);
+    controller::Lqr<model::Bicycle> lqr(bicycle,
+            controller::Lqr<model::Bicycle>::state_cost_t::Identity(),
+            0.1 * controller::Lqr<model::Bicycle>::input_cost_t::Identity(),
+            model::Bicycle::state_t::Zero(), n);
 
-    std::cout << "initial state: [" << x0.transpose() * constants::as_degrees << "]' deg" << std::endl;
-
+    x = x0;
+    std::cout << "initial state: [" << x.transpose() * constants::as_degrees << "]' deg" << std::endl;
     std::cout << std::endl << "simulating without controller..." << std::endl;
     auto it_x = system_state.begin();
-    xt = x0;;
     start = std::chrono::system_clock::now();
     for (; it_x != system_state.end(); ++it_x) {
-        xt = bicycle.x_next(xt);
-        *it_x = xt;
+        x = bicycle.x_next(x);
+        *it_x = x;
     }
     stop = std::chrono::system_clock::now();
-    std::chrono::duration<double> duration = stop - start;
+    auto duration = stop - start;
     std::cout << "duration for simulation without controller: " <<
         std::chrono::duration_cast<std::chrono::microseconds>(duration).count() <<
         " us" << std::endl;
 
-
+    x = x0;
     std::cout << std::endl << "simulating with controller..." << std::endl;
     it_x = system_state.begin();
     auto it_u = system_control_input.begin();
-    xt = x0;
     start = std::chrono::system_clock::now();
     for (; it_x != system_state.end(); ++it_x, ++it_u) {
-        *it_u = lqr.control_calculate(xt);
-        xt = bicycle.x_next(xt, *it_u);
-        *it_x = xt;
-//        std::cout << xt.transpose() * constants::as_degrees << std::endl;
+        *it_u = lqr.control_calculate(x);
+        x = bicycle.x_next(x, *it_u);
+        *it_x = x;
     }
     stop = std::chrono::system_clock::now();
     duration = stop - start;
