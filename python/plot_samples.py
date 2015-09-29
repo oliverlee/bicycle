@@ -109,6 +109,14 @@ def plot_state(samples, degrees=True, confidence=True, filename=None):
         ax.set_ylabel('{} [{}]'.format(x_state, x_unit))
         ax.plot(t, x, color=color[2*n + 1], label='true', zorder=2)
 
+        if not z.mask.all() and z.any():
+            flatgrey = '#95a5a6'
+            cmap = sns.blend_palette([color[2*n + 1], flatgrey], 6)
+            grey_color = sns.color_palette(cmap)[4]
+            ax.plot(t[1:], z[1:], color=grey_color,
+                    label='measurement', zorder=1)
+            ax.legend()
+
         if not x_hat.mask.all():
             ax.plot(t, x_hat, color=color[2*n], label='estimate', zorder=3)
             if confidence:
@@ -118,14 +126,9 @@ def plot_state(samples, degrees=True, confidence=True, filename=None):
                 # plot confidence interval of 2 standard deviations
                 low = x_hat.ravel() - 2*std_dev
                 high = x_hat.ravel() + 2*std_dev
+                limits = ax.get_ylim()
                 ax.fill_between(t, low, high, alpha=0.2, color=color[2*n])
-            ax.legend()
-
-        if not z.mask.all() and z.any():
-            flatgrey = '#95a5a6'
-            cmap = sns.blend_palette([color[2*n + 1], flatgrey], 6)
-            grey_color = sns.color_palette(cmap)[4]
-            ax.plot(t, z, color=grey_color, label='measurement', zorder=1)
+                ax.set_ylim(limits)
             ax.legend()
 
     title = 'system state'
