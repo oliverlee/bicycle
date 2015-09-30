@@ -12,8 +12,10 @@ class Lqr {
     public:
         using state_t = typename T::state_t;
         using input_t = typename T::input_t;
+        using state_matrix_t = typename T::state_matrix_t;
+        using input_matrix_t = typename T::input_matrix_t;
         using lqr_gain_t = typename Eigen::Matrix<double, T::m, T::n>;
-        using state_cost_t = typename T::state_matrix_t;
+        using state_cost_t = state_matrix_t;
         using input_cost_t = typename Eigen::Matrix<double, T::m, T::m>;
 
         Lqr(T& system, const state_cost_t& Q, const input_cost_t& R,
@@ -23,6 +25,7 @@ class Lqr {
             m_steady_state(false), m_Ad(system.Ad()), m_Bd(system.Bd()) { }
 
         input_t control_calculate(const state_t& x);
+        input_t control_calculate(const state_t& x, const state_t& r);
 
         void set_horizon(uint32_t horizon_iterations);
         void set_reference(const state_t& r);
@@ -44,31 +47,27 @@ class Lqr {
     private:
         T& m_system;
         uint32_t m_horizon;
-        state_t m_x; // starting state
         state_t m_r; // reference state
-        input_t m_u; // starting state
         lqr_gain_t m_K;
-        state_cost_t m_P; // running horizon cost
+        state_cost_t m_P; // cost-to-go
         state_cost_t m_Q;
         input_cost_t m_R;
         bool m_steady_state;
-        typename T::state_matrix_t m_Ad;
-        typename T::input_matrix_t m_Bd;
+        state_matrix_t m_Ad;
+        input_matrix_t m_Bd;
 
-        void update_reference();
+        void perform_value_iteration();
         void update_lqr_gain();
         void update_horizon_cost();
 }; // class Lqr
 
 template<typename T>
 inline void Lqr<T>::set_horizon(uint32_t horizon_iterations) {
-    m_steady_state = false;
     m_horizon = horizon_iterations;
 }
 
 template<typename T>
 inline void Lqr<T>::set_reference(const state_t& r) {
-    m_steady_state = false;
     m_r = r;
 }
 
@@ -117,16 +116,6 @@ inline typename Lqr<T>::state_cost_t Lqr<T>::Q() const {
 template<typename T>
 inline typename Lqr<T>::input_cost_t Lqr<T>::R() const {
     return m_R;
-}
-
-template<typename T>
-inline typename Lqr<T>::state_t Lqr<T>::x() const {
-    return m_x;
-}
-
-template<typename T>
-inline typename Lqr<T>::input_t Lqr<T>::u() const {
-    return m_u;
 }
 
 template<typename T>
