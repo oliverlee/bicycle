@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
     auto fbs_state = fbs::state(x);
     //auto fbs_input = fbs::input(model::Bicycle::input_t::Zero());
     auto fbs_measurement = fbs::output(model::Bicycle::output_t::Zero());
-    builder.Finish(fbs::CreateSample(builder, current_sample,
+    builder.Finish(fbs::CreateSample(builder, current_sample, 0,
                 bicycle_location, kalman_location, 0,
                 &fbs_state, 0, 0, &fbs_measurement));
 
@@ -88,6 +88,7 @@ int main(int argc, char* argv[]) {
 
     auto disc_start = std::chrono::system_clock::now();
     for (; current_sample < N; ++current_sample) {
+        auto comp_start = std::chrono::high_resolution_clock::now();
         /* compute control law */
         //auto u = lqr.control_calculate(kalman.x());
 
@@ -117,7 +118,9 @@ int main(int argc, char* argv[]) {
         //fbs_input = fbs::input(u);
         fbs_measurement = fbs::output(z);
 
-        builder.Finish(fbs::CreateSample(builder, current_sample,
+        auto comp_stop = std::chrono::high_resolution_clock::now();
+        auto comp_time = std::chrono::duration<double>(comp_stop - comp_start);
+        builder.Finish(fbs::CreateSample(builder, current_sample, comp_time.count(),
                     0, kalman_location, 0, &fbs_state, 0, 0, &fbs_measurement));
         /* sample is serialized */
 
