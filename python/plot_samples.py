@@ -14,7 +14,9 @@ import convert
 
 
 def unit(value, degrees=True):
-    if value.endswith('angle'):
+    if value == 'computation time':
+        u = 'us'
+    elif value.endswith('angle'):
         u = 'rad'
     elif value.endswith('rate'):
         u = 'rad/s'
@@ -69,6 +71,43 @@ def hold_masked_values(masked_array):
             edges = []
         data[slice(start, stop)] = data[start - 1]
     return data
+
+def plot_computation_time(samples, filename=None):
+    t = samples.bicycle.dt.mean() * samples.ts
+    tc = samples.t_comp / 1e-6 # convert seconds to microseonds
+    label = 'computation time'
+
+    fig, axes = plt.subplots(1, 2)
+    axes = axes.ravel()
+
+    ax = axes[0]
+    ax.set_xlabel('{} [{}]'.format('time', unit('time')))
+    ax.set_ylabel('{} [{}]'.format(label, unit(label)))
+    ax.set_title('time series')
+    ax.plot(t, tc)
+
+    ax = axes[1]
+    max_tc = np.ceil(np.max(tc))
+    bins = int(max_tc/2)
+
+    # normalize histogram such that sum of bars is 1
+    hist, bins = np.histogram(tc, bins=bins)
+    hist = hist.astype(np.float64)
+    hist /= np.sum(hist)
+    widths = np.diff(bins)
+    ax.bar(bins[:-1], hist, widths, alpha=0.4, label='N = {}'.format(len(tc)))
+    ax.set_xlabel('{} [{}]'.format(label, unit(label)))
+    ax.set_ylabel('frequency')
+    ax.set_title('histogram')
+    ax.legend()
+
+    # don't show negative ticks
+    _, xmax = ax.get_xlim()
+    ax.set_xlim(0, xmax)
+
+    title = 'computation time'
+    _set_suptitle(fig, title, filename)
+    return fig, axes
 
 
 def plot_state(samples, degrees=True, confidence=True, filename=None):
