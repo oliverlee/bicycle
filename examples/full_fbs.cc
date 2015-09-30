@@ -19,7 +19,7 @@ namespace {
     const double dt = 1.0/fs;           // sample time [s]
     const double v0 = 5.0;              // forward speed [m/s]
     const size_t N = 1000;                // length of simulation in samples
-    //const size_t n = 100;               // length of horizon in samples
+    const size_t n = 100;               // length of horizon in samples
 
     model::Bicycle::state_t x; // roll angle, steer angle, roll rate, steer rate
 
@@ -27,6 +27,17 @@ namespace {
     flatbuffers::FlatBufferBuilder builder;
     flatbuffers::FlatBufferBuilder log_builder;
     flatbuffers::Offset<fbs::SampleBuffer> sample_locations[N];
+
+    /* reference trajectory (roll angle and roll reference) */
+    auto reference = [](double t) {
+        const double f = 1; // 1 Hz sine wave
+        const model::Bicycle::state_t r((model::Bicycle::state_t() <<
+            3 * std::sin(constants::two_pi*f*t),
+            0,
+            3*constants::two_pi*f * std::cos(constants::two_pi*f*t),
+            0).finished() * constants::as_radians);
+        return r;
+    };
 
     /* used for noise generation */
     std::random_device rd; // used only to seed rng
@@ -53,11 +64,15 @@ int main(int argc, char* argv[]) {
             model::Bicycle::state_t::Zero(), // starts at zero state
             std::pow(x[0]/2, 2) * model::Bicycle::state_matrix_t::Identity());
 
-//    controller::Lqr<model::Bicycle> lqr(bicycle,
-//            controller::Lqr<model::Bicycle>::state_cost_t::Identity(),
-//            0.1 * controller::Lqr<model::Bicycle>::input_cost_t::Identity(),
-//            model::Bicycle::state_t::Zero(),
-//            n);
+    controller::Lqr<model::Bicycle> lqr(bicycle,
+            (controller::Lqr<model::Bicycle>::state_cost_t() <<
+             1000000,     0,   0,      0,
+                   0, 0.001,   0,      0,
+                   0,     0, 0.1,      0,
+                   0,     0,   0, 0.0001).finished() * constants::as_radians,
+            0.01 * controller::Lqr<model::Bicycle>::input_cost_t::Identity(),
+            model::Bicycle::state_t::Zero(),
+            n);
 
     std::cout << "initial state: [" << x.transpose() << "]' rad" << std::endl;
     std::cout << "initial state estimate: [" << kalman.x().transpose() * constants::as_degrees << "]' deg" << std::endl;
@@ -65,8 +80,7 @@ int main(int argc, char* argv[]) {
 
     std::cout << "simulating discrete time system at constant speed (" <<
         N << " steps at " << fs << " Hz)" << std::endl;
-    //std::cout << "with kalman filter and lqr controller..." << std::endl;
-    std::cout << "with kalman filter..." << std::endl;
+    std::cout << "with kalman filter and lqr controller..." << std::endl;
 
     /* flatbuffer objects must be serialized in depth first pre-order traversal
      * bicycle, kalman, and lqr objects must be serialized first
@@ -75,12 +89,12 @@ int main(int argc, char* argv[]) {
     size_t current_sample = 0;
     auto bicycle_location = fbs::create_bicycle(builder, bicycle);
     auto kalman_location = fbs::create_kalman(builder, kalman);
-    //auto lqr_location = fbs::create_lqr(builder, lqr);
+    auto lqr_location = fbs::create_lqr(builder, lqr);
     auto fbs_state = fbs::state(x);
-    //auto fbs_input = fbs::input(model::Bicycle::input_t::Zero());
+    auto fbs_input = fbs::input(model::Bicycle::input_t::Zero());
     auto fbs_measurement = fbs::output(model::Bicycle::output_t::Zero());
     builder.Finish(fbs::CreateSample(builder, current_sample,
-                bicycle_location, kalman_location, 0,
+                bicycle_location, kalman_location, lqr_location,
                 &fbs_state, 0, 0, &fbs_measurement));
 
     auto data = log_builder.CreateVector(builder.GetBufferPointer(), builder.GetSize());
@@ -88,12 +102,14 @@ int main(int argc, char* argv[]) {
 
     auto disc_start = std::chrono::system_clock::now();
     for (; current_sample < N; ++current_sample) {
+        double t = current_sample * dt;
+        lqr.set_reference(reference(t));
+
         /* compute control law */
-        //auto u = lqr.control_calculate(kalman.x());
+        auto u = lqr.control_calculate(kalman.x());
 
         /* system simulate */
-        //x = bicycle.x_next(x, u);
-        x = bicycle.x_next(x);
+        x = bicycle.x_next(x, u);
 
         /* measure output with noise */
         auto z = bicycle.y(x);
@@ -101,24 +117,24 @@ int main(int argc, char* argv[]) {
         z(1) += rn1(gen);
 
         /* observer time/measurement update */
-        //kalman.time_update(u);
-        kalman.time_update();
+        kalman.time_update(u);
         kalman.measurement_update(z);
 
         builder.Clear();
 
         kalman_location = fbs::create_kalman(builder, kalman,
-                true, true, false, false, true);
-        //lqr_location = fbs::create_lqr(builder, lqr,
-        //        false, false, true, false, false, true);
+                true, true, false, false, true); // x, P, Q, R, K
+        lqr_location = fbs::create_lqr(builder, lqr,
+                false, true, true, false, false, true); // n, r, P, Q, R, K
 
         /* skip output as we can get it from state */
         fbs_state = fbs::state(x);
-        //fbs_input = fbs::input(u);
+        fbs_input = fbs::input(u);
         fbs_measurement = fbs::output(z);
 
         builder.Finish(fbs::CreateSample(builder, current_sample,
-                    0, kalman_location, 0, &fbs_state, 0, 0, &fbs_measurement));
+                    0, kalman_location, lqr_location,
+                    &fbs_state, &fbs_input, 0, &fbs_measurement));
         /* sample is serialized */
 
         //uint8_t* p = nullptr;
