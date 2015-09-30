@@ -20,6 +20,8 @@ def unit(value, degrees=True):
         u = 'rad/s'
     elif value.endswith('time'):
         u = 's'
+    elif value.endswith('torque'):
+        u = 'N'
     else:
         raise NotImplementedError(
                 "No unit associated with '{}'.".format(value))
@@ -34,12 +36,20 @@ def _set_suptitle(fig, title, filename):
     fig.suptitle(title, size=mpl.rcParams['font.size'] + 2)
 
 
+def _grey_color(color):
+        flatgrey = '#95a5a6'
+        cmap = sns.blend_palette([color, flatgrey], 6)
+        return sns.color_palette(cmap)[4]
+
+
 def hold_masked_values(masked_array):
     """Fill in masked values using previous valid value. Returns a numpy
     array."""
     mask = masked_array.mask
-    if len(mask.shape) > 1:
+    if len(mask.shape) == 3:
         mask = mask[:, 0, 0]
+    elif len(mask.shape) == 2:
+        mask = mask[:, 0]
     if not mask.any():
         return masked_array.data
 
@@ -132,6 +142,59 @@ def plot_state(samples, degrees=True, confidence=True, filename=None):
             ax.legend()
 
     title = 'system state'
+    _set_suptitle(fig, title, filename)
+    return fig, axes
+
+
+def plot_control(samples, degrees=True, filename=None):
+    # get time from timestamp and sample time
+    t = samples.bicycle.dt.mean() * samples.ts
+
+    n = samples.x.shape[1] + samples.u.shape[1]
+    cols = 2
+    rows = math.ceil(n/cols)
+    fig, axes = plt.subplots(rows, cols, sharex=True)
+    axes = np.ravel(axes)
+    if len(axes) > n:
+        axes[-1].axis('off')
+
+    color = sns.color_palette('Paired', 12)
+    state = ['roll angle', 'steer angle', 'roll rate', 'steer rate']
+    control = ['roll torque', 'steer torque']
+
+    for n in range(samples.x.shape[1]):
+        ax = axes[n]
+
+        x_state = state[n]
+        x_unit = unit(x_state, degrees)
+
+        x = samples.x[:, n]
+        r = hold_masked_values(samples.lqr.r[:, n])
+        e = x - r
+        if degrees and '°' in x_unit:
+            x = np.rad2deg(x)
+            r = np.rad2deg(r)
+            e = np.rad2deg(e)
+
+        ax.set_xlabel('{} [{}]'.format('time', unit('time')))
+        ax.set_ylabel('{} [{}]'.format(x_state, x_unit))
+        ax.plot(t, x, color=color[2*n + 1], label='true')
+        ax.plot(t, r, color=color[2*n], label='reference')
+        ax.plot(t, e, color=_grey_color(color[2*n + 1]), label='error')
+        ax.legend()
+
+    for n in range(samples.u.shape[1]):
+        ax = axes[n + samples.x.shape[1]]
+
+        u_control = control[n]
+        u_unit = unit(u_control, degrees)
+
+        u = samples.u[:, n]
+        ax.set_xlabel('{} [{}]'.format('time', unit('time')))
+        ax.set_ylabel('{} [{}]'.format(u_control, u_unit))
+        ax.plot(t, u, color=color[2*(samples.x.shape[1] + n) + 1])
+
+    title = 'system control'
     _set_suptitle(fig, title, filename)
     return fig, axes
 
