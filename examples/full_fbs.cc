@@ -35,7 +35,7 @@ namespace {
     constexpr double r0 = 1; // roll torque cost weight
     constexpr double r1 = 1; // steer torque cost weight
 
-    bicycle_t::state_t x; // roll angle, steer angle, roll rate, steer rate
+    bicycle_t::state_t x; // yaw angle, roll angle, steer angle, roll rate, steer rate
 
     /* used for serializing/logging */
     flatbuffers::FlatBufferBuilder builder;
@@ -46,6 +46,7 @@ namespace {
     auto reference = [](double t) {
         const double f = 1; // 1 Hz sine wave
         const bicycle_t::state_t r((bicycle_t::state_t() <<
+            0,
             3 * std::sin(constants::two_pi*f*t),
             0,
             3*constants::two_pi*f * std::cos(constants::two_pi*f*t),
@@ -73,7 +74,7 @@ int main(int argc, char* argv[]) {
             parameters::benchmark::steer_axis_tilt,
             v0, dt);
     bicycle.set_C(parameters::defaultvalue::bicycle::C);
-    x << 5, 5, 0, 0; // define x0 in degrees
+    x << 0, 5, 5, 0, 0; // define x0 in degrees
     x *= constants::as_radians; // convert to radians
 
     kalman_t kalman(bicycle,
@@ -96,7 +97,7 @@ int main(int argc, char* argv[]) {
 
     std::cout << "initial state: [" << x.transpose() << "]' rad" << std::endl;
     std::cout << "initial state estimate: [" << kalman.x().transpose() * constants::as_degrees << "]' deg" << std::endl;
-    std::cout << "states are: [roll angle, steer angle, roll rate, steer rate]'" << std::endl << std::endl;
+    std::cout << "states are: [yaw, roll angle, steer angle, roll rate, steer rate]'" << std::endl << std::endl;
 
     std::cout << "simulating discrete time system at constant speed (" <<
         N << " steps at " << fs << " Hz)" << std::endl;

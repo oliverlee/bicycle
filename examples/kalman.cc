@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
             parameters::benchmark::steer_axis_tilt,
             v0, dt);
     bicycle.set_C(parameters::defaultvalue::bicycle::C);
-    x << 0, 10, 10, 0; // define x in degrees
+    x << 0, 0, 10, 10, 0; // define x in degrees
     x *= constants::as_radians; // convert degrees to radians
 
     observer::Kalman<model::Bicycle> kalman(bicycle,

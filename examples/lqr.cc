@@ -14,7 +14,7 @@ namespace {
 
     const model::Bicycle::state_t x0(
             (model::Bicycle::state_t() <<
-                0, 10, 10, 0).finished() * constants::as_radians);
+                0, 0, 10, 10, 0).finished() * constants::as_radians);
     model::Bicycle::state_t x;
 
     std::array<model::Bicycle::state_t, N> system_state;

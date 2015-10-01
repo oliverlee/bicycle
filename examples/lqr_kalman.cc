@@ -16,7 +16,7 @@ namespace {
 
     model::Bicycle::state_t x(
             (model::Bicycle::state_t() <<
-                5, 5, 0, 0).finished() * constants::as_radians);
+                0, 5, 5, 0, 0).finished() * constants::as_radians);
 
     std::array<model::Bicycle::state_t, N> system_state;
     std::array<model::Bicycle::state_t, N> system_state_estimate;

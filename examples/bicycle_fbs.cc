@@ -33,12 +33,12 @@ int main(int argc, char* argv[]) {
             parameters::benchmark::steer_axis_tilt,
             v0, dt);
 
-    model::Bicycle::state_t x; // roll angle, steer angle, roll rate, steer rate
-    x << 0, 10, 10, 0; // define x0 in degrees
+    model::Bicycle::state_t x; // yaw angle, roll angle, steer angle, roll rate, steer rate
+    x << 0, 0, 10, 10, 0; // define x0 in degrees
     x *= constants::as_radians; // convert to radians
     system_state[0] = x;
     std::cout << "initial state: [" << x.transpose() << "]' rad" << std::endl;
-    std::cout << "states are: [roll angle, steer angle, roll rate, steer rate]'" << std::endl << std::endl;
+    std::cout << "states are: [yaw angle, roll angle, steer angle, roll rate, steer rate]'" << std::endl << std::endl;
 
     // flatbuffer objects must be serialized in depth first pre-order traversal
     size_t current_sample = 0;

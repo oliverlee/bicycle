@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from functools import reduce
-from itertools import product
 from operator import mul
 import math
 import os
@@ -127,9 +126,11 @@ def plot_state(samples, degrees=True, confidence=True, filename=None):
     cols = 2
     rows = math.ceil(samples.x.shape[1] / cols)
     fig, axes = plt.subplots(rows, cols, sharex=True)
+    axes = axes.ravel()
 
     color = sns.color_palette('Paired', 10)
-    state = ['roll angle', 'steer angle', 'roll rate', 'steer rate']
+    state = ['yaw angle', 'roll angle', 'steer angle',
+             'roll rate', 'steer rate']
 
     # We want C'*z so we have the measured state with noise at every timestep
     # (some states will be zero).
@@ -137,12 +138,9 @@ def plot_state(samples, degrees=True, confidence=True, filename=None):
     C = samples.bicycle.Cd[0] # C = Cd
 
     x_meas = np.dot(samples.z.transpose(0, 2, 1), C).transpose(0, 2, 1)
-    for n, (i, j) in enumerate(product(range(rows), range(cols))):
-        ax = axes[i, j]
-        if n >= samples.x.shape[1]:
-            ax.axis('off')
-            continue
-
+    axes[0].axis('off')
+    for n in range(rows*cols):
+        ax = axes[n + 1]
         x_state = state[n]
         x_unit = unit(x_state, degrees)
 
@@ -158,7 +156,7 @@ def plot_state(samples, degrees=True, confidence=True, filename=None):
         ax.set_ylabel('{} [{}]'.format(x_state, x_unit))
         ax.plot(t, x, color=color[2*n + 1], label='true', zorder=2)
 
-        if not z.mask.all() and z.any():
+        if not samples.z.mask.all():
             flatgrey = '#95a5a6'
             cmap = sns.blend_palette([color[2*n + 1], flatgrey], 6)
             grey_color = sns.color_palette(cmap)[4]
@@ -254,18 +252,20 @@ def plot_entries(samples, field, filename=None):
     else:
         color = sns.color_palette('muted', n)
     fig, axes = plt.subplots(rows, cols, sharex=True)
+    axes = axes.ravel()
 
     vector_type = False
-    if len(axes.shape) == 1:
+    if cols == 1:
         vector_type = True
 
     fields = field.split('.')
-    for n, (i, j) in enumerate(product(range(rows), range(cols))):
+    for n in range(rows*cols):
+        ax = axes[n]
         if vector_type:
-            ax = axes[n]
             x = X[:, n]
         else:
-            ax = axes[i, j]
+            i = n // cols
+            j = n % cols
             x = X[:, i, j]
 
         # small entries in Kalman gain K break plots
@@ -300,9 +300,12 @@ def plot_error_covariance(samples, filename=None):
     color_calc = sns.husl_palette(rows*cols)
     color_true = sns.husl_palette(rows*cols, l=0.4)
     fig, axes = plt.subplots(rows, cols, sharex=True)
+    axes = axes.ravel()
 
-    for n, (i, j) in enumerate(product(range(rows), range(cols))):
-        ax = axes[i, j]
+    for n in range(rows*cols):
+        ax = axes[n]
+        i = n // cols
+        j = n % cols
         ax.set_xlabel('{} [{}]'.format('time', unit('time')))
         ax.set_title('P[{}, {}]'.format(i, j))
         ax.plot(t, P[:, i, j], color=color_calc[n], label='estimate')
