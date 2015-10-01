@@ -3,6 +3,7 @@
 #include "bicycle.h"
 #include "parameters.h"
 #include "test_utilities.h"
+#include "test_state_space.h"
 
 /*
  * A and B expected state space matrices generated using dtk.bicycle:
@@ -16,6 +17,7 @@
  * import scipy.signal as sig
  * sig.cont2discrete((A, B, np.eye(4), np.zeros((4, 2))), 1/200)
  */
+
 
 namespace {
     const double dt = 1.0/200;
@@ -56,48 +58,44 @@ namespace {
     };
 } // namespace
 
-TEST(StateSpace, ContinuousV1) {
-    model::Bicycle bicycle(parameters::benchmark::M, parameters::benchmark::C1,
-            parameters::benchmark::K0, parameters::benchmark::K2, 1.0, 0);
+TEST_F(StateSpaceTest, ContinuousV1) {
+    bicycle->set_v(1.0, 0);
 
     A <<  0.                ,   0.                ,   1.                , 0.                ,
           0.                ,   0.                ,   0.                , 1.                ,
           9.4865338000460664,  -1.4625257433243051,  -0.1055224498056882, -0.330515398992312 ,
          11.7154748079957685,  28.9264833312917631,   3.6768052333214327, -3.0848655274330694;
 
-    EXPECT_TRUE(bicycle.A().isApprox(A)) << output_matrices(bicycle.A(), A);
-    EXPECT_TRUE(bicycle.B().isApprox(B)) << output_matrices(bicycle.B(), B);
+    EXPECT_TRUE(bicycle->A().isApprox(A)) << output_matrices(bicycle->A(), A);
+    EXPECT_TRUE(bicycle->B().isApprox(B)) << output_matrices(bicycle->B(), B);
 }
 
-TEST(StateSpace, ContinuousV3) {
-    model::Bicycle bicycle(parameters::benchmark::M, parameters::benchmark::C1,
-            parameters::benchmark::K0, parameters::benchmark::K2, 3.0, 0);
+TEST_F(StateSpaceTest, ContinuousV3) {
+    bicycle->set_v(3.0, 0);
 
     A <<  0.                ,   0.                ,   1.                , 0.                ,
           0.                ,   0.                ,   0.                , 1.                ,
           9.4865338000460664,  -8.5921076477970253,  -0.3165673494170646, -0.9915461969769359,
          11.7154748079957685,  13.1527626512942426,  11.0304156999642977, -9.2545965822992091;
 
-    EXPECT_TRUE(bicycle.A().isApprox(A)) << output_matrices(bicycle.A(), A);
-    EXPECT_TRUE(bicycle.B().isApprox(B)) << output_matrices(bicycle.B(), B);
+    EXPECT_TRUE(bicycle->A().isApprox(A)) << output_matrices(bicycle->A(), A);
+    EXPECT_TRUE(bicycle->B().isApprox(B)) << output_matrices(bicycle->B(), B);
 }
 
-TEST(StateSpace, ContinuousV5) {
-    model::Bicycle bicycle(parameters::benchmark::M, parameters::benchmark::C1,
-            parameters::benchmark::K0, parameters::benchmark::K2, 5.0, 0);
+TEST_F(StateSpaceTest, ContinuousV5) {
+    bicycle->set_v(5.0, 0);
 
     A <<  0.                ,   0.                ,   1.                , 0.                ,
           0.                ,   0.                ,   0.                , 1.                ,
           9.4865338000460664, -22.8512714567424666,  -0.5276122490284411, -1.6525769949615603,
          11.7154748079957685, -18.3946787087007344,  18.384026166607164 , -15.4243276371653479;
 
-    EXPECT_TRUE(bicycle.A().isApprox(A)) << output_matrices(bicycle.A(), A);
-    EXPECT_TRUE(bicycle.B().isApprox(B)) << output_matrices(bicycle.B(), B);
+    EXPECT_TRUE(bicycle->A().isApprox(A)) << output_matrices(bicycle->A(), A);
+    EXPECT_TRUE(bicycle->B().isApprox(B)) << output_matrices(bicycle->B(), B);
 }
 
-TEST(StateSpace, DiscreteV1) {
-    model::Bicycle bicycle(parameters::benchmark::M, parameters::benchmark::C1,
-            parameters::benchmark::K0, parameters::benchmark::K2, 1.0, dt);
+TEST_F(StateSpaceTest, DiscreteV1) {
+    bicycle->set_v(1.0, dt);
 
     Ad << 1.0001184820643081e+00,  -1.8478167519170527e-05, 4.9988533321204658e-03,  -4.1402267568149167e-06,
           1.4642849817488363e-04,   1.0003596378458957e+00, 4.5963276543359894e-05,   4.9622093457528903e-03,
@@ -108,13 +106,12 @@ TEST(StateSpace, DiscreteV1) {
           8.0170391584997460e-05,  -6.3821951352698188e-04,
          -6.1503818438800187e-04,   2.1450096478647790e-02;
 
-    EXPECT_TRUE(bicycle.Ad().isApprox(Ad)) << output_matrices(bicycle.Ad(), Ad);
-    EXPECT_TRUE(bicycle.Bd().isApprox(Bd)) << output_matrices(bicycle.Bd(), Bd);
+    EXPECT_TRUE(bicycle->Ad().isApprox(Ad)) << output_matrices(bicycle->Ad(), Ad);
+    EXPECT_TRUE(bicycle->Bd().isApprox(Bd)) << output_matrices(bicycle->Bd(), Bd);
 }
 
-TEST(StateSpace, DiscreteV3) {
-    model::Bicycle bicycle(parameters::benchmark::M, parameters::benchmark::C1,
-            parameters::benchmark::K0, parameters::benchmark::K2, 3.0, dt);
+TEST_F(StateSpaceTest, DiscreteV3) {
+    bicycle->set_v(3.0, dt);
 
     Ad << 1.0001182770323798e+00,  -1.0761577382854053e-04, 4.9960146578785398e-03,  -1.2376061665969063e-05,
           1.4636823146804625e-04,   1.0001599497146791e+00, 1.3595045476592029e-04,   4.8861238841920599e-03,
@@ -125,13 +122,12 @@ TEST(StateSpace, DiscreteV3) {
           8.1147158805629875e-05,  -6.7347769059348866e-04,
          -6.0416264157068470e-04,   2.1109948411569327e-02;
 
-    EXPECT_TRUE(bicycle.Ad().isApprox(Ad)) << output_matrices(bicycle.Ad(), Ad);
-    EXPECT_TRUE(bicycle.Bd().isApprox(Bd)) << output_matrices(bicycle.Bd(), Bd);
+    EXPECT_TRUE(bicycle->Ad().isApprox(Ad)) << output_matrices(bicycle->Ad(), Ad);
+    EXPECT_TRUE(bicycle->Bd().isApprox(Bd)) << output_matrices(bicycle->Bd(), Bd);
 }
 
-TEST(StateSpace, DiscreteV5) {
-    model::Bicycle bicycle(parameters::benchmark::M, parameters::benchmark::C1,
-            parameters::benchmark::K0, parameters::benchmark::K2, 5.0, dt);
+TEST_F(StateSpaceTest, DiscreteV5) {
+    bicycle->set_v(5.0, dt);
 
     Ad << 1.0001184820643081e+00,  -1.8478167519170527e-05, 4.9988533321204658e-03,  -4.1402267568149167e-06,
           1.4642849817488363e-04,   1.0003596378458957e+00, 4.5963276543359894e-05,   4.9622093457528903e-03,
@@ -150,15 +146,23 @@ TEST(StateSpace, DiscreteV5) {
           8.2117225610236940e-05,  -7.0858832804455301e-04,
          -5.9344551127057076e-04,   2.0774496614372077e-02;
 
-    EXPECT_TRUE(bicycle.Ad().isApprox(Ad)) << output_matrices(bicycle.Ad(), Ad);
-    EXPECT_TRUE(bicycle.Bd().isApprox(Bd)) << output_matrices(bicycle.Bd(), Bd);
+    EXPECT_TRUE(bicycle->Ad().isApprox(Ad)) << output_matrices(bicycle->Ad(), Ad);
+    EXPECT_TRUE(bicycle->Bd().isApprox(Bd)) << output_matrices(bicycle->Bd(), Bd);
 }
 
 TEST(StateSpace, LookupFound) {
     model::Bicycle bicycle0(parameters::benchmark::M, parameters::benchmark::C1,
-            parameters::benchmark::K0, parameters::benchmark::K2, vw, dt, &state_space_map);
+            parameters::benchmark::K0, parameters::benchmark::K2,
+            parameters::benchmark::wheelbase,
+            parameters::benchmark::trail,
+            parameters::benchmark::steer_axis_tilt,
+            vw, dt, &state_space_map);
     model::Bicycle bicycle1(parameters::benchmark::M, parameters::benchmark::C1,
-            parameters::benchmark::K0, parameters::benchmark::K2, vw, dt);
+            parameters::benchmark::K0, parameters::benchmark::K2,
+            parameters::benchmark::wheelbase,
+            parameters::benchmark::trail,
+            parameters::benchmark::steer_axis_tilt,
+            vw, dt);
 
     EXPECT_FALSE(bicycle0.Ad().isApprox(bicycle1.Ad())) << output_matrices(bicycle0.Ad(), bicycle1.Ad());
     EXPECT_FALSE(bicycle0.Bd().isApprox(bicycle1.Bd())) << output_matrices(bicycle0.Bd(), bicycle1.Bd());
@@ -177,9 +181,17 @@ TEST(StateSpace, LookupFound) {
 TEST(StateSpace, LookupNotFound) {
     double v = 1.0;
     model::Bicycle bicycle0(parameters::benchmark::M, parameters::benchmark::C1,
-            parameters::benchmark::K0, parameters::benchmark::K2, v, dt, &state_space_map);
+            parameters::benchmark::K0, parameters::benchmark::K2,
+            parameters::benchmark::wheelbase,
+            parameters::benchmark::trail,
+            parameters::benchmark::steer_axis_tilt,
+            v, dt, &state_space_map);
     model::Bicycle bicycle1(parameters::benchmark::M, parameters::benchmark::C1,
-            parameters::benchmark::K0, parameters::benchmark::K2, v, dt);
+            parameters::benchmark::K0, parameters::benchmark::K2,
+            parameters::benchmark::wheelbase,
+            parameters::benchmark::trail,
+            parameters::benchmark::steer_axis_tilt,
+            v, dt);
 
     EXPECT_TRUE(bicycle0.Ad().isApprox(bicycle1.Ad())) << output_matrices(bicycle0.Ad(), bicycle1.Ad());
     EXPECT_TRUE(bicycle0.Bd().isApprox(bicycle1.Bd())) << output_matrices(bicycle0.Bd(), bicycle1.Bd());

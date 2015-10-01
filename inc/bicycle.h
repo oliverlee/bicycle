@@ -41,6 +41,7 @@ class Bicycle : public DiscreteLinear<4, 2, 2, 2> {
 
         Bicycle(const second_order_matrix_t& M, const second_order_matrix_t& C1,
                 const second_order_matrix_t& K0, const second_order_matrix_t& K2,
+                double wheelbase, double trail, double steer_axis_tilt,
                 double v, double dt,
                 const state_space_map_t* discrete_state_space_map = nullptr);
         Bicycle(const char* param_file, double v, double dt,
@@ -72,6 +73,9 @@ class Bicycle : public DiscreteLinear<4, 2, 2, 2> {
         second_order_matrix_t C1() const;
         second_order_matrix_t K0() const;
         second_order_matrix_t K2() const;
+        double wheelbase() const;
+        double trail() const;
+        double steer_axis_tilt() const;
         double v() const;
         virtual double dt() const;
 
@@ -82,6 +86,9 @@ class Bicycle : public DiscreteLinear<4, 2, 2, 2> {
         second_order_matrix_t m_C1;
         second_order_matrix_t m_K0;
         second_order_matrix_t m_K2;
+        double m_w;
+        double m_c;
+        double m_lambda;
 
         state_matrix_t m_A;
         //input_matrix_t m_B; Use Cholesky decomposition of M
@@ -113,7 +120,7 @@ class Bicycle : public DiscreteLinear<4, 2, 2, 2> {
             state_t, double, state_t, double,
             boost::numeric::odeint::vector_space_algebra> m_stepper_noinput;
 
-        void set_matrices_from_file(const char* param_file);
+        void set_parameters_from_file(const char* param_file);
         void initialize_state_space_matrices();
 }; // class Bicycle
 
@@ -170,6 +177,15 @@ inline Bicycle::second_order_matrix_t Bicycle::K0() const {
 }
 inline Bicycle::second_order_matrix_t Bicycle::K2() const {
     return m_K2;
+}
+inline double Bicycle::wheelbase() const {
+    return m_w;
+}
+inline double Bicycle::trail() const {
+    return m_c;
+}
+inline double Bicycle::steer_axis_tilt() const {
+    return m_lambda;
 }
 inline double Bicycle::v() const {
     return m_v;

@@ -10,6 +10,9 @@ namespace parameters {
         extern const model::Bicycle::second_order_matrix_t C1;
         extern const model::Bicycle::second_order_matrix_t K0;
         extern const model::Bicycle::second_order_matrix_t K2;
+        extern const double wheelbase;
+        extern const double trail;
+        extern const double steer_axis_tilt;
     } // namespace benchmark
 
     // default matrices used for examples and tests

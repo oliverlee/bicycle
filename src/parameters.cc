@@ -16,6 +16,9 @@ namespace benchmark {
     const model::Bicycle::second_order_matrix_t K2(
             (model::Bicycle::second_order_matrix_t() <<
              0.0, 76.59734589573222, 0.0, 2.65431523794604).finished());
+    const double wheelbase = 1.02;
+    const double trail = 0.08;
+    const double steer_axis_tilt = boost::math::constants::pi<double>()/10.0;
 } // namespace benchmark
 
 namespace defaultvalue {

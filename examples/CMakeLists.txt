@@ -1,4 +1,5 @@
 add_executable(bicycle_model bicycle_model.cc ${BICYCLE_SOURCE})
+add_executable(bicycle_param bicycle_param.cc ${BICYCLE_SOURCE})
 add_executable(kalman kalman.cc ${BICYCLE_SOURCE})
 add_executable(lqr lqr.cc ${BICYCLE_SOURCE})
 add_executable(lqr_kalman lqr_kalman.cc ${BICYCLE_SOURCE})

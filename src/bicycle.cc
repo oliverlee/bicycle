@@ -15,8 +15,10 @@ namespace {
 namespace model {
 Bicycle::Bicycle(const second_order_matrix_t& M, const second_order_matrix_t& C1,
         const second_order_matrix_t& K0, const second_order_matrix_t& K2,
+        double wheelbase, double trail, double steer_axis_tilt,
         double v, double dt, const state_space_map_t* discrete_state_space_map) :
     m_M(M), m_C1(C1), m_K0(K0), m_K2(K2),
+    m_w(wheelbase), m_c(trail), m_lambda(steer_axis_tilt),
     m_expAT(m_AT), m_discrete_state_space_map(discrete_state_space_map) {
     initialize_state_space_matrices();
 
@@ -28,7 +30,7 @@ Bicycle::Bicycle(const char* param_file, double v, double dt,
         const state_space_map_t* discrete_state_space_map) :
     m_expAT(m_AT), m_discrete_state_space_map(discrete_state_space_map) {
     // set M, C1, K0, K2 matrices from file
-    set_matrices_from_file(param_file);
+    set_parameters_from_file(param_file);
     initialize_state_space_matrices();
 
     // set forward speed, sampling time and update state matrices
@@ -133,9 +135,9 @@ bool Bicycle::discrete_state_space_lookup(const state_space_map_key_t& k) {
     return true;
 }
 
-void Bicycle::set_matrices_from_file(const char* param_file) {
+void Bicycle::set_parameters_from_file(const char* param_file) {
     const unsigned int num_elem = o*o;
-    std::array<double, 4*num_elem> buffer;
+    std::array<double, 4*num_elem + 3> buffer;
 
     std::fstream pf(param_file, std::ios_base::in);
     if (!pf.good()) {
@@ -151,6 +153,9 @@ void Bicycle::set_matrices_from_file(const char* param_file) {
     m_C1 = Eigen::Map<second_order_matrix_t>(buffer.data() + num_elem).transpose();
     m_K0 = Eigen::Map<second_order_matrix_t>(buffer.data() + 2*num_elem).transpose();
     m_K2 = Eigen::Map<second_order_matrix_t>(buffer.data() + 3*num_elem).transpose();
+    m_w = buffer[4*num_elem];
+    m_c = buffer[4*num_elem + 1];
+    m_lambda = buffer[4*num_elem + 2];
 }
 
 void Bicycle::initialize_state_space_matrices() {
