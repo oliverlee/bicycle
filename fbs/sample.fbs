@@ -148,7 +148,7 @@ table Kalman {
 
 table Lqr {
     horizon:uint;
-    state_target:State;
+    reference:State;
     state_cost:SymmetricStateMatrix;
     input_cost:SymmetricInputMatrix;
     horizon_cost:SymmetricStateMatrix;

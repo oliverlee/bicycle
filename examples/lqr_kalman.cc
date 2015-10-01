@@ -16,18 +16,7 @@ namespace {
 
     model::Bicycle::state_t x(
             (model::Bicycle::state_t() <<
-                0, 10, 10, 0).finished() * constants::as_radians);
-
-    model::Bicycle::state_t xt(
-            model::Bicycle::state_t::Zero());
-
-    const model::Bicycle::output_matrix_t C = parameters::defaultvalue::bicycle::C;
-
-    const controller::Lqr<model::Bicycle>::state_cost_t Q(
-            controller::Lqr<model::Bicycle>::state_cost_t::Identity());
-
-    const controller::Lqr<model::Bicycle>::input_cost_t R(
-            0.1 * controller::Lqr<model::Bicycle>::input_cost_t::Identity());
+                5, 5, 0, 0).finished() * constants::as_radians);
 
     std::array<model::Bicycle::state_t, N> system_state;
     std::array<model::Bicycle::state_t, N> system_state_estimate;
@@ -47,9 +36,12 @@ int main(int argc, char* argv[]) {
 
     model::Bicycle bicycle(parameters::benchmark::M, parameters::benchmark::C1,
             parameters::benchmark::K0, parameters::benchmark::K2, v0, dt);
-    bicycle.set_C(C);
+    bicycle.set_C(parameters::defaultvalue::bicycle::C);
 
-    controller::Lqr<model::Bicycle> lqr(bicycle, Q, R, xt, n);
+    controller::Lqr<model::Bicycle> lqr(bicycle,
+            controller::Lqr<model::Bicycle>::state_cost_t::Identity(),
+            0.1 * controller::Lqr<model::Bicycle>::input_cost_t::Identity(),
+            model::Bicycle::state_t::Zero(), n);
     observer::Kalman<model::Bicycle> kalman(bicycle,
             parameters::defaultvalue::kalman::Q(dt),
             parameters::defaultvalue::kalman::R,
@@ -64,14 +56,12 @@ int main(int argc, char* argv[]) {
     auto it_x = system_state.begin();
     auto it_xh =  system_state_estimate.begin();
     *it_x++ = x;
-    *it_xh++ = xt;
-
-    model::Bicycle::input_t u;
+    *it_xh++ = kalman.x();
 
     auto start = std::chrono::system_clock::now();
     for (; it_x != system_state.end(); ++it_x, ++it_xh) {
         // compute control law
-        u = lqr.control_calculate(kalman.x());
+        auto u = lqr.control_calculate(kalman.x());
 
         // system simulate
         x = bicycle.x_next(x, u);

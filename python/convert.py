@@ -103,7 +103,7 @@ def convert_kalman(rec_kalman, fbs_kalman):
 def convert_lqr(rec_lqr, fbs_lqr):
     # n must be greater than zero
     convert_record_subfield(rec_lqr.n, fbs_lqr.Horizon())
-    convert_record_subfield(rec_lqr.r, fbs_lqr.StateTarget(), convert_state)
+    convert_record_subfield(rec_lqr.r, fbs_lqr.Reference(), convert_state)
     convert_record_subfield(rec_lqr.Q, fbs_lqr.StateCost(),
                             convert_symmetric_state_matrix)
     convert_record_subfield(rec_lqr.R, fbs_lqr.InputCost(),
