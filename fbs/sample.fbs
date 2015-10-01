@@ -170,6 +170,7 @@ table Bicycle {
 
 table Sample {
     timestamp:uint;
+    computation_time:double;
     bicycle:Bicycle;
     kalman:Kalman;
     lqr:Lqr;

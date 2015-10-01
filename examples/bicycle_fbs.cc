@@ -40,7 +40,7 @@ int main(int argc, char* argv[]) {
     size_t current_sample = 0;
     auto bicycle_location = fbs::create_bicycle(builder, bicycle);
     auto fbs_state = fbs::state(x);
-    builder.Finish(fbs::CreateSample(builder, current_sample,
+    builder.Finish(fbs::CreateSample(builder, current_sample, 0,
                 bicycle_location, 0, 0, &fbs_state, 0, 0, 0));
 
     auto data = log_builder.CreateVector(builder.GetBufferPointer(), builder.GetSize());
@@ -57,7 +57,7 @@ int main(int argc, char* argv[]) {
         builder.Clear();
         fbs_state = fbs::state(x);
         builder.Finish(fbs::CreateSample(builder,
-                    current_sample, 0, 0, 0, &fbs_state, 0, 0, 0));
+                    current_sample, 0, 0, 0, 0, &fbs_state, 0, 0, 0));
         // sample is serialized
 
         unsigned char* p = nullptr;

@@ -59,6 +59,7 @@ lqr_t = [
 
 sample_t = [
         ('ts', natural_t),                  # timestamp
+        ('t_comp', real_t),                 # computation time
         ('bicycle', bicycle_t),
         ('kalman', kalman_t),
         ('lqr', lqr_t),

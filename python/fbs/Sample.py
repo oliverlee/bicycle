@@ -27,8 +27,15 @@ class Sample(object):
         return 0
 
     # Sample
-    def Bicycle(self):
+    def ComputationTime(self):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(6))
+        if o != 0:
+            return self._tab.Get(flatbuffers.number_types.Float64Flags, o + self._tab.Pos)
+        return 0
+
+    # Sample
+    def Bicycle(self):
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(8))
         if o != 0:
             x = self._tab.Indirect(o + self._tab.Pos)
             from .Bicycle import Bicycle
@@ -39,7 +46,7 @@ class Sample(object):
 
     # Sample
     def Kalman(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(8))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(10))
         if o != 0:
             x = self._tab.Indirect(o + self._tab.Pos)
             from .Kalman import Kalman
@@ -50,7 +57,7 @@ class Sample(object):
 
     # Sample
     def Lqr(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(10))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(12))
         if o != 0:
             x = self._tab.Indirect(o + self._tab.Pos)
             from .Lqr import Lqr
@@ -61,7 +68,7 @@ class Sample(object):
 
     # Sample
     def State(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(12))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(14))
         if o != 0:
             x = o + self._tab.Pos
             from .State import State
@@ -72,7 +79,7 @@ class Sample(object):
 
     # Sample
     def Input(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(14))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(16))
         if o != 0:
             x = o + self._tab.Pos
             from .Input import Input
@@ -83,7 +90,7 @@ class Sample(object):
 
     # Sample
     def Output(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(16))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(18))
         if o != 0:
             x = o + self._tab.Pos
             from .Output import Output
@@ -94,7 +101,7 @@ class Sample(object):
 
     # Sample
     def Measurement(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(18))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(20))
         if o != 0:
             x = o + self._tab.Pos
             from .Output import Output
@@ -103,13 +110,14 @@ class Sample(object):
             return obj
         return None
 
-def SampleStart(builder): builder.StartObject(8)
+def SampleStart(builder): builder.StartObject(9)
 def SampleAddTimestamp(builder, timestamp): builder.PrependUint32Slot(0, timestamp, 0)
-def SampleAddBicycle(builder, bicycle): builder.PrependUOffsetTRelativeSlot(1, flatbuffers.number_types.UOffsetTFlags.py_type(bicycle), 0)
-def SampleAddKalman(builder, kalman): builder.PrependUOffsetTRelativeSlot(2, flatbuffers.number_types.UOffsetTFlags.py_type(kalman), 0)
-def SampleAddLqr(builder, lqr): builder.PrependUOffsetTRelativeSlot(3, flatbuffers.number_types.UOffsetTFlags.py_type(lqr), 0)
-def SampleAddState(builder, state): builder.PrependStructSlot(4, flatbuffers.number_types.UOffsetTFlags.py_type(state), 0)
-def SampleAddInput(builder, input): builder.PrependStructSlot(5, flatbuffers.number_types.UOffsetTFlags.py_type(input), 0)
-def SampleAddOutput(builder, output): builder.PrependStructSlot(6, flatbuffers.number_types.UOffsetTFlags.py_type(output), 0)
-def SampleAddMeasurement(builder, measurement): builder.PrependStructSlot(7, flatbuffers.number_types.UOffsetTFlags.py_type(measurement), 0)
+def SampleAddComputationTime(builder, computationTime): builder.PrependFloat64Slot(1, computationTime, 0)
+def SampleAddBicycle(builder, bicycle): builder.PrependUOffsetTRelativeSlot(2, flatbuffers.number_types.UOffsetTFlags.py_type(bicycle), 0)
+def SampleAddKalman(builder, kalman): builder.PrependUOffsetTRelativeSlot(3, flatbuffers.number_types.UOffsetTFlags.py_type(kalman), 0)
+def SampleAddLqr(builder, lqr): builder.PrependUOffsetTRelativeSlot(4, flatbuffers.number_types.UOffsetTFlags.py_type(lqr), 0)
+def SampleAddState(builder, state): builder.PrependStructSlot(5, flatbuffers.number_types.UOffsetTFlags.py_type(state), 0)
+def SampleAddInput(builder, input): builder.PrependStructSlot(6, flatbuffers.number_types.UOffsetTFlags.py_type(input), 0)
+def SampleAddOutput(builder, output): builder.PrependStructSlot(7, flatbuffers.number_types.UOffsetTFlags.py_type(output), 0)
+def SampleAddMeasurement(builder, measurement): builder.PrependStructSlot(8, flatbuffers.number_types.UOffsetTFlags.py_type(measurement), 0)
 def SampleEnd(builder): return builder.EndObject()

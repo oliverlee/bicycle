@@ -45,6 +45,8 @@ def convert_record_subfield(subfield, flatbuf, convert_func=None, default=0):
 ## flatbuffers table converters
 def convert_sample(rec_sample, fbs_sample):
     rec_sample.ts[0] = fbs_sample.Timestamp() # assume always serialized
+    # t_comp should be greater than zero
+    convert_record_subfield(rec_sample.t_comp, fbs_sample.ComputationTime())
     convert_record_subfield(rec_sample.bicycle, fbs_sample.Bicycle(),
                             convert_bicycle)
     convert_record_subfield(rec_sample.kalman, fbs_sample.Kalman(),
