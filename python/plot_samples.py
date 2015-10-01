@@ -161,6 +161,8 @@ def plot_control(samples, degrees=True, filename=None):
     color = sns.color_palette('Paired', 12)
     state = ['roll angle', 'steer angle', 'roll rate', 'steer rate']
     control = ['roll torque', 'steer torque']
+    state_cost_weight = np.diagonal(samples.lqr.Q.mean(axis=0))
+    input_cost_weight = np.diagonal(samples.lqr.R.mean(axis=0))
 
     for n in range(samples.x.shape[1]):
         ax = axes[n]
@@ -178,6 +180,7 @@ def plot_control(samples, degrees=True, filename=None):
 
         ax.set_xlabel('{} [{}]'.format('time', unit('time')))
         ax.set_ylabel('{} [{}]'.format(x_state, x_unit))
+        ax.set_title('LQR cost = {}'.format(state_cost_weight[n]))
         ax.plot(t, x, color=color[2*n + 1], label='true')
         ax.plot(t, r, color=color[2*n], label='reference')
         ax.plot(t, e, color=_grey_color(color[2*n + 1]), label='error')
@@ -192,6 +195,7 @@ def plot_control(samples, degrees=True, filename=None):
         u = samples.u[:, n]
         ax.set_xlabel('{} [{}]'.format('time', unit('time')))
         ax.set_ylabel('{} [{}]'.format(u_control, u_unit))
+        ax.set_title('LQR cost = {}'.format(input_cost_weight[n]))
         ax.plot(t, u, color=color[2*(samples.x.shape[1] + n) + 1])
 
     title = 'system control'
