@@ -29,7 +29,7 @@ def unit(value, degrees=True):
     elif value.endswith('time'):
         u = 's'
     elif value.endswith('torque'):
-        u = 'N'
+        u = 'N-m'
     else:
         raise NotImplementedError(
                 "No unit associated with '{}'.".format(value))
@@ -373,9 +373,10 @@ def plot_norm(samples, fields=None, filename=None):
     return fig, axes
 
 
-def plot_all(samples):
-    filename = None
-    plot_state(samples, confidence=False, filename=filename)
+def plot_all(samples, filename=None):
+    plot_computation_time(samples, filename=filename)
+    plot_state(samples, filename=filename)
+    plot_control(samples, filename=filename)
     plot_error_covariance(samples, filename=filename)
     plot_norm(samples, filename=filename)
 
@@ -395,9 +396,7 @@ if __name__ == "__main__":
 
     samples = convert.load_sample_log(sys.argv[1])
     filename = os.path.basename(sys.argv[1])
-    plot_state(samples, confidence=False, filename=filename)
-    plot_error_covariance(samples, filename=filename)
-    plot_norm(samples, filename=filename)
+    plot_all(samples, filename)
     plt.show()
 
     sys.exit(0)
