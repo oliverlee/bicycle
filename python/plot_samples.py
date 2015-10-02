@@ -12,6 +12,13 @@ import seaborn as sns
 import convert
 
 
+state_name = ['yaw angle', 'roll angle', 'steer angle',
+              'roll rate', 'steer rate']
+state_color = np.roll(sns.color_palette('Paired', 10), 2, axis=0)
+control_name = ['roll torque', 'steer torque']
+control_color = sns.color_palette('muted', 6)
+
+
 def unit(value, degrees=True):
     if value == 'computation time':
         u = 'us'
@@ -128,10 +135,6 @@ def plot_state(samples, degrees=True, confidence=True, filename=None):
     fig, axes = plt.subplots(rows, cols, sharex=True)
     axes = axes.ravel()
 
-    color = sns.color_palette('Paired', 10)
-    state = ['yaw angle', 'roll angle', 'steer angle',
-             'roll rate', 'steer rate']
-
     # We want C'*z so we have the measured state with noise at every timestep
     # (some states will be zero).
     # (C'*z)' = z'*C
@@ -139,9 +142,9 @@ def plot_state(samples, degrees=True, confidence=True, filename=None):
 
     x_meas = np.dot(samples.z.transpose(0, 2, 1), C).transpose(0, 2, 1)
     axes[0].axis('off')
-    for n in range(rows*cols):
+    for n in range(samples.x.shape[1]):
         ax = axes[n + 1]
-        x_state = state[n]
+        x_state = state_name[n]
         x_unit = unit(x_state, degrees)
 
         x = samples.x[:, n]
@@ -154,18 +157,19 @@ def plot_state(samples, degrees=True, confidence=True, filename=None):
 
         ax.set_xlabel('{} [{}]'.format('time', unit('time')))
         ax.set_ylabel('{} [{}]'.format(x_state, x_unit))
-        ax.plot(t, x, color=color[2*n + 1], label='true', zorder=2)
+        ax.plot(t, x, color=state_color[2*n + 1], label='true', zorder=2)
 
-        if not samples.z.mask.all():
+        if not samples.z.mask.all() and z.any():
             flatgrey = '#95a5a6'
-            cmap = sns.blend_palette([color[2*n + 1], flatgrey], 6)
+            cmap = sns.blend_palette([state_color[2*n + 1], flatgrey], 6)
             grey_color = sns.color_palette(cmap)[4]
             ax.plot(t[1:], z[1:], color=grey_color,
                     label='measurement', zorder=1)
             ax.legend()
 
         if not x_hat.mask.all():
-            ax.plot(t, x_hat, color=color[2*n], label='estimate', zorder=3)
+            ax.plot(t, x_hat, color=state_color[2*n],
+                    label='estimate', zorder=3)
             if confidence:
                 std_dev = np.sqrt(samples.kalman.P[:, n, n])
                 if degrees and '°' in x_unit:
@@ -174,7 +178,7 @@ def plot_state(samples, degrees=True, confidence=True, filename=None):
                 low = x_hat.ravel() - 2*std_dev
                 high = x_hat.ravel() + 2*std_dev
                 limits = ax.get_ylim()
-                ax.fill_between(t, low, high, alpha=0.2, color=color[2*n])
+                ax.fill_between(t, low, high, alpha=0.2, color=state_color[2*n])
                 ax.set_ylim(limits)
             ax.legend()
 
@@ -187,24 +191,19 @@ def plot_control(samples, degrees=True, filename=None):
     # get time from timestamp and sample time
     t = samples.bicycle.dt.mean() * samples.ts
 
-    n = samples.x.shape[1] + samples.u.shape[1]
+    n = samples.x.shape[1] + 1
     cols = 2
     rows = math.ceil(n/cols)
     fig, axes = plt.subplots(rows, cols, sharex=True)
     axes = np.ravel(axes)
-    if len(axes) > n:
-        axes[-1].axis('off')
 
-    color = sns.color_palette('Paired', 12)
-    state = ['roll angle', 'steer angle', 'roll rate', 'steer rate']
-    control = ['roll torque', 'steer torque']
     state_cost_weight = np.diagonal(samples.lqr.Q.mean(axis=0))
     input_cost_weight = np.diagonal(samples.lqr.R.mean(axis=0))
 
     for n in range(samples.x.shape[1]):
-        ax = axes[n]
+        ax = axes[n + 1]
 
-        x_state = state[n]
+        x_state = state_name[n]
         x_unit = unit(x_state, degrees)
 
         x = samples.x[:, n]
@@ -217,23 +216,24 @@ def plot_control(samples, degrees=True, filename=None):
 
         ax.set_xlabel('{} [{}]'.format('time', unit('time')))
         ax.set_ylabel('{} [{}]'.format(x_state, x_unit))
-        ax.set_title('LQR cost = {}'.format(state_cost_weight[n]))
-        ax.plot(t, x, color=color[2*n + 1], label='true')
-        ax.plot(t, r, color=color[2*n], label='reference')
-        ax.plot(t, e, color=_grey_color(color[2*n + 1]), label='error')
+        ax.set_title('q{} = {}'.format(n, state_cost_weight[n]))
+        ax.plot(t, x, color=state_color[2*n + 1], label='true')
+        ax.plot(t, r, color=state_color[2*n], label='reference')
+        ax.plot(t, e, color=_grey_color(state_color[2*n + 1]), label='error')
         ax.legend()
 
+    ax = axes[0]
+    ax.set_xlabel('{} [{}]'.format('time', unit('time')))
+    ax.set_ylabel('{} [{}]'.format('torque', unit('torque')))
+    title_components = []
     for n in range(samples.u.shape[1]):
-        ax = axes[n + samples.x.shape[1]]
-
-        u_control = control[n]
-        u_unit = unit(u_control, degrees)
-
         u = samples.u[:, n]
-        ax.set_xlabel('{} [{}]'.format('time', unit('time')))
-        ax.set_ylabel('{} [{}]'.format(u_control, u_unit))
-        ax.set_title('LQR cost = {}'.format(input_cost_weight[n]))
-        ax.plot(t, u, color=color[2*(samples.x.shape[1] + n) + 1])
+        u_control = control_name[n]
+        label = '{} r{}'.format(u_control, n)
+        title_components.append('r{} = {}'.format(n, input_cost_weight[n]))
+        ax.plot(t, u, color=control_color[n], label=label)
+    ax.set_title(', '.join(title_components))
+    ax.legend()
 
     title = 'system control'
     _set_suptitle(fig, title, filename)
