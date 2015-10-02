@@ -47,12 +47,14 @@ endif()
 # the extension .hh
 include_directories(inc)
 include_directories(src)
-include_directories(fbs) # include util file
 add_subdirectory(fbs) # set FLATBUFFER_SCHEMAS
 
 flatbuffers_generate_c_headers(FLATBUFFER_GENERATED ${FLATBUFFER_SCHEMAS})
 include_directories(${PROJECT_BINARY_DIR}/generated) # location of flatbuffer generated headers
-add_custom_target(generate_flatbuffer_headers DEPENDS ${FLATBUFFER_GENERATED_OUTPUTS})
+add_custom_target(generate_flatbuffer_headers DEPENDS
+    ${FLATBUFFER_GENERATED_OUTPUTS} ${FLATBUFFER_SCHEMAS})
+set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES
+    ${PROJECT_BINARY_DIR}/generated)
 
 set(BICYCLE_SOURCE
     ${BICYCLE_SOURCE_DIR}/src/bicycle.cc

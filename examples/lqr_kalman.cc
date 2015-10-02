@@ -16,7 +16,7 @@ namespace {
 
     model::Bicycle::state_t x(
             (model::Bicycle::state_t() <<
-                5, 5, 0, 0).finished() * constants::as_radians);
+                0, 5, 5, 0, 0).finished() * constants::as_radians);
 
     std::array<model::Bicycle::state_t, N> system_state;
     std::array<model::Bicycle::state_t, N> system_state_estimate;
@@ -35,7 +35,11 @@ int main(int argc, char* argv[]) {
             parameters::defaultvalue::kalman::R(1, 1));
 
     model::Bicycle bicycle(parameters::benchmark::M, parameters::benchmark::C1,
-            parameters::benchmark::K0, parameters::benchmark::K2, v0, dt);
+            parameters::benchmark::K0, parameters::benchmark::K2,
+            parameters::benchmark::wheelbase,
+            parameters::benchmark::trail,
+            parameters::benchmark::steer_axis_tilt,
+            v0, dt);
     bicycle.set_C(parameters::defaultvalue::bicycle::C);
 
     controller::Lqr<model::Bicycle> lqr(bicycle,
@@ -46,7 +50,7 @@ int main(int argc, char* argv[]) {
             parameters::defaultvalue::kalman::Q(dt),
             parameters::defaultvalue::kalman::R,
             model::Bicycle::state_t::Zero(), // starts at zero state
-            std::pow(x[0]/2, 2) * model::Bicycle::state_matrix_t::Identity());
+            std::pow(x[1]/2, 2) * model::Bicycle::state_matrix_t::Identity());
 
     std::cout << "initial state:          [" << x.transpose() * constants::as_degrees << "]' deg" << std::endl;
     std::cout << "initial state estimate: [" << kalman.x().transpose() * constants::as_degrees << "]' deg" << std::endl;

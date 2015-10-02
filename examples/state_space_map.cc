@@ -37,9 +37,17 @@ int main(int argc, char* argv[]) {
     (void)argv;
 
     model::Bicycle bicycle0(parameters::benchmark::M, parameters::benchmark::C1,
-            parameters::benchmark::K0, parameters::benchmark::K2, vw, dt, &state_space_map);
+            parameters::benchmark::K0, parameters::benchmark::K2,
+            parameters::benchmark::wheelbase,
+            parameters::benchmark::trail,
+            parameters::benchmark::steer_axis_tilt,
+            vw, dt, &state_space_map);
     model::Bicycle bicycle1(parameters::benchmark::M, parameters::benchmark::C1,
-            parameters::benchmark::K0, parameters::benchmark::K2, vw, dt);
+            parameters::benchmark::K0, parameters::benchmark::K2,
+            parameters::benchmark::wheelbase,
+            parameters::benchmark::trail,
+            parameters::benchmark::steer_axis_tilt,
+            vw, dt);
 
     std::cout << "for vw: " << vw << ", dt: " << dt << std::endl;
     std::cout << "with discrete state space map, Ad" << std::endl <<

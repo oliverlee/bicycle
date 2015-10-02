@@ -14,7 +14,7 @@ namespace {
 
     const model::Bicycle::state_t x0(
             (model::Bicycle::state_t() <<
-                0, 10, 10, 0).finished() * constants::as_radians);
+                0, 0, 10, 10, 0).finished() * constants::as_radians);
     model::Bicycle::state_t x;
 
     std::array<model::Bicycle::state_t, N> system_state;
@@ -28,7 +28,11 @@ int main(int argc, char* argv[]) {
     (void)argv;
 
     model::Bicycle bicycle(parameters::benchmark::M, parameters::benchmark::C1,
-            parameters::benchmark::K0, parameters::benchmark::K2, v0, dt);
+            parameters::benchmark::K0, parameters::benchmark::K2,
+            parameters::benchmark::wheelbase,
+            parameters::benchmark::trail,
+            parameters::benchmark::steer_axis_tilt,
+            v0, dt);
     controller::Lqr<model::Bicycle> lqr(bicycle,
             controller::Lqr<model::Bicycle>::state_cost_t::Identity(),
             0.1 * controller::Lqr<model::Bicycle>::input_cost_t::Identity(),

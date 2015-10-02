@@ -1,22 +1,22 @@
 #include <array>
+#include <cmath>
 #include <fstream>
-#include <iostream>
 #include <stdexcept>
 #include <Eigen/QR>
 #include "bicycle.h"
 #include "constants.h"
 
-// Note: Rank will drop with given threshold at capsize speed as there is a zero
-// eigenvalue. Weave speed eigenvalues has nonzero imaginary components.
 namespace {
-    constexpr double rank_threshold = 1e-5;
+    const double discretization_precision = Eigen::NumTraits<double>::dummy_precision();
 } // namespace
 
 namespace model {
 Bicycle::Bicycle(const second_order_matrix_t& M, const second_order_matrix_t& C1,
         const second_order_matrix_t& K0, const second_order_matrix_t& K2,
+        double wheelbase, double trail, double steer_axis_tilt,
         double v, double dt, const state_space_map_t* discrete_state_space_map) :
     m_M(M), m_C1(C1), m_K0(K0), m_K2(K2),
+    m_w(wheelbase), m_c(trail), m_lambda(steer_axis_tilt),
     m_expAT(m_AT), m_discrete_state_space_map(discrete_state_space_map) {
     initialize_state_space_matrices();
 
@@ -28,7 +28,7 @@ Bicycle::Bicycle(const char* param_file, double v, double dt,
         const state_space_map_t* discrete_state_space_map) :
     m_expAT(m_AT), m_discrete_state_space_map(discrete_state_space_map) {
     // set M, C1, K0, K2 matrices from file
-    set_matrices_from_file(param_file);
+    set_parameters_from_file(param_file);
     initialize_state_space_matrices();
 
     // set forward speed, sampling time and update state matrices
@@ -86,34 +86,36 @@ void Bicycle::set_v(double v, double dt) {
     m_v = v;
     m_dt = dt;
 
-    // M is positive definite so use the Cholskey decomposition in solving the linear system
-    m_A.bottomLeftCorner<o, o>() = -m_M_llt.solve(constants::g*m_K0 + m_v*m_v*m_K2);
+    // M is positive definite so use the Cholesky decomposition in solving the linear system
+    m_A(0, 2) = v * std::cos(m_lambda) / m_w;
+    m_A.block<o, o>(3, 1) = -m_M_llt.solve(constants::g*m_K0 + m_v*m_v*m_K2);
     m_A.bottomRightCorner<o, o>() = -m_M_llt.solve(m_v*m_C1);
+
+    // Calculate M^-1 as we need it for discretization
+    if (o < 5) { // inverse calculation is okay if matrix size is small
+        m_B.bottomRows<o>() = m_M.inverse();
+    } else {
+        m_B.bottomRows<o>() = m_M_llt.solve(second_order_matrix_t::Identity());
+    }
 
     if (m_dt == 0.0) { // discrete time state does not change
         m_AT.setZero();
         m_Ad.setIdentity();
         m_Bd.setZero();
     } else {
-        m_AT = m_A*dt;
         state_space_map_key_t k = make_state_space_map_key(v, dt);
         if (!discrete_state_space_lookup(k)) {
-            m_expAT.compute(m_Ad);
-            Eigen::FullPivHouseholderQR<state_matrix_t> A_qr(m_A);
-            A_qr.setThreshold(rank_threshold);
-            if (A_qr.rank() < n) {
-                std::cout << "Warning: A is (near) singular and a precomputed Bd has not been " <<
-                    "provided in the discrete state space map.\nComputation of Bd may be inaccurate.\n";
+            m_AT.topLeftCorner<n, n>() = m_A;
+            m_AT.topRightCorner<n, m>() = m_B;
+            m_AT *= dt;
+            m_expAT.compute(m_T);
+            if (!m_T.bottomLeftCorner<m, n>().isZero(discretization_precision) ||
+                !m_T.bottomRightCorner<m, m>().isIdentity(discretization_precision)) {
+                std::cout << "Warning: Discretization validation failed with v = " << v <<
+                    ", dt = " << dt << ". Computation of Ad and Bd may be inaccurate.\n";
             }
-            // B isn't stored so to calculate the term T = (Ad - I)*B before applying A_qr
-            // T = (Ad - I) * [   0  ] = [ (Ad - I).rightCols<o> * M^-1 ]
-            //                [ M^-1 ]
-            // As we need to calculate the transpose in order to use a linear solver ]
-            // T' = M^-1 * (Ad' - I).bottomRows<o>
-            // since M is symmetric
-            m_Bd.transpose() = m_M_llt.solve(
-                    (Ad().transpose() - state_matrix_t::Identity()).bottomRows<o>());
-            m_Bd = A_qr.solve(m_Bd).eval();
+            m_Ad = m_T.topLeftCorner<n, n>();
+            m_Bd = m_T.topRightCorner<n, m>();
         }
     }
 }
@@ -133,9 +135,9 @@ bool Bicycle::discrete_state_space_lookup(const state_space_map_key_t& k) {
     return true;
 }
 
-void Bicycle::set_matrices_from_file(const char* param_file) {
+void Bicycle::set_parameters_from_file(const char* param_file) {
     const unsigned int num_elem = o*o;
-    std::array<double, 4*num_elem> buffer;
+    std::array<double, 4*num_elem + 3> buffer;
 
     std::fstream pf(param_file, std::ios_base::in);
     if (!pf.good()) {
@@ -151,6 +153,9 @@ void Bicycle::set_matrices_from_file(const char* param_file) {
     m_C1 = Eigen::Map<second_order_matrix_t>(buffer.data() + num_elem).transpose();
     m_K0 = Eigen::Map<second_order_matrix_t>(buffer.data() + 2*num_elem).transpose();
     m_K2 = Eigen::Map<second_order_matrix_t>(buffer.data() + 3*num_elem).transpose();
+    m_w = buffer[4*num_elem];
+    m_c = buffer[4*num_elem + 1];
+    m_lambda = buffer[4*num_elem + 2];
 }
 
 void Bicycle::initialize_state_space_matrices() {
@@ -166,7 +171,9 @@ void Bicycle::initialize_state_space_matrices() {
     m_AT.setZero();
 
     // set constant parts of state and input matrices
-    m_A.topRightCorner<o, o>().setIdentity();
+    m_A(0, 4) = m_c * std::cos(m_lambda) / m_w;
+    m_A.block<o, o>(1, 3).setIdentity();
+    m_B.topRows<o>() = second_order_matrix_t::Zero();
 
     // We can write B in block matrix form as:
     // B.transpose() = [0 |  M.inverse().transpose()]

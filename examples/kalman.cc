@@ -30,16 +30,20 @@ int main(int argc, char* argv[]) {
     std::normal_distribution<> r1(0, parameters::defaultvalue::kalman::R(1, 1));
 
     model::Bicycle bicycle(parameters::benchmark::M, parameters::benchmark::C1,
-            parameters::benchmark::K0, parameters::benchmark::K2, v0, dt);
+            parameters::benchmark::K0, parameters::benchmark::K2,
+            parameters::benchmark::wheelbase,
+            parameters::benchmark::trail,
+            parameters::benchmark::steer_axis_tilt,
+            v0, dt);
     bicycle.set_C(parameters::defaultvalue::bicycle::C);
-    x << 0, 10, 10, 0; // define x in degrees
+    x << 0, 0, 10, 10, 0; // define x in degrees
     x *= constants::as_radians; // convert degrees to radians
 
     observer::Kalman<model::Bicycle> kalman(bicycle,
             parameters::defaultvalue::kalman::Q(dt),
             parameters::defaultvalue::kalman::R,
             model::Bicycle::state_t::Zero(),
-            std::pow(x[0]/2, 2) * model::Bicycle::state_matrix_t::Identity());
+            std::pow(x[2]/2, 2) * model::Bicycle::state_matrix_t::Identity());
 
     std::cout << "simulating bicycle model with measurement noise (equal to R)" << std::endl;
     std::cout << "initial state:          [" << x.transpose() << "] deg" << std::endl;

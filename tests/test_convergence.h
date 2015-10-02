@@ -15,6 +15,7 @@ class ConvergenceTest: public ::testing::TestWithParam<double> {
         model::Bicycle::state_t x_true();
 
     protected:
+        static const double m_yaw_tol;
         static const double m_roll_tol;
         static const double m_steer_tol;
         static const double m_roll_rate_tol;

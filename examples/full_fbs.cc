@@ -26,29 +26,34 @@ namespace {
     constexpr size_t N = 1000; // length of simulation in samples
     constexpr size_t n = 100; // length of horizon in samples
 
-    constexpr double q0 = 100000; // roll angle cost weight
-    constexpr double q1 = 0; // steer angle cost weight
-    constexpr double q2 = q0/10; // roll rate cost weight
-    constexpr double q3 = q1/10; // steer rate cost weight
+    constexpr double q0 = 1000000; // yaw angle cost weight
+    constexpr double q1 = 0.1; // roll angle cost weight
+    constexpr double q2 = 0.00001; // steer angle cost weight
+    constexpr double q3 = q1/10; // roll rate cost weight
+    constexpr double q4 = q2/10; // steer rate cost weight
 
     constexpr double rho = 0.1; // input cost weight scaling constant
-    constexpr double r0 = 1; // roll torque cost weight
+    constexpr double r0 = 10; // roll torque cost weight
     constexpr double r1 = 1; // steer torque cost weight
 
-    bicycle_t::state_t x; // roll angle, steer angle, roll rate, steer rate
+    const double sigma0 = 1 * constants::as_radians; // yaw angle measurement noise variance
+    const double sigma1 = 0.008 * constants::as_radians; // steer angle measurement noise variance
+
+    bicycle_t::state_t x; // yaw angle, roll angle, steer angle, roll rate, steer rate
 
     /* used for serializing/logging */
     flatbuffers::FlatBufferBuilder builder;
     flatbuffers::FlatBufferBuilder log_builder;
     flatbuffers::Offset<fbs::SampleBuffer> sample_locations[N];
 
-    /* reference trajectory (roll angle and roll reference) */
+    /* reference trajectory (yaw angle) */
     auto reference = [](double t) {
-        const double f = 1; // 1 Hz sine wave
+        const double f = 0.2; // 0.2 Hz sine wave (5 second period)
         const bicycle_t::state_t r((bicycle_t::state_t() <<
-            3 * std::sin(constants::two_pi*f*t),
+            5 * std::sin(constants::two_pi*f*t),
             0,
-            3*constants::two_pi*f * std::cos(constants::two_pi*f*t),
+            0,
+            0,
             0).finished() * constants::as_radians);
         return r;
     };
@@ -63,27 +68,36 @@ int main(int argc, char* argv[]) {
     (void)argv;
 
     std::mt19937 gen(rd());
-    std::normal_distribution<> rn0(0, parameters::defaultvalue::kalman::R(0, 0));
-    std::normal_distribution<> rn1(0, parameters::defaultvalue::kalman::R(1, 1));
+    std::normal_distribution<> rn0(0, sigma0);
+    std::normal_distribution<> rn1(0, sigma1);
 
     bicycle_t bicycle(parameters::benchmark::M, parameters::benchmark::C1,
-            parameters::benchmark::K0, parameters::benchmark::K2, v0, dt);
-    bicycle.set_C(parameters::defaultvalue::bicycle::C);
-    x << 5, 5, 0, 0; // define x0 in degrees
+            parameters::benchmark::K0, parameters::benchmark::K2,
+            parameters::benchmark::wheelbase,
+            parameters::benchmark::trail,
+            parameters::benchmark::steer_axis_tilt,
+            v0, dt);
+    bicycle.set_C((bicycle_t::output_matrix_t() <<
+                1, 0, 0, 0, 0,
+                0, 0, 1, 0, 0).finished());
+    x << 0, 5, 5, 0, 0; // define x0 in degrees
     x *= constants::as_radians; // convert to radians
 
     kalman_t kalman(bicycle,
             parameters::defaultvalue::kalman::Q(dt),
-            parameters::defaultvalue::kalman::R,
+            (kalman_t::measurement_noise_covariance_t() <<
+             sigma0,      0,
+                  0, sigma1).finished(),
             bicycle_t::state_t::Zero(), // starts at zero state
-            std::pow(x[0]/2, 2) * bicycle_t::state_matrix_t::Identity());
+            std::pow(x[1]/2, 2) * bicycle_t::state_matrix_t::Identity());
 
     lqr_t lqr(bicycle,
             (lqr_t::state_cost_t() <<
-             q0,  0,  0,  0,
-              0, q1,  0,  0,
-              0,  0, q2,  0,
-              0,  0,  0, q3).finished() * constants::as_radians,
+             q0,  0,  0,  0,  0,
+              0, q1,  0,  0,  0,
+              0,  0, q2,  0,  0,
+              0,  0,  0, q3,  0,
+              0,  0,  0,  0, q4).finished() * constants::as_radians,
             (lqr_t::input_cost_t() <<
              r0, 0,
               0, r1).finished() * rho,
@@ -92,7 +106,7 @@ int main(int argc, char* argv[]) {
 
     std::cout << "initial state: [" << x.transpose() << "]' rad" << std::endl;
     std::cout << "initial state estimate: [" << kalman.x().transpose() * constants::as_degrees << "]' deg" << std::endl;
-    std::cout << "states are: [roll angle, steer angle, roll rate, steer rate]'" << std::endl << std::endl;
+    std::cout << "states are: [yaw, roll angle, steer angle, roll rate, steer rate]'" << std::endl << std::endl;
 
     std::cout << "simulating discrete time system at constant speed (" <<
         N << " steps at " << fs << " Hz)" << std::endl;

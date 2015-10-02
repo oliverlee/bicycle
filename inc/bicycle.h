@@ -12,22 +12,23 @@
 namespace model {
 
 /* State and Input Definitions
- * state: [roll angle, steer angle, roll rate, steer rate]
+ * state: [yaw angle, roll angle, steer angle, roll rate, steer rate]
  * input: [roll torque, steer torque]
  * output: [*, *] - 2 outputs are defined, but must be specified by
  *                  setting the C and D matrices
  */
 
-class Bicycle : public DiscreteLinear<4, 2, 2, 2> {
+class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
     public:
-        /* We normally treat speed v as a double. However to allow for constant
+        /*
+         * We normally treat speed v as a double. However to allow for constant
          * time lookup along with quickly finding a key 'near' the requested
          * one, we convert speeds to a fixed precision integer.
          *
          * For example, if six digits after the decimal defines the precision used:
          * v = 6.024262 -> 6024262
          *
-         * And the same is done with sample time dt and microsecond precision is used.
+         * And the same is done with sample time dt and if microsecond precision is used:
          * dt = 0.005 -> 5000
          *
          * Keys are defined as a pair:
@@ -41,6 +42,7 @@ class Bicycle : public DiscreteLinear<4, 2, 2, 2> {
 
         Bicycle(const second_order_matrix_t& M, const second_order_matrix_t& C1,
                 const second_order_matrix_t& K0, const second_order_matrix_t& K2,
+                double wheelbase, double trail, double steer_axis_tilt,
                 double v, double dt,
                 const state_space_map_t* discrete_state_space_map = nullptr);
         Bicycle(const char* param_file, double v, double dt,
@@ -72,19 +74,34 @@ class Bicycle : public DiscreteLinear<4, 2, 2, 2> {
         second_order_matrix_t C1() const;
         second_order_matrix_t K0() const;
         second_order_matrix_t K2() const;
+        double wheelbase() const;
+        double trail() const;
+        double steer_axis_tilt() const;
         double v() const;
         virtual double dt() const;
 
     private:
+        // The full state matrix A is singular as yaw rate, and all other
+        // states, are independent of yaw angle. As we discretize the continuous
+        // state space, this is problematic for computation of Bd since we assume
+        // that A is rarely singular.
+        // The continuous time state space is discretized using the following property:
+        //      [ A  B ]         [ Ad  Bd ]
+        // exp( [ 0  0 ] * T ) = [  0   I ]
+        using discretization_matrix_t = Eigen::Matrix<double, n + m, n + m>;
+
         double m_v; // parameterized forward speed
         double m_dt; // sampling time of discrete time system
         second_order_matrix_t m_M;
         second_order_matrix_t m_C1;
         second_order_matrix_t m_K0;
         second_order_matrix_t m_K2;
+        double m_w;
+        double m_c;
+        double m_lambda;
 
         state_matrix_t m_A;
-        //input_matrix_t m_B; Use Cholesky decomposition of M
+        input_matrix_t m_B; // Use Cholesky decomposition of M if possible
         Eigen::LLT<second_order_matrix_t> m_M_llt;
         output_matrix_t m_C;
         feedthrough_matrix_t m_D;
@@ -92,8 +109,9 @@ class Bicycle : public DiscreteLinear<4, 2, 2, 2> {
         state_matrix_t m_Ad;
         input_matrix_t m_Bd;
 
-        state_matrix_t m_AT;
-        Eigen::MatrixExponential<state_matrix_t> m_expAT;
+        discretization_matrix_t m_AT;
+        discretization_matrix_t m_T; // storage for matrix exponential calculation
+        Eigen::MatrixExponential<discretization_matrix_t> m_expAT;
 
         static constexpr uint32_t m_dt_key_precision = 1000;
         static constexpr int32_t m_v_key_precision = 1000000;
@@ -113,7 +131,7 @@ class Bicycle : public DiscreteLinear<4, 2, 2, 2> {
             state_t, double, state_t, double,
             boost::numeric::odeint::vector_space_algebra> m_stepper_noinput;
 
-        void set_matrices_from_file(const char* param_file);
+        void set_parameters_from_file(const char* param_file);
         void initialize_state_space_matrices();
 }; // class Bicycle
 
@@ -131,15 +149,7 @@ inline Bicycle::state_matrix_t Bicycle::A() const {
     return m_A;
 }
 inline Bicycle::input_matrix_t Bicycle::B() const {
-    // Calculate M^-1 as we have explicitly asked for B
-    input_matrix_t B;
-    B.topRows<o>() = second_order_matrix_t::Zero();
-    if (o < 5) {
-        B.bottomRows<o>() = m_M.inverse();
-    } else {
-        B.bottomRows<o>() = m_M_llt.solve(second_order_matrix_t::Identity());
-    }
-    return B;
+    return m_B;
 }
 inline Bicycle::output_matrix_t Bicycle::C() const {
     return m_C;
@@ -170,6 +180,15 @@ inline Bicycle::second_order_matrix_t Bicycle::K0() const {
 }
 inline Bicycle::second_order_matrix_t Bicycle::K2() const {
     return m_K2;
+}
+inline double Bicycle::wheelbase() const {
+    return m_w;
+}
+inline double Bicycle::trail() const {
+    return m_c;
+}
+inline double Bicycle::steer_axis_tilt() const {
+    return m_lambda;
 }
 inline double Bicycle::v() const {
     return m_v;

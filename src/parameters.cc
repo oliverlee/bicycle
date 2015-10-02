@@ -16,6 +16,9 @@ namespace benchmark {
     const model::Bicycle::second_order_matrix_t K2(
             (model::Bicycle::second_order_matrix_t() <<
              0.0, 76.59734589573222, 0.0, 2.65431523794604).finished());
+    const double wheelbase = 1.02;
+    const double trail = 0.08;
+    const double steer_axis_tilt = boost::math::constants::pi<double>()/10.0;
 } // namespace benchmark
 
 namespace defaultvalue {
@@ -23,8 +26,8 @@ namespace defaultvalue {
 namespace bicycle {
     const model::Bicycle::output_matrix_t C(
             (model::Bicycle::output_matrix_t() <<
-             0, 1, 0, 0,                // steer angle
-             0, 0, 1, 0).finished());   // roll rate
+             0, 0, 1, 0, 0,                // steer angle
+             0, 0, 0, 1, 0).finished());   // roll rate
 } // namespace bicycle
 
 namespace kalman {
@@ -35,10 +38,11 @@ namespace kalman {
         * notes: Estimation II. Ian Reid. Hilary Term, 2001
         * http://www.robots.ox.ac.uk/~ian/Teaching/Estimation/LectureNotes2.pdf
         */
-       const double data[] = {     dt,       0,    dt*dt/2,          0,
-                                    0,      dt,          0,    dt*dt/2,
-                              dt*dt/2,       0, dt*dt*dt/3,          0,
-                                    0, dt*dt/2,          0, dt*dt*dt/3};
+       const double data[] = {dt,       0,       0,          0,          0,
+                               0,      dt,       0,    dt*dt/2,          0,
+                               0,       0,      dt,          0,    dt*dt/2,
+                               0, dt*dt/2,       0, dt*dt*dt/3,          0,
+                               0,       0, dt*dt/2,          0, dt*dt*dt/3};
        return std::pow(0.1*constants::as_radians, 2) *
            observer::Kalman<model::Bicycle>::process_noise_covariance_t(data);
    }
