@@ -3,7 +3,6 @@
 #include <utility>
 #include <Eigen/Core>
 #include <Eigen/Cholesky>
-#include <unsupported/Eigen/MatrixFunctions>
 #include <boost/numeric/odeint/stepper/runge_kutta_dopri5.hpp>
 #include <boost/numeric/odeint/algebra/vector_space_algebra.hpp>
 #include <boost/functional/hash.hpp>
@@ -108,10 +107,6 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
 
         state_matrix_t m_Ad;
         input_matrix_t m_Bd;
-
-        discretization_matrix_t m_AT;
-        discretization_matrix_t m_T; // storage for matrix exponential calculation
-        Eigen::MatrixExponential<discretization_matrix_t> m_expAT;
 
         static constexpr uint32_t m_dt_key_precision = 1000;
         static constexpr int32_t m_v_key_precision = 1000000;
