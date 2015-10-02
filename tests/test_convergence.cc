@@ -27,7 +27,7 @@ void ConvergenceTest::SetUp() {
             parameters::defaultvalue::kalman::Q(m_dt),
             parameters::defaultvalue::kalman::R,
             model::Bicycle::state_t::Zero(),
-            std::pow(m_x[0]/2, 2) * model::Bicycle::state_matrix_t::Identity());
+            std::pow(m_x[1]/2, 2) * model::Bicycle::state_matrix_t::Identity());
     m_lqr = new controller::Lqr<model::Bicycle>(*m_bicycle,
             controller::Lqr<model::Bicycle>::state_cost_t::Identity(),
             0.1 * controller::Lqr<model::Bicycle>::input_cost_t::Identity(),

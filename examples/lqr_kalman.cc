@@ -50,7 +50,7 @@ int main(int argc, char* argv[]) {
             parameters::defaultvalue::kalman::Q(dt),
             parameters::defaultvalue::kalman::R,
             model::Bicycle::state_t::Zero(), // starts at zero state
-            std::pow(x[0]/2, 2) * model::Bicycle::state_matrix_t::Identity());
+            std::pow(x[1]/2, 2) * model::Bicycle::state_matrix_t::Identity());
 
     std::cout << "initial state:          [" << x.transpose() * constants::as_degrees << "]' deg" << std::endl;
     std::cout << "initial state estimate: [" << kalman.x().transpose() * constants::as_degrees << "]' deg" << std::endl;

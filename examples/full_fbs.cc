@@ -82,7 +82,7 @@ int main(int argc, char* argv[]) {
             parameters::defaultvalue::kalman::Q(dt),
             parameters::defaultvalue::kalman::R,
             bicycle_t::state_t::Zero(), // starts at zero state
-            std::pow(x[0]/2, 2) * bicycle_t::state_matrix_t::Identity());
+            std::pow(x[1]/2, 2) * bicycle_t::state_matrix_t::Identity());
 
     lqr_t lqr(bicycle,
             (lqr_t::state_cost_t() <<

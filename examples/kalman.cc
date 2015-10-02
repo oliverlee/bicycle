@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
             parameters::defaultvalue::kalman::Q(dt),
             parameters::defaultvalue::kalman::R,
             model::Bicycle::state_t::Zero(),
-            std::pow(x[0]/2, 2) * model::Bicycle::state_matrix_t::Identity());
+            std::pow(x[2]/2, 2) * model::Bicycle::state_matrix_t::Identity());
 
     std::cout << "simulating bicycle model with measurement noise (equal to R)" << std::endl;
     std::cout << "initial state:          [" << x.transpose() << "] deg" << std::endl;
