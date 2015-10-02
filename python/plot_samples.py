@@ -88,7 +88,7 @@ def hold_masked_values(masked_array):
         data[slice(start, stop)] = data[start - 1]
     return data
 
-def plot_computation_time(samples, filename=None):
+def plot_computation_time(samples, bins=10, logscale=None, filename=None):
     t = samples.bicycle.dt.mean() * samples.ts
     tc = samples.t_comp / 1e-6 # convert seconds to microseonds
     label = 'computation time'
@@ -104,10 +104,16 @@ def plot_computation_time(samples, filename=None):
 
     ax = axes[1]
     max_tc = np.ceil(np.max(tc))
-    bins = int(max_tc/2)
+
+    min_tc = np.min(tc)
+    max_tc = np.max(tc)
+    if logscale is None:
+        logscale = max_tc/min_tc > 100
+    if logscale:
+        bins = 10**np.linspace(np.log10(min_tc), np.log10(max_tc), bins)
 
     # normalize histogram such that sum of bars is 1
-    hist, bins = np.histogram(tc, bins=bins)
+    hist, bins = np.histogram(tc.compressed(), bins) # ignore masked values
     hist = hist.astype(np.float64)
     hist /= np.sum(hist)
     widths = np.diff(bins)
@@ -117,9 +123,13 @@ def plot_computation_time(samples, filename=None):
     ax.set_title('histogram')
     ax.legend()
 
-    # don't show negative ticks
-    _, xmax = ax.get_xlim()
-    ax.set_xlim(0, xmax)
+    if logscale:
+        ax.set_xscale('log')
+    else:
+        # don't show negative ticks
+        _, xmax = ax.get_xlim()
+        ax.set_xlim(0, xmax)
+
 
     title = 'computation time'
     _set_suptitle(fig, title, filename)
