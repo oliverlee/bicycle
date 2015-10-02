@@ -3,6 +3,7 @@
 #include <fstream>
 #include <stdexcept>
 #include <Eigen/QR>
+#include <unsupported/Eigen/MatrixFunctions>
 #include "bicycle.h"
 #include "constants.h"
 
@@ -17,7 +18,7 @@ Bicycle::Bicycle(const second_order_matrix_t& M, const second_order_matrix_t& C1
         double v, double dt, const state_space_map_t* discrete_state_space_map) :
     m_M(M), m_C1(C1), m_K0(K0), m_K2(K2),
     m_w(wheelbase), m_c(trail), m_lambda(steer_axis_tilt),
-    m_expAT(m_AT), m_discrete_state_space_map(discrete_state_space_map) {
+    m_discrete_state_space_map(discrete_state_space_map) {
     initialize_state_space_matrices();
 
     // set forward speed, sampling time and update state matrices
@@ -26,7 +27,7 @@ Bicycle::Bicycle(const second_order_matrix_t& M, const second_order_matrix_t& C1
 
 Bicycle::Bicycle(const char* param_file, double v, double dt,
         const state_space_map_t* discrete_state_space_map) :
-    m_expAT(m_AT), m_discrete_state_space_map(discrete_state_space_map) {
+    m_discrete_state_space_map(discrete_state_space_map) {
     // set M, C1, K0, K2 matrices from file
     set_parameters_from_file(param_file);
     initialize_state_space_matrices();
@@ -99,23 +100,23 @@ void Bicycle::set_v(double v, double dt) {
     }
 
     if (m_dt == 0.0) { // discrete time state does not change
-        m_AT.setZero();
         m_Ad.setIdentity();
         m_Bd.setZero();
     } else {
         state_space_map_key_t k = make_state_space_map_key(v, dt);
         if (!discrete_state_space_lookup(k)) {
-            m_AT.topLeftCorner<n, n>() = m_A;
-            m_AT.topRightCorner<n, m>() = m_B;
-            m_AT *= dt;
-            m_expAT.compute(m_T);
-            if (!m_T.bottomLeftCorner<m, n>().isZero(discretization_precision) ||
-                !m_T.bottomRightCorner<m, m>().isIdentity(discretization_precision)) {
+            discretization_matrix_t AT = discretization_matrix_t::Zero();
+            AT.topLeftCorner<n, n>() = m_A;
+            AT.topRightCorner<n, m>() = m_B;
+            AT *= dt;
+            discretization_matrix_t T = AT.exp();
+            if (!T.bottomLeftCorner<m, n>().isZero(discretization_precision) ||
+                !T.bottomRightCorner<m, m>().isIdentity(discretization_precision)) {
                 std::cout << "Warning: Discretization validation failed with v = " << v <<
                     ", dt = " << dt << ". Computation of Ad and Bd may be inaccurate.\n";
             }
-            m_Ad = m_T.topLeftCorner<n, n>();
-            m_Bd = m_T.topRightCorner<n, m>();
+            m_Ad = T.topLeftCorner<n, n>();
+            m_Bd = T.topRightCorner<n, m>();
         }
     }
 }
@@ -160,15 +161,11 @@ void Bicycle::set_parameters_from_file(const char* param_file) {
 
 void Bicycle::initialize_state_space_matrices() {
     m_A.setZero();
-    // m_B.setZero(); B is not explicitly calculated!
+    m_B.setZero();
     m_C.setZero();
     m_D.setZero();
     m_Ad.setZero();
     m_Bd.setZero();
-
-    // matrix used for calculating discrete time state space matrices
-    // a reference of this matrix must be provided to the MatrixExponential class
-    m_AT.setZero();
 
     // set constant parts of state and input matrices
     m_A(0, 4) = m_c * std::cos(m_lambda) / m_w;

@@ -7,6 +7,9 @@
 
 class ConvergenceTest: public ::testing::TestWithParam<double> {
     public:
+        using bicycle_t = model::Bicycle;
+        using kalman_t = observer::Kalman<bicycle_t>;
+        using lqr_t = controller::Lqr<bicycle_t>;
         virtual void SetUp();
         virtual void TearDown();
         virtual void simulate() = 0;

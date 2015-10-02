@@ -184,7 +184,7 @@ TEST(StateSpace, LookupFound) {
     EXPECT_TRUE(bicycle0.Bd().isApprox(Bd_vc)) << output_matrices(bicycle0.Bd(), Bd_vc);
 }
 
-TEST(StateSpace, DISABLED_LookupNotFound) {
+TEST(StateSpace, LookupNotFound) {
     double v = 1.0;
     model::Bicycle bicycle0(parameters::benchmark::M, parameters::benchmark::C1,
             parameters::benchmark::K0, parameters::benchmark::K2,

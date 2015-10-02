@@ -33,8 +33,8 @@ namespace {
     constexpr double q4 = q2/10; // steer rate cost weight
 
     constexpr double rho = 0.1; // input cost weight scaling constant
-    constexpr double r0 = 10; // roll torque cost weight
-    constexpr double r1 = 1; // steer torque cost weight
+    constexpr double r0 = 0.0; // roll torque cost weight (this is disabled)
+    constexpr double r1 = 1.0; // steer torque cost weight
 
     const double sigma0 = 1 * constants::as_radians; // yaw angle measurement noise variance
     const double sigma1 = 0.008 * constants::as_radians; // steer angle measurement noise variance
