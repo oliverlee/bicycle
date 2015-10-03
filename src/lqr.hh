@@ -18,7 +18,6 @@ typename Lqr<T>::input_t Lqr<T>::control_calculate(const state_t& x) {
     perform_value_iteration();
     input_t reduced_u = m_K*(x - m_r);
     if (m_m == T::m) {
-        //std::cout << "u: " << reduced_u.transpose() << std::endl;
         return reduced_u;
     }
 
@@ -28,7 +27,6 @@ typename Lqr<T>::input_t Lqr<T>::control_calculate(const state_t& x) {
             u[i] = reduced_u[j++];
         }
     }
-    //std::cout << "u: " << u.transpose() << std::endl;
     return u;
 }
 
@@ -57,9 +55,6 @@ void Lqr<T>::perform_value_iteration() {
         }
         if (K.isApprox(m_K) && P.isApprox(m_P)) {
             m_steady_state = true;
-            //std::cout << "steady state reached" << std::endl;
-            //std::cout << "K:\n" << m_K << std::endl;
-            //std::cout << "P:\n" << m_P << std::endl;
         }
     }
 }
@@ -96,8 +91,6 @@ void Lqr<T>::set_control_mask() {
     // unavailable input and reduce the input matrix.
     m_mask = (m_R.diagonal().array() != 0.0).template cast<uint32_t>();
     m_m = m_mask.sum();
-    //std::cout << "mask set: " << m_mask.transpose() << std::endl;
-    //std::cout << "nonzero entries = " << m_m << std::endl;
     reduce_input_matrices();
 }
 
@@ -107,7 +100,6 @@ void Lqr<T>::reduce_input_matrices() {
     if (m_m == T::m) {
         m_Br.setZero();
         m_Rr.setZero();
-        //std::cout << "reduce input matrices: skipping reduction" << std::endl;
     } else {
         for (unsigned int i = 0, j = 0; i < T::m; ++i) {
             if (m_mask[i]) {
@@ -121,10 +113,6 @@ void Lqr<T>::reduce_input_matrices() {
             }
         }
     }
-    //std::cout << "initial B\n" << m_Bd << std::endl;
-    //std::cout << "initial R\n" << m_R << std::endl;
-    //std::cout << "reduced B [" << T::n << ", " << m_m << "]\n" << m_Br << std::endl;
-    //std::cout << "reduced R [" << m_m << ", " << m_m << "]\n" << m_Rr << std::endl;
 }
 
 

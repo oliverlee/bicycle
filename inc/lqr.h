@@ -18,7 +18,6 @@ class Lqr {
         using lqr_gain_t = typename Eigen::Matrix<double, T::m, T::n>;
         using state_cost_t = state_matrix_t;
         using input_cost_t = typename Eigen::Matrix<double, T::m, T::m>;
-        using control_mask_t = typename Eigen::Matrix<uint32_t, T::m, 1>;
 
         Lqr(T& system, const state_cost_t& Q, const input_cost_t& R,
                 const state_t& r, uint32_t horizon_iterations);
@@ -44,6 +43,7 @@ class Lqr {
         double dt() const;
 
     private:
+        using control_mask_t = typename Eigen::Matrix<uint32_t, T::m, 1>;
         T& m_system;                    // controlled system or plant
         uint32_t m_horizon;             // horizon length in iterations
         state_t m_r;                    // reference state
@@ -86,6 +86,7 @@ template<typename T>
 inline void Lqr<T>::set_R(const input_cost_t& R) {
     m_steady_state = false;
     m_R = R;
+    set_control_mask();
 }
 
 template<typename T>
