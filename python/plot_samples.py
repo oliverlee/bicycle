@@ -16,7 +16,7 @@ state_name = ['yaw angle', 'roll angle', 'steer angle',
               'roll rate', 'steer rate']
 state_color = np.roll(sns.color_palette('Paired', 10), 2, axis=0)
 control_name = ['roll torque', 'steer torque']
-control_color = sns.color_palette('muted', 6)
+control_color = sns.color_palette('deep', 6)
 
 
 def unit(value, degrees=True):
@@ -208,6 +208,7 @@ def plot_control(samples, degrees=True, filename=None):
     axes = np.ravel(axes)
 
     state_cost_weight = np.diagonal(samples.lqr.Q.mean(axis=0))
+    integral_cost_weight = np.diagonal(samples.lqr.Qi.mean(axis=0))
     input_cost_weight = np.diagonal(samples.lqr.R.mean(axis=0))
 
     for n in range(samples.x.shape[1]):
@@ -218,31 +219,38 @@ def plot_control(samples, degrees=True, filename=None):
 
         x = samples.x[:, n]
         r = hold_masked_values(samples.lqr.r[:, n])
-        e = x - r
+        q = samples.lqr.q[:, n]
         if degrees and '°' in x_unit:
             x = np.rad2deg(x)
             r = np.rad2deg(r)
-            e = np.rad2deg(e)
+            q = np.rad2deg(q)
 
         ax.set_xlabel('{} [{}]'.format('time', unit('time')))
         ax.set_ylabel('{} [{}]'.format(x_state, x_unit))
-        ax.set_title('q{} = {}'.format(n, state_cost_weight[n]))
-        ax.plot(t, x, color=state_color[2*n + 1], label='true')
-        ax.plot(t, r, color=state_color[2*n], label='reference')
-        ax.plot(t, e, color=_grey_color(state_color[2*n + 1]), label='error')
+        ax.plot(t, x, color=state_color[2*n + 1],
+                label='true (q{} = {:0.2g})'.format(n, state_cost_weight[n]))
+        if integral_cost_weight[n]:
+            ax.plot(t, r, color=state_color[2*n],
+                    label='reference (qi{} = {:0.2g})'.format(
+                        n, integral_cost_weight[n]))
+            scale = np.around(np.min(np.abs(ax.get_ylim())) / np.max(np.abs(q)),
+                              decimals=3)
+            ax.plot(t, q * scale, color=_grey_color(state_color[2*n + 1]),
+                    label='integral error * {:0.2g}'.format(scale))
         ax.legend()
 
     ax = axes[0]
     ax.set_xlabel('{} [{}]'.format('time', unit('time')))
     ax.set_ylabel('{} [{}]'.format('torque', unit('torque')))
+    ax.set_title('control signals')
     title_components = []
     for n in range(samples.u.shape[1]):
         u = samples.u[:, n]
+        if not u.any():
+            continue
         u_control = control_name[n]
-        label = '{} r{}'.format(u_control, n)
-        title_components.append('r{} = {}'.format(n, input_cost_weight[n]))
+        label = '{} (r{} = {:0.2g})'.format(u_control, n, input_cost_weight[n])
         ax.plot(t, u, color=control_color[n], label=label)
-    ax.set_title(', '.join(title_components))
     ax.legend()
 
     title = 'system control'

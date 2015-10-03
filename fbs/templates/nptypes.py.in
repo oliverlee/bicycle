@@ -59,7 +59,9 @@ lqr_t = [
         ('Q',) + symmetric_state_matrix_t,  # state cost
         ('R',) + symmetric_input_matrix_t,  # input cost
         ('P',) + symmetric_state_matrix_t,  # horizon cost
-        ('K',) + lqr_gain_matrix_t]         # LQR gain
+        ('K',) + lqr_gain_matrix_t,         # LQR gain
+        ('Qi',) + symmetric_state_matrix_t, # integral cost
+        ('q',) + state_t]                   # state reference
 
 sample_t = [
         ('ts', natural_t),                  # timestamp

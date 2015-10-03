@@ -23,16 +23,22 @@ namespace {
     constexpr double fs = 200; // sample rate [Hz]
     constexpr double dt = 1.0/fs; // sample time [s]
     constexpr double v0 = 5.0; // forward speed [m/s]
-    constexpr size_t N = 1000; // length of simulation in samples
+    constexpr size_t N = 2000; // length of simulation in samples
     constexpr size_t n = 100; // length of horizon in samples
 
-    constexpr double q0 = 1000000; // yaw angle cost weight
-    constexpr double q1 = 0.1; // roll angle cost weight
-    constexpr double q2 = 0.00001; // steer angle cost weight
+    constexpr double q0 = 0.0; // yaw angle cost weight
+    constexpr double q1 = 0.01; // roll angle cost weight
+    constexpr double q2 = 0.001; // steer angle cost weight
     constexpr double q3 = q1/10; // roll rate cost weight
     constexpr double q4 = q2/10; // steer rate cost weight
 
-    constexpr double rho = 0.1; // input cost weight scaling constant
+    constexpr double qi0 = 100.0; // output integral yaw angle cost weight
+    constexpr double qi1 = 0.0; // output integral roll angle cost weight
+    constexpr double qi2 = 0.0; // output integral steer angle cost weight
+    constexpr double qi3 = 0.0; // output integral roll rate cost weight
+    constexpr double qi4 = 0.0; // output integral steer rate cost weight
+
+    constexpr double rho = 0.01; // input cost weight scaling constant
     constexpr double r0 = 0.0; // roll torque cost weight (this is disabled)
     constexpr double r1 = 1.0; // steer torque cost weight
 
@@ -77,10 +83,8 @@ int main(int argc, char* argv[]) {
             parameters::benchmark::trail,
             parameters::benchmark::steer_axis_tilt,
             v0, dt);
-    bicycle.set_C((bicycle_t::output_matrix_t() <<
-                1, 0, 0, 0, 0,
-                0, 0, 1, 0, 0).finished());
-    x << 0, 5, 5, 0, 0; // define x0 in degrees
+    bicycle.set_C(parameters::defaultvalue::bicycle::C);
+    x << 0, 3, 5, 0, 0; // define x0 in degrees
     x *= constants::as_radians; // convert to radians
 
     kalman_t kalman(bicycle,
@@ -92,17 +96,14 @@ int main(int argc, char* argv[]) {
             std::pow(x[1]/2, 2) * bicycle_t::state_matrix_t::Identity());
 
     lqr_t lqr(bicycle,
-            (lqr_t::state_cost_t() <<
-             q0,  0,  0,  0,  0,
-              0, q1,  0,  0,  0,
-              0,  0, q2,  0,  0,
-              0,  0,  0, q3,  0,
-              0,  0,  0,  0, q4).finished() * constants::as_radians,
-            (lqr_t::input_cost_t() <<
-             r0, 0,
-              0, r1).finished() * rho,
+            (bicycle_t::state_t() <<
+             q0, q1, q2, q3, q4).finished().asDiagonal() * constants::as_radians,
+            (bicycle_t::input_t() <<
+             r0, r1).finished().asDiagonal() * rho,
             bicycle_t::state_t::Zero(),
-            n);
+            n,
+            (bicycle_t::state_t() <<
+             qi0, qi1, qi2, qi3, qi4).finished().asDiagonal() * constants::as_radians);
 
     std::cout << "initial state: [" << x.transpose() << "]' rad" << std::endl;
     std::cout << "initial state estimate: [" << kalman.x().transpose() * constants::as_degrees << "]' deg" << std::endl;
@@ -153,7 +154,8 @@ int main(int argc, char* argv[]) {
         kalman_location = fbs::create_kalman(builder, kalman,
                 true, true, false, false, true); // x, P, Q, R, K
         lqr_location = fbs::create_lqr(builder, lqr,
-                false, true, true, false, false, true); // n, r, P, Q, R, K
+                false, true, true, false, false, true, // n, r, P, Q, R, K
+                false, true); // Qi, q
 
         /* skip output as we can get it from state */
         fbs_state = fbs::state(x);

@@ -82,6 +82,8 @@ table Lqr {
     input_cost:SymmetricInputMatrix;
     horizon_cost:SymmetricStateMatrix;
     lqr_gain:LqrGainMatrix;
+    integral_cost:SymmetricStateMatrix;
+    integral:State;
 }
 
 table Bicycle {

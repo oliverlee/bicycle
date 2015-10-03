@@ -19,9 +19,12 @@ class State(object):
     def X2(self): return self._tab.Get(flatbuffers.number_types.Float64Flags, self._tab.Pos + flatbuffers.number_types.UOffsetTFlags.py_type(16))
     # State
     def X3(self): return self._tab.Get(flatbuffers.number_types.Float64Flags, self._tab.Pos + flatbuffers.number_types.UOffsetTFlags.py_type(24))
+    # State
+    def X4(self): return self._tab.Get(flatbuffers.number_types.Float64Flags, self._tab.Pos + flatbuffers.number_types.UOffsetTFlags.py_type(32))
 
-def CreateState(builder, x0, x1, x2, x3):
-    builder.Prep(8, 32)
+def CreateState(builder, x0, x1, x2, x3, x4):
+    builder.Prep(8, 40)
+    builder.PrependFloat64(x4)
     builder.PrependFloat64(x3)
     builder.PrependFloat64(x2)
     builder.PrependFloat64(x1)
