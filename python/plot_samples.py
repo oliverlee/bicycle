@@ -16,7 +16,7 @@ state_name = ['yaw angle', 'roll angle', 'steer angle',
               'roll rate', 'steer rate']
 state_color = np.roll(sns.color_palette('Paired', 10), 2, axis=0)
 control_name = ['roll torque', 'steer torque']
-control_color = sns.color_palette('muted', 6)
+control_color = sns.color_palette('deep', 6)
 
 
 def unit(value, degrees=True):
@@ -235,14 +235,15 @@ def plot_control(samples, degrees=True, filename=None):
     ax = axes[0]
     ax.set_xlabel('{} [{}]'.format('time', unit('time')))
     ax.set_ylabel('{} [{}]'.format('torque', unit('torque')))
+    ax.set_title('control signals')
     title_components = []
     for n in range(samples.u.shape[1]):
         u = samples.u[:, n]
+        if not u.any():
+            continue
         u_control = control_name[n]
-        label = '{} r{}'.format(u_control, n)
-        title_components.append('r{} = {}'.format(n, input_cost_weight[n]))
+        label = '{} (r{} = {})'.format(u_control, n, input_cost_weight[n])
         ax.plot(t, u, color=control_color[n], label=label)
-    ax.set_title(', '.join(title_components))
     ax.legend()
 
     title = 'system control'
