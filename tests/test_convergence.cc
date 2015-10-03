@@ -1,7 +1,7 @@
 #include "test_convergence.h"
 #include "parameters.h"
 
-//const double ConvergenceTest::m_yaw_tol = 1 * constants::as_radians;
+const double ConvergenceTest::m_yaw_tol = 1 * constants::as_radians;
 const double ConvergenceTest::m_roll_tol = 0.3 * constants::as_radians;
 const double ConvergenceTest::m_steer_tol = 0.3 * constants::as_radians;
 const double ConvergenceTest::m_roll_rate_tol = 10 * ConvergenceTest::m_roll_tol;
@@ -12,8 +12,7 @@ const uint32_t ConvergenceTest::m_n = 100;
 
 void ConvergenceTest::SetUp() {
     // set initial state
-    // assume we have a good guess of the initial state
-    m_x << 0, 1, 1, 0, 0; // define x in degrees
+    m_x << 0, 3, 5, 0, 0; // define x in degrees
     m_x *= constants::as_radians;
 
     m_bicycle = new model::Bicycle(parameters::benchmark::M, parameters::benchmark::C1,
@@ -48,9 +47,7 @@ void ConvergenceTest::TearDown() {
 
 void ConvergenceTest::test_state_near(model::Bicycle::state_t actual,
         model::Bicycle::state_t expected, double tol_multiplier) {
-    // Don't check yaw angle as is doesn't affect dynamics at all and error
-    // in steer angle/rate results in an inaccurate yaw rate
-    //EXPECT_NEAR(actual(0), expected(0), tol_multiplier * m_yaw_tol);
+    EXPECT_NEAR(actual(0), expected(0), tol_multiplier * m_yaw_tol);
     EXPECT_NEAR(actual(1), expected(1), tol_multiplier * m_roll_tol);
     EXPECT_NEAR(actual(2), expected(2), tol_multiplier * m_steer_tol);
     EXPECT_NEAR(actual(3), expected(3), tol_multiplier * m_roll_rate_tol);

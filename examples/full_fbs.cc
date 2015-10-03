@@ -83,9 +83,7 @@ int main(int argc, char* argv[]) {
             parameters::benchmark::trail,
             parameters::benchmark::steer_axis_tilt,
             v0, dt);
-    bicycle.set_C((bicycle_t::output_matrix_t() <<
-                1, 0, 0, 0, 0,
-                0, 0, 1, 0, 0).finished());
+    bicycle.set_C(parameters::defaultvalue::bicycle::C);
     x << 0, 3, 5, 0, 0; // define x0 in degrees
     x *= constants::as_radians; // convert to radians
 
