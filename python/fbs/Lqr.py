@@ -73,11 +73,35 @@ class Lqr(object):
             return obj
         return None
 
-def LqrStart(builder): builder.StartObject(6)
+    # Lqr
+    def IntegralCost(self):
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(16))
+        if o != 0:
+            x = o + self._tab.Pos
+            from .SymmetricStateMatrix import SymmetricStateMatrix
+            obj = SymmetricStateMatrix()
+            obj.Init(self._tab.Bytes, x)
+            return obj
+        return None
+
+    # Lqr
+    def Integral(self):
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(18))
+        if o != 0:
+            x = o + self._tab.Pos
+            from .State import State
+            obj = State()
+            obj.Init(self._tab.Bytes, x)
+            return obj
+        return None
+
+def LqrStart(builder): builder.StartObject(8)
 def LqrAddHorizon(builder, horizon): builder.PrependUint32Slot(0, horizon, 0)
 def LqrAddReference(builder, reference): builder.PrependStructSlot(1, flatbuffers.number_types.UOffsetTFlags.py_type(reference), 0)
 def LqrAddStateCost(builder, stateCost): builder.PrependStructSlot(2, flatbuffers.number_types.UOffsetTFlags.py_type(stateCost), 0)
 def LqrAddInputCost(builder, inputCost): builder.PrependStructSlot(3, flatbuffers.number_types.UOffsetTFlags.py_type(inputCost), 0)
 def LqrAddHorizonCost(builder, horizonCost): builder.PrependStructSlot(4, flatbuffers.number_types.UOffsetTFlags.py_type(horizonCost), 0)
 def LqrAddLqrGain(builder, lqrGain): builder.PrependStructSlot(5, flatbuffers.number_types.UOffsetTFlags.py_type(lqrGain), 0)
+def LqrAddIntegralCost(builder, integralCost): builder.PrependStructSlot(6, flatbuffers.number_types.UOffsetTFlags.py_type(integralCost), 0)
+def LqrAddIntegral(builder, integral): builder.PrependStructSlot(7, flatbuffers.number_types.UOffsetTFlags.py_type(integral), 0)
 def LqrEnd(builder): return builder.EndObject()

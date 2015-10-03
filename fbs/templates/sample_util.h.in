@@ -197,18 +197,22 @@ flatbuffers::Offset<::fbs::Lqr> create_lqr(
         flatbuffers::FlatBufferBuilder& fbb,
         const controller::Lqr<model::Bicycle>& lqr, bool n = true,
         bool r = true, bool P = true, bool Q = true, bool R = true,
-        bool K = true) {
+        bool K = true, bool Qi = true, bool q = true) {
     uint32_t n_ = 0;
     auto r_ = state(lqr.r());
     auto Q_ = symmetric_state_matrix(lqr.Q());
     auto R_ = symmetric_input_matrix(lqr.R());
     auto P_ = symmetric_state_matrix(lqr.P());
     auto K_ = lqr_gain_matrix(lqr.K());
+    auto Qi_ = symmetric_state_matrix(lqr.Qi());
+    auto q_ = state(lqr.q());
     auto rp = &r_;
     auto Qp = &Q_;
     auto Rp = &R_;
     auto Pp = &P_;
     auto Kp = &K_;
+    auto Qip = &Qi_;
+    auto qp = &q_;
 
     if (n) {
         n_ = lqr.horizon_iterations();
@@ -228,7 +232,13 @@ flatbuffers::Offset<::fbs::Lqr> create_lqr(
     if (!K) {
         Kp = nullptr;
     }
-    return CreateLqr(fbb, n_, rp, Qp, Rp, Pp, Kp);
+    if (!Qi) {
+        Qip = nullptr;
+    }
+    if (!q) {
+        qp = nullptr;
+    }
+    return CreateLqr(fbb, n_, rp, Qp, Rp, Pp, Kp, Qip, qp);
 }
 
 } // namespace fbs

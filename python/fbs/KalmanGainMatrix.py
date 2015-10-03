@@ -27,9 +27,15 @@ class KalmanGainMatrix(object):
     def K30(self): return self._tab.Get(flatbuffers.number_types.Float64Flags, self._tab.Pos + flatbuffers.number_types.UOffsetTFlags.py_type(48))
     # KalmanGainMatrix
     def K31(self): return self._tab.Get(flatbuffers.number_types.Float64Flags, self._tab.Pos + flatbuffers.number_types.UOffsetTFlags.py_type(56))
+    # KalmanGainMatrix
+    def K40(self): return self._tab.Get(flatbuffers.number_types.Float64Flags, self._tab.Pos + flatbuffers.number_types.UOffsetTFlags.py_type(64))
+    # KalmanGainMatrix
+    def K41(self): return self._tab.Get(flatbuffers.number_types.Float64Flags, self._tab.Pos + flatbuffers.number_types.UOffsetTFlags.py_type(72))
 
-def CreateKalmanGainMatrix(builder, k00, k01, k10, k11, k20, k21, k30, k31):
-    builder.Prep(8, 64)
+def CreateKalmanGainMatrix(builder, k00, k01, k10, k11, k20, k21, k30, k31, k40, k41):
+    builder.Prep(8, 80)
+    builder.PrependFloat64(k41)
+    builder.PrependFloat64(k40)
     builder.PrependFloat64(k31)
     builder.PrependFloat64(k30)
     builder.PrependFloat64(k21)

@@ -27,9 +27,15 @@ class InputMatrix(object):
     def B30(self): return self._tab.Get(flatbuffers.number_types.Float64Flags, self._tab.Pos + flatbuffers.number_types.UOffsetTFlags.py_type(48))
     # InputMatrix
     def B31(self): return self._tab.Get(flatbuffers.number_types.Float64Flags, self._tab.Pos + flatbuffers.number_types.UOffsetTFlags.py_type(56))
+    # InputMatrix
+    def B40(self): return self._tab.Get(flatbuffers.number_types.Float64Flags, self._tab.Pos + flatbuffers.number_types.UOffsetTFlags.py_type(64))
+    # InputMatrix
+    def B41(self): return self._tab.Get(flatbuffers.number_types.Float64Flags, self._tab.Pos + flatbuffers.number_types.UOffsetTFlags.py_type(72))
 
-def CreateInputMatrix(builder, b00, b01, b10, b11, b20, b21, b30, b31):
-    builder.Prep(8, 64)
+def CreateInputMatrix(builder, b00, b01, b10, b11, b20, b21, b30, b31, b40, b41):
+    builder.Prep(8, 80)
+    builder.PrependFloat64(b41)
+    builder.PrependFloat64(b40)
     builder.PrependFloat64(b31)
     builder.PrependFloat64(b30)
     builder.PrependFloat64(b21)

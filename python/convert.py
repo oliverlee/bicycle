@@ -112,6 +112,9 @@ def convert_lqr(rec_lqr, fbs_lqr):
                             convert_symmetric_state_matrix)
     convert_record_subfield(rec_lqr.K, fbs_lqr.LqrGain(),
                             convert_lqr_gain_matrix)
+    convert_record_subfield(rec_lqr.Qi, fbs_lqr.IntegralCost(),
+                            convert_symmetric_state_matrix)
+    convert_record_subfield(rec_lqr.q, fbs_lqr.Integral(), convert_state)
 
 
 ## flatbuffers struct converters

@@ -20,20 +20,26 @@ class LqrGainMatrix(object):
     # LqrGainMatrix
     def K03(self): return self._tab.Get(flatbuffers.number_types.Float64Flags, self._tab.Pos + flatbuffers.number_types.UOffsetTFlags.py_type(24))
     # LqrGainMatrix
-    def K10(self): return self._tab.Get(flatbuffers.number_types.Float64Flags, self._tab.Pos + flatbuffers.number_types.UOffsetTFlags.py_type(32))
+    def K04(self): return self._tab.Get(flatbuffers.number_types.Float64Flags, self._tab.Pos + flatbuffers.number_types.UOffsetTFlags.py_type(32))
     # LqrGainMatrix
-    def K11(self): return self._tab.Get(flatbuffers.number_types.Float64Flags, self._tab.Pos + flatbuffers.number_types.UOffsetTFlags.py_type(40))
+    def K10(self): return self._tab.Get(flatbuffers.number_types.Float64Flags, self._tab.Pos + flatbuffers.number_types.UOffsetTFlags.py_type(40))
     # LqrGainMatrix
-    def K12(self): return self._tab.Get(flatbuffers.number_types.Float64Flags, self._tab.Pos + flatbuffers.number_types.UOffsetTFlags.py_type(48))
+    def K11(self): return self._tab.Get(flatbuffers.number_types.Float64Flags, self._tab.Pos + flatbuffers.number_types.UOffsetTFlags.py_type(48))
     # LqrGainMatrix
-    def K13(self): return self._tab.Get(flatbuffers.number_types.Float64Flags, self._tab.Pos + flatbuffers.number_types.UOffsetTFlags.py_type(56))
+    def K12(self): return self._tab.Get(flatbuffers.number_types.Float64Flags, self._tab.Pos + flatbuffers.number_types.UOffsetTFlags.py_type(56))
+    # LqrGainMatrix
+    def K13(self): return self._tab.Get(flatbuffers.number_types.Float64Flags, self._tab.Pos + flatbuffers.number_types.UOffsetTFlags.py_type(64))
+    # LqrGainMatrix
+    def K14(self): return self._tab.Get(flatbuffers.number_types.Float64Flags, self._tab.Pos + flatbuffers.number_types.UOffsetTFlags.py_type(72))
 
-def CreateLqrGainMatrix(builder, k00, k01, k02, k03, k10, k11, k12, k13):
-    builder.Prep(8, 64)
+def CreateLqrGainMatrix(builder, k00, k01, k02, k03, k04, k10, k11, k12, k13, k14):
+    builder.Prep(8, 80)
+    builder.PrependFloat64(k14)
     builder.PrependFloat64(k13)
     builder.PrependFloat64(k12)
     builder.PrependFloat64(k11)
     builder.PrependFloat64(k10)
+    builder.PrependFloat64(k04)
     builder.PrependFloat64(k03)
     builder.PrependFloat64(k02)
     builder.PrependFloat64(k01)
