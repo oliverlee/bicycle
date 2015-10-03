@@ -29,7 +29,7 @@ class Lqr {
 
         void set_horizon(uint32_t horizon_iterations);
         void set_reference(const state_t& r);
-        void set_output_integral(const state_t& q);
+        void set_error_integral(const state_t& q);
         void set_Q(const state_cost_t& Q);
         void set_Qi(const state_cost_t& Qi);
         void set_R(const input_cost_t& R);
@@ -41,7 +41,7 @@ class Lqr {
         state_t q() const;
         lqr_gain_t K() const;
         lqr_gain_t Ki() const;
-        state_cost_t P() const;
+        state_cost_t P() const; // TODO: Also return augmented cost-to-go matrix?
         state_cost_t Q() const;
         state_cost_t Qi() const;
         input_cost_t R() const;
@@ -57,11 +57,11 @@ class Lqr {
         T& m_system;                        // controlled system or plant
         uint32_t m_horizon;                 // horizon length in iterations
         state_t m_r;                        // reference state
-        state_t m_q;                        // output integral
+        state_t m_q;                        // error integral
         //lqr_gain_t m_K;                     // computed feedback gain
         //state_cost_t m_P;                   // cost-to-go
         state_cost_t m_Q;                   // state cost weights
-        state_cost_t m_Qi;                  // output integral cost weights
+        state_cost_t m_Qi;                  // error integral cost weights
         input_cost_t m_R;                   // input cost weights
         bool m_steady_state;                // steady state indicator
         //state_matrix_t m_Ad;                // copy of system state matrix
@@ -79,7 +79,7 @@ class Lqr {
         void update_horizon_cost();
         void set_control_mask();
         void reduce_input_matrices();
-        void update_output_integral(const state_t& x);
+        void update_error_integral(const state_t& x);
 }; // class Lqr
 
 template<typename T>
@@ -90,6 +90,11 @@ inline void Lqr<T>::set_horizon(uint32_t horizon_iterations) {
 template<typename T>
 inline void Lqr<T>::set_reference(const state_t& r) {
     m_r = r;
+}
+
+template<typename T>
+inline void Lqr<T>::set_error_integral(const state_t& q) {
+    m_q = q;
 }
 
 template<typename T>

@@ -20,7 +20,7 @@ Lqr<T>::Lqr(T& system, const state_cost_t& Q, const input_cost_t& R,
 }
 
 template<typename T>
-void Lqr<T>::update_output_integral(const state_t& x) {
+void Lqr<T>::update_error_integral(const state_t& x) {
     m_q += m_Ag.template bottomLeftCorner<T::n, T::n>()*(x - m_r);
 }
 
@@ -38,7 +38,7 @@ typename Lqr<T>::input_t Lqr<T>::control_calculate(const state_t& x) {
             u[i] = reduced_u[j++];
         }
     }
-    update_output_integral(x);
+    update_error_integral(x);
     return u;
 }
 
