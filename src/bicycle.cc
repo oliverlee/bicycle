@@ -66,10 +66,9 @@ Bicycle::output_t Bicycle::y(const Bicycle::state_t& x) const {
 }
 
 Bicycle::state_t Bicycle::x_integrate(const Bicycle::state_t& x, const Bicycle::input_t& u, double dt) const {
-    odeint_state_t xu;
     odeint_state_t xout;
 
-    xu << x, u;
+    xout << x, u;
     m_stepper.do_step([this](const odeint_state_t& xu, odeint_state_t& dxdt, const double t) -> void {
                 (void)t;
                 dxdt.head<n>() = m_A*xu.head<n>();
@@ -77,8 +76,9 @@ Bicycle::state_t Bicycle::x_integrate(const Bicycle::state_t& x, const Bicycle::
                 // explicitly as that would require the calculation of
                 // M.inverse(). As B = [   0  ], the product Bu = [      0   ]
                 //                     [ M^-1 ]                   [ M^-1 * u ]
-                dxdt.segment<o>(o) += m_M_llt.solve(xu.segment<o>(n));
-            }, xu, 0.0, xout, dt);
+                dxdt.segment<o>(n - o) += m_M_llt.solve(xu.segment<o>(n));
+                dxdt.tail<m>().setZero();
+            }, xout, 0.0, dt); // newly obtained state written in place
     return xout.head<n>();
 }
 
