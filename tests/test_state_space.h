@@ -21,6 +21,8 @@ inline void StateSpaceTest::SetUp() {
             parameters::benchmark::wheelbase,
             parameters::benchmark::trail,
             parameters::benchmark::steer_axis_tilt,
+            parameters::benchmark::rear_wheel_radius,
+            parameters::benchmark::front_wheel_radius,
             0.0, 0.0);
 }
 

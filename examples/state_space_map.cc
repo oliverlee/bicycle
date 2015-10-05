@@ -41,12 +41,16 @@ int main(int argc, char* argv[]) {
             parameters::benchmark::wheelbase,
             parameters::benchmark::trail,
             parameters::benchmark::steer_axis_tilt,
+            parameters::benchmark::rear_wheel_radius,
+            parameters::benchmark::front_wheel_radius,
             vw, dt, &state_space_map);
     model::Bicycle bicycle1(parameters::benchmark::M, parameters::benchmark::C1,
             parameters::benchmark::K0, parameters::benchmark::K2,
             parameters::benchmark::wheelbase,
             parameters::benchmark::trail,
             parameters::benchmark::steer_axis_tilt,
+            parameters::benchmark::rear_wheel_radius,
+            parameters::benchmark::front_wheel_radius,
             vw, dt);
 
     std::cout << "for vw: " << vw << ", dt: " << dt << std::endl;

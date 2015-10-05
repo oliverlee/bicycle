@@ -31,6 +31,8 @@ int main(int argc, char* argv[]) {
             parameters::benchmark::wheelbase,
             parameters::benchmark::trail,
             parameters::benchmark::steer_axis_tilt,
+            parameters::benchmark::rear_wheel_radius,
+            parameters::benchmark::front_wheel_radius,
             v0, dt);
 
     model::Bicycle::state_t x; // yaw angle, roll angle, steer angle, roll rate, steer rate

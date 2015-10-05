@@ -82,6 +82,8 @@ int main(int argc, char* argv[]) {
             parameters::benchmark::wheelbase,
             parameters::benchmark::trail,
             parameters::benchmark::steer_axis_tilt,
+            parameters::benchmark::rear_wheel_radius,
+            parameters::benchmark::front_wheel_radius,
             v0, dt);
     bicycle.set_C(parameters::defaultvalue::bicycle::C);
     x << 0, 3, 5, 0, 0; // define x0 in degrees

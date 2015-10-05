@@ -162,12 +162,16 @@ TEST(StateSpace, LookupFound) {
             parameters::benchmark::wheelbase,
             parameters::benchmark::trail,
             parameters::benchmark::steer_axis_tilt,
+            parameters::benchmark::rear_wheel_radius,
+            parameters::benchmark::front_wheel_radius,
             vw, dt, &state_space_map);
     model::Bicycle bicycle1(parameters::benchmark::M, parameters::benchmark::C1,
             parameters::benchmark::K0, parameters::benchmark::K2,
             parameters::benchmark::wheelbase,
             parameters::benchmark::trail,
             parameters::benchmark::steer_axis_tilt,
+            parameters::benchmark::rear_wheel_radius,
+            parameters::benchmark::front_wheel_radius,
             vw, dt);
 
     EXPECT_FALSE(bicycle0.Ad().isApprox(bicycle1.Ad())) << output_matrices(bicycle0.Ad(), bicycle1.Ad());
@@ -191,12 +195,16 @@ TEST(StateSpace, LookupNotFound) {
             parameters::benchmark::wheelbase,
             parameters::benchmark::trail,
             parameters::benchmark::steer_axis_tilt,
+            parameters::benchmark::rear_wheel_radius,
+            parameters::benchmark::front_wheel_radius,
             v, dt, &state_space_map);
     model::Bicycle bicycle1(parameters::benchmark::M, parameters::benchmark::C1,
             parameters::benchmark::K0, parameters::benchmark::K2,
             parameters::benchmark::wheelbase,
             parameters::benchmark::trail,
             parameters::benchmark::steer_axis_tilt,
+            parameters::benchmark::rear_wheel_radius,
+            parameters::benchmark::front_wheel_radius,
             v, dt);
 
     EXPECT_TRUE(bicycle0.Ad().isApprox(bicycle1.Ad())) << output_matrices(bicycle0.Ad(), bicycle1.Ad());
@@ -207,6 +215,5 @@ TEST(StateSpace, LookupNotFound) {
     bicycle1.set_v(v, dt);
 
     EXPECT_TRUE(bicycle0.Ad().isApprox(bicycle1.Ad())) << output_matrices(bicycle0.Ad(), bicycle1.Ad());
-    //TODO: This next statement fails
     EXPECT_TRUE(bicycle0.Bd().isApprox(bicycle1.Bd())) << output_matrices(bicycle0.Bd(), bicycle1.Bd());
 }

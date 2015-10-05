@@ -19,6 +19,8 @@ namespace benchmark {
     const double wheelbase = 1.02;
     const double trail = 0.08;
     const double steer_axis_tilt = boost::math::constants::pi<double>()/10.0;
+    const double rear_wheel_radius = 0.3;
+    const double front_wheel_radius = 0.35;
 } // namespace benchmark
 
 namespace defaultvalue {

@@ -26,6 +26,8 @@ int main(int argc, char* argv[]) {
             parameters::benchmark::wheelbase,
             parameters::benchmark::trail,
             parameters::benchmark::steer_axis_tilt,
+            parameters::benchmark::rear_wheel_radius,
+            parameters::benchmark::front_wheel_radius,
             v0, dt);
 
     std::chrono::time_point<std::chrono::system_clock> cont_start, cont_stop;

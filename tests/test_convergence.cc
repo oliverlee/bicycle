@@ -20,6 +20,8 @@ void ConvergenceTest::SetUp() {
             parameters::benchmark::wheelbase,
             parameters::benchmark::trail,
             parameters::benchmark::steer_axis_tilt,
+            parameters::benchmark::rear_wheel_radius,
+            parameters::benchmark::front_wheel_radius,
             GetParam(), m_dt);
     m_bicycle->set_C(parameters::defaultvalue::bicycle::C);
     m_kalman = new kalman_t(*m_bicycle,

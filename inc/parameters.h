@@ -13,6 +13,8 @@ namespace parameters {
         extern const double wheelbase;
         extern const double trail;
         extern const double steer_axis_tilt;
+        extern const double rear_wheel_radius;
+        extern const double front_wheel_radius;
     } // namespace benchmark
 
     // default matrices used for examples and tests

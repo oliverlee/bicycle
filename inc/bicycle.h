@@ -42,6 +42,7 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         Bicycle(const second_order_matrix_t& M, const second_order_matrix_t& C1,
                 const second_order_matrix_t& K0, const second_order_matrix_t& K2,
                 double wheelbase, double trail, double steer_axis_tilt,
+                double rear_wheel_radius, double front_wheel_radius,
                 double v, double dt,
                 const state_space_map_t* discrete_state_space_map = nullptr);
         Bicycle(const char* param_file, double v, double dt,
@@ -76,6 +77,8 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         double wheelbase() const;
         double trail() const;
         double steer_axis_tilt() const;
+        double rear_wheel_radius() const;
+        double front_wheel_radius() const;
         double v() const;
         virtual double dt() const;
 
@@ -98,6 +101,8 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         double m_w;
         double m_c;
         double m_lambda;
+        double m_rR;
+        double m_rF;
 
         state_matrix_t m_A;
         input_matrix_t m_B; // Use Cholesky decomposition of M if possible
@@ -184,6 +189,12 @@ inline double Bicycle::trail() const {
 }
 inline double Bicycle::steer_axis_tilt() const {
     return m_lambda;
+}
+inline double Bicycle::rear_wheel_radius() const {
+    return m_rR;
+}
+inline double Bicycle::front_wheel_radius() const {
+    return m_rF;
 }
 inline double Bicycle::v() const {
     return m_v;
