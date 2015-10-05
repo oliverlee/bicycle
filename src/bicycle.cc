@@ -92,6 +92,24 @@ Bicycle::state_t Bicycle::x_integrate(const Bicycle::state_t& x, double dt) cons
     return xout;
 }
 
+Bicycle::auxiliary_state_t Bicycle::x_aux_next(const state_t& x, const auxiliary_state_t& x_aux) const {
+    odeint_auxiliary_state_t xout;
+
+    xout << x_aux, x;
+    m_auxiliary_stepper.do_step([this](
+                const odeint_auxiliary_state_t& x, odeint_auxiliary_state_t& dxdt, const double t) -> void {
+                (void)t;
+                dxdt[0] = m_v*std::cos(x[n_aux + 0]); // xdot = v*cos(psi)
+                dxdt[1] = m_v*std::sin(x[n_aux + 0]); // ydot = v*sin(psi)
+                // Linearizing the expression for thetadot with respect to the coordinates:
+                // thetadot = -c*cos(lambda)/w * (delta*phidot + (sin(lambda)*delta + phi)*deltadot)
+                dxdt[2] = -m_c*std::cos(m_lambda)/m_w *
+                    (x[n_aux + 2]*x[n_aux + 3] + (std::sin(m_lambda)*x[n_aux + 2] + x[n_aux + 1])*x[n_aux + 4]);
+                dxdt.tail<n>().setZero();
+            }, xout, 0.0, m_dt);
+    return xout.head<n_aux>();
+}
+
 void Bicycle::set_v(double v, double dt) {
     /* system state space is parameterized by forward speed v
      * this function sets forward speed and calculates the state space matrices

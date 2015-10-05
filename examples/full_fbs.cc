@@ -46,6 +46,7 @@ namespace {
     const double sigma1 = 0.008 * constants::as_radians; // steer angle measurement noise variance
 
     bicycle_t::state_t x; // yaw angle, roll angle, steer angle, roll rate, steer rate
+    bicycle_t::auxiliary_state_t aux; // x, y, pitch angle (pitch is set to zero for now)
 
     /* used for serializing/logging */
     flatbuffers::FlatBufferBuilder builder;
@@ -81,6 +82,7 @@ int main(int argc, char* argv[]) {
     bicycle.set_C(parameters::defaultvalue::bicycle::C);
     x << 0, 3, 5, 0, 0; // define x0 in degrees
     x *= constants::as_radians; // convert to radians
+    aux.setZero();
 
     kalman_t kalman(bicycle,
             parameters::defaultvalue::kalman::Q(dt),
@@ -134,6 +136,10 @@ int main(int argc, char* argv[]) {
 
         /* system simulate */
         x = bicycle.x_next(x, u);
+
+        /* update auxiliary states */
+        aux = bicycle.x_aux_next(x, aux);
+        std::cout << aux.transpose() << std::endl;
 
         /* measure output with noise */
         auto z = bicycle.y(x);

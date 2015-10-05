@@ -10,11 +10,13 @@
 
 namespace model {
 
-/* State and Input Definitions
+/* State, Input, and Output Definitions
  * state: [yaw angle, roll angle, steer angle, roll rate, steer rate]
  * input: [roll torque, steer torque]
  * output: [*, *] - 2 outputs are defined, but must be specified by
  *                  setting the C and D matrices
+ *
+ * auxiliary: [x rear contact, y rear contact, pitch angle]
  */
 
 class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
@@ -39,6 +41,9 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         using state_space_map_t = std::unordered_map<state_space_map_key_t,
               state_space_map_value_t, boost::hash<state_space_map_key_t>>;
 
+        static constexpr unsigned int n_aux = 3;
+        using auxiliary_state_t = Eigen::Matrix<double, n_aux, 1>;
+
         Bicycle(const second_order_matrix_t& M, const second_order_matrix_t& C1,
                 const second_order_matrix_t& K0, const second_order_matrix_t& K2,
                 double wheelbase, double trail, double steer_axis_tilt,
@@ -56,6 +61,7 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         virtual state_t x_next(const state_t& x) const;
         state_t x_integrate(const state_t& x, double dt) const;
         virtual output_t y(const state_t& x) const;
+        auxiliary_state_t x_aux_next(const state_t& x, const auxiliary_state_t& x_aux) const;
         void set_v(double v, double dt);
         void set_C(const output_matrix_t& C);
         void set_D(const feedthrough_matrix_t& D);
@@ -132,6 +138,10 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         mutable boost::numeric::odeint::runge_kutta_dopri5<
             state_t, double, state_t, double,
             boost::numeric::odeint::vector_space_algebra> m_stepper_noinput;
+        using odeint_auxiliary_state_t = Eigen::Matrix<double, n_aux + n, 1>;
+        mutable boost::numeric::odeint::runge_kutta_dopri5<
+            odeint_auxiliary_state_t, double, odeint_auxiliary_state_t, double,
+            boost::numeric::odeint::vector_space_algebra> m_auxiliary_stepper;
 
         void set_parameters_from_file(const char* param_file);
         void initialize_state_space_matrices();
