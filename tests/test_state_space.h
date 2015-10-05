@@ -13,15 +13,7 @@ class StateSpaceTest : public ::testing::Test {
 };
 
 inline void StateSpaceTest::SetUp() {
-    bicycle = new model::Bicycle(
-            parameters::benchmark::M,
-            parameters::benchmark::C1,
-            parameters::benchmark::K0,
-            parameters::benchmark::K2,
-            parameters::benchmark::wheelbase,
-            parameters::benchmark::trail,
-            parameters::benchmark::steer_axis_tilt,
-            0.0, 0.0);
+    bicycle = new model::Bicycle(0.0, 0.0);
 }
 
 inline void StateSpaceTest::TearDown() {

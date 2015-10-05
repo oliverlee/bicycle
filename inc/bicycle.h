@@ -10,11 +10,13 @@
 
 namespace model {
 
-/* State and Input Definitions
+/* State, Input, and Output Definitions
  * state: [yaw angle, roll angle, steer angle, roll rate, steer rate]
  * input: [roll torque, steer torque]
  * output: [*, *] - 2 outputs are defined, but must be specified by
  *                  setting the C and D matrices
+ *
+ * auxiliary: [x rear contact, y rear contact, pitch angle]
  */
 
 class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
@@ -39,12 +41,18 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         using state_space_map_t = std::unordered_map<state_space_map_key_t,
               state_space_map_value_t, boost::hash<state_space_map_key_t>>;
 
+        static constexpr unsigned int p = 3;
+        using auxiliary_state_t = Eigen::Matrix<double, p, 1>;
+
         Bicycle(const second_order_matrix_t& M, const second_order_matrix_t& C1,
                 const second_order_matrix_t& K0, const second_order_matrix_t& K2,
                 double wheelbase, double trail, double steer_axis_tilt,
+                double rear_wheel_radius, double front_wheel_radius,
                 double v, double dt,
                 const state_space_map_t* discrete_state_space_map = nullptr);
         Bicycle(const char* param_file, double v, double dt,
+                const state_space_map_t* discrete_state_space_map = nullptr);
+        Bicycle(double v, double dt,
                 const state_space_map_t* discrete_state_space_map = nullptr);
 
         virtual state_t x_next(const state_t& x, const input_t& u) const;
@@ -53,12 +61,15 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         virtual state_t x_next(const state_t& x) const;
         state_t x_integrate(const state_t& x, double dt) const;
         virtual output_t y(const state_t& x) const;
+        auxiliary_state_t x_aux_next(const state_t& x, const auxiliary_state_t& x_aux) const;
         void set_v(double v, double dt);
         void set_C(const output_matrix_t& C);
         void set_D(const feedthrough_matrix_t& D);
 
         static constexpr state_space_map_key_t make_state_space_map_key(double v, double dt);
         bool discrete_state_space_lookup(const state_space_map_key_t& k);
+
+        double solve_constraint_pitch(const state_t& x, double guess) const;
 
         // (pseudo) parameter accessors
         state_matrix_t A() const;
@@ -76,6 +87,8 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         double wheelbase() const;
         double trail() const;
         double steer_axis_tilt() const;
+        double rear_wheel_radius() const;
+        double front_wheel_radius() const;
         double v() const;
         virtual double dt() const;
 
@@ -98,6 +111,11 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         double m_w;
         double m_c;
         double m_lambda;
+        double m_rr;
+        double m_rf;
+        double m_d1; // Moore parameter. Luke calls this cR.
+        double m_d2; // Moore parameter. Luke calls this ls.
+        double m_d3; // Moore parameter. Luke calls this cF.
 
         state_matrix_t m_A;
         input_matrix_t m_B; // Use Cholesky decomposition of M if possible
@@ -125,9 +143,14 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         mutable boost::numeric::odeint::runge_kutta_dopri5<
             state_t, double, state_t, double,
             boost::numeric::odeint::vector_space_algebra> m_stepper_noinput;
+        using odeint_auxiliary_state_t = Eigen::Matrix<double, p + n, 1>;
+        mutable boost::numeric::odeint::runge_kutta_dopri5<
+            odeint_auxiliary_state_t, double, odeint_auxiliary_state_t, double,
+            boost::numeric::odeint::vector_space_algebra> m_auxiliary_stepper;
 
         void set_parameters_from_file(const char* param_file);
         void initialize_state_space_matrices();
+        void set_moore_parameters();
 }; // class Bicycle
 
 // define simple member functions using inline
@@ -184,6 +207,12 @@ inline double Bicycle::trail() const {
 }
 inline double Bicycle::steer_axis_tilt() const {
     return m_lambda;
+}
+inline double Bicycle::rear_wheel_radius() const {
+    return m_rr;
+}
+inline double Bicycle::front_wheel_radius() const {
+    return m_rf;
 }
 inline double Bicycle::v() const {
     return m_v;

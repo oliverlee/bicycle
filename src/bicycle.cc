@@ -4,8 +4,10 @@
 #include <stdexcept>
 #include <Eigen/QR>
 #include <unsupported/Eigen/MatrixFunctions>
+#include <boost/math/tools/tuple.hpp>
+#include <boost/math/tools/roots.hpp>
 #include "bicycle.h"
-#include "constants.h"
+#include "parameters.h"
 
 namespace {
     const double discretization_precision = Eigen::NumTraits<double>::dummy_precision();
@@ -15,11 +17,14 @@ namespace model {
 Bicycle::Bicycle(const second_order_matrix_t& M, const second_order_matrix_t& C1,
         const second_order_matrix_t& K0, const second_order_matrix_t& K2,
         double wheelbase, double trail, double steer_axis_tilt,
+        double rear_wheel_radius, double front_wheel_radius,
         double v, double dt, const state_space_map_t* discrete_state_space_map) :
     m_M(M), m_C1(C1), m_K0(K0), m_K2(K2),
     m_w(wheelbase), m_c(trail), m_lambda(steer_axis_tilt),
+    m_rr(rear_wheel_radius), m_rf(front_wheel_radius),
     m_discrete_state_space_map(discrete_state_space_map) {
     initialize_state_space_matrices();
+    set_moore_parameters();
 
     // set forward speed, sampling time and update state matrices
     set_v(v, dt);
@@ -31,10 +36,22 @@ Bicycle::Bicycle(const char* param_file, double v, double dt,
     // set M, C1, K0, K2 matrices from file
     set_parameters_from_file(param_file);
     initialize_state_space_matrices();
+    set_moore_parameters();
 
     // set forward speed, sampling time and update state matrices
     set_v(v, dt);
 }
+
+Bicycle::Bicycle(double v, double dt,
+        const state_space_map_t* discrete_state_space_map) :
+    Bicycle(parameters::benchmark::M, parameters::benchmark::C1,
+            parameters::benchmark::K0, parameters::benchmark::K2,
+            parameters::benchmark::wheelbase,
+            parameters::benchmark::trail,
+            parameters::benchmark::steer_axis_tilt,
+            parameters::benchmark::rear_wheel_radius,
+            parameters::benchmark::front_wheel_radius,
+            v, dt, discrete_state_space_map) { }
 
 Bicycle::state_t Bicycle::x_next(const Bicycle::state_t& x, const Bicycle::input_t& u) const {
     return m_Ad*x + m_Bd*u;
@@ -53,10 +70,9 @@ Bicycle::output_t Bicycle::y(const Bicycle::state_t& x) const {
 }
 
 Bicycle::state_t Bicycle::x_integrate(const Bicycle::state_t& x, const Bicycle::input_t& u, double dt) const {
-    odeint_state_t xu;
     odeint_state_t xout;
 
-    xu << x, u;
+    xout << x, u;
     m_stepper.do_step([this](const odeint_state_t& xu, odeint_state_t& dxdt, const double t) -> void {
                 (void)t;
                 dxdt.head<n>() = m_A*xu.head<n>();
@@ -64,8 +80,9 @@ Bicycle::state_t Bicycle::x_integrate(const Bicycle::state_t& x, const Bicycle::
                 // explicitly as that would require the calculation of
                 // M.inverse(). As B = [   0  ], the product Bu = [      0   ]
                 //                     [ M^-1 ]                   [ M^-1 * u ]
-                dxdt.segment<o>(o) += m_M_llt.solve(xu.segment<o>(n));
-            }, xu, 0.0, xout, dt);
+                dxdt.segment<o>(n - o) += m_M_llt.solve(xu.segment<o>(n));
+                dxdt.tail<m>().setZero();
+            }, xout, 0.0, dt); // newly obtained state written in place
     return xout.head<n>();
 }
 
@@ -77,6 +94,22 @@ Bicycle::state_t Bicycle::x_integrate(const Bicycle::state_t& x, double dt) cons
                 dxdt = m_A*x;
             }, x, 0.0, xout, dt);
     return xout;
+}
+
+Bicycle::auxiliary_state_t Bicycle::x_aux_next(const state_t& x, const auxiliary_state_t& x_aux) const {
+    odeint_auxiliary_state_t xout;
+
+    xout << x_aux, x;
+    m_auxiliary_stepper.do_step([this](
+                const odeint_auxiliary_state_t& x, odeint_auxiliary_state_t& dxdt, const double t) -> void {
+                (void)t;
+                dxdt[0] = m_v*std::cos(x[p + 0]); // xdot = v*cos(psi)
+                dxdt[1] = m_v*std::sin(x[p + 0]); // ydot = v*sin(psi)
+                dxdt.tail<n + 1>().setZero(); // pitch is calculated separately
+            }, xout, 0.0, m_dt);
+
+    xout[2] = solve_constraint_pitch(x, x_aux[2]); // use last pitch value as initial guess
+    return xout.head<p>();
 }
 
 void Bicycle::set_v(double v, double dt) {
@@ -138,7 +171,7 @@ bool Bicycle::discrete_state_space_lookup(const state_space_map_key_t& k) {
 
 void Bicycle::set_parameters_from_file(const char* param_file) {
     const unsigned int num_elem = o*o;
-    std::array<double, 4*num_elem + 3> buffer;
+    std::array<double, 4*num_elem + 5> buffer;
 
     std::fstream pf(param_file, std::ios_base::in);
     if (!pf.good()) {
@@ -157,6 +190,8 @@ void Bicycle::set_parameters_from_file(const char* param_file) {
     m_w = buffer[4*num_elem];
     m_c = buffer[4*num_elem + 1];
     m_lambda = buffer[4*num_elem + 2];
+    m_rr = buffer[4*num_elem + 3];
+    m_rf = buffer[4*num_elem + 4];
 }
 
 void Bicycle::initialize_state_space_matrices() {
@@ -178,6 +213,74 @@ void Bicycle::initialize_state_space_matrices() {
     // used when necessary
     // m_B.bottomLeftCorner<o, o>() = m_M.inverse();
     m_M_llt.compute(m_M);
+}
+
+void Bicycle::set_moore_parameters() {
+    m_d1 = std::cos(m_lambda)*(m_c + m_w - m_rr*std::tan(m_lambda));
+    m_d3 = -std::cos(m_lambda)*(m_c - m_rf*std::tan(m_lambda));
+    m_d2 = (m_rr + m_d1*std::sin(m_lambda) - m_rf + m_d3*std::sin(m_lambda)) / std::cos(m_lambda);
+}
+
+double Bicycle::solve_constraint_pitch(const state_t& x, double guess) const {
+    // constraint function generated by script 'generate_pitch.py'.
+    static constexpr int digits = std::numeric_limits<double>::digits*2/3;
+    static const double min = -constants::pi/2;
+    static const double max = constants::pi/2;
+    auto constraint_function = [this, x](double pitch)->boost::math::tuple<double, double> {
+        return boost::math::make_tuple(
+((m_rf*std::pow(std::cos(pitch), 2)*std::pow(std::cos(x[1]), 2) +
+(m_d3*std::sqrt(std::pow(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) + std::sin(x[1])*std::sin(x[2]), 2) +
+std::pow(std::cos(pitch), 2)*std::pow(std::cos(x[1]), 2)) +
+m_rf*(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) +
+std::sin(x[1])*std::sin(x[2])))*(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) +
+std::sin(x[1])*std::sin(x[2])))*std::sqrt(std::pow(std::cos(x[1]), 2)) +
+std::sqrt(std::pow(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) + std::sin(x[1])*std::sin(x[2]), 2) +
+std::pow(std::cos(pitch), 2)*std::pow(std::cos(x[1]), 2))*(-m_d1*std::sqrt(std::pow(std::cos(x[1]),
+2))*std::sin(pitch) + m_d2*std::sqrt(std::pow(std::cos(x[1]), 2))*std::cos(pitch) -
+m_rr*std::cos(x[1]))*std::cos(x[1]))/(std::sqrt(std::pow(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) +
+std::sin(x[1])*std::sin(x[2]), 2) + std::pow(std::cos(pitch), 2)*std::pow(std::cos(x[1]),
+2))*std::sqrt(std::pow(std::cos(x[1]), 2)))
+                ,
+((m_rf*std::pow(std::cos(pitch), 2)*std::pow(std::cos(x[1]), 2) +
+(m_d3*std::sqrt(std::pow(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) + std::sin(x[1])*std::sin(x[2]), 2) +
+std::pow(std::cos(pitch), 2)*std::pow(std::cos(x[1]), 2)) +
+m_rf*(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) +
+std::sin(x[1])*std::sin(x[2])))*(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) +
+std::sin(x[1])*std::sin(x[2])))*std::sqrt(std::pow(std::cos(x[1]), 2)) +
+std::sqrt(std::pow(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) + std::sin(x[1])*std::sin(x[2]), 2) +
+std::pow(std::cos(pitch), 2)*std::pow(std::cos(x[1]), 2))*(-m_d1*std::sqrt(std::pow(std::cos(x[1]),
+2))*std::sin(pitch) + m_d2*std::sqrt(std::pow(std::cos(x[1]), 2))*std::cos(pitch) -
+m_rr*std::cos(x[1]))*std::cos(x[1]))*((-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) +
+std::sin(x[1])*std::sin(x[2]))*std::cos(pitch)*std::cos(x[1])*std::cos(x[2]) +
+std::sin(pitch)*std::cos(pitch)*std::pow(std::cos(x[1]),
+2))/(std::pow(std::pow(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) + std::sin(x[1])*std::sin(x[2]), 2) +
+std::pow(std::cos(pitch), 2)*std::pow(std::cos(x[1]), 2), 1.5)*std::sqrt(std::pow(std::cos(x[1]), 2))) +
+((-m_d1*std::sqrt(std::pow(std::cos(x[1]), 2))*std::cos(pitch) - m_d2*std::sqrt(std::pow(std::cos(x[1]),
+2))*std::sin(pitch))*std::sqrt(std::pow(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) +
+std::sin(x[1])*std::sin(x[2]), 2) + std::pow(std::cos(pitch), 2)*std::pow(std::cos(x[1]), 2))*std::cos(x[1]) +
+(-(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) +
+std::sin(x[1])*std::sin(x[2]))*std::cos(pitch)*std::cos(x[1])*std::cos(x[2]) -
+std::sin(pitch)*std::cos(pitch)*std::pow(std::cos(x[1]), 2))*(-m_d1*std::sqrt(std::pow(std::cos(x[1]),
+2))*std::sin(pitch) + m_d2*std::sqrt(std::pow(std::cos(x[1]), 2))*std::cos(pitch) -
+m_rr*std::cos(x[1]))*std::cos(x[1])/std::sqrt(std::pow(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) +
+std::sin(x[1])*std::sin(x[2]), 2) + std::pow(std::cos(pitch), 2)*std::pow(std::cos(x[1]), 2)) +
+(-2*m_rf*std::sin(pitch)*std::cos(pitch)*std::pow(std::cos(x[1]), 2) -
+(m_d3*std::sqrt(std::pow(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) + std::sin(x[1])*std::sin(x[2]), 2) +
+std::pow(std::cos(pitch), 2)*std::pow(std::cos(x[1]), 2)) +
+m_rf*(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) +
+std::sin(x[1])*std::sin(x[2])))*std::cos(pitch)*std::cos(x[1])*std::cos(x[2]) +
+(m_d3*(-(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) +
+std::sin(x[1])*std::sin(x[2]))*std::cos(pitch)*std::cos(x[1])*std::cos(x[2]) -
+std::sin(pitch)*std::cos(pitch)*std::pow(std::cos(x[1]),
+2))/std::sqrt(std::pow(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) + std::sin(x[1])*std::sin(x[2]), 2) +
+std::pow(std::cos(pitch), 2)*std::pow(std::cos(x[1]), 2)) -
+m_rf*std::cos(pitch)*std::cos(x[1])*std::cos(x[2]))*(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) +
+std::sin(x[1])*std::sin(x[2])))*std::sqrt(std::pow(std::cos(x[1]),
+2)))/(std::sqrt(std::pow(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) + std::sin(x[1])*std::sin(x[2]), 2) +
+std::pow(std::cos(pitch), 2)*std::pow(std::cos(x[1]), 2))*std::sqrt(std::pow(std::cos(x[1]), 2)))
+                );
+    };
+    return boost::math::tools::newton_raphson_iterate(constraint_function, guess, min, max, digits);
 }
 
 } // namespace model

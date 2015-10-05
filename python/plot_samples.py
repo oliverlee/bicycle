@@ -8,13 +8,18 @@ import sys
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pylab as plt
+from matplotlib.collections import LineCollection
 import seaborn as sns
 import convert
 
 
+flatgrey = '#95a5a6'
 state_name = ['yaw angle', 'roll angle', 'steer angle',
               'roll rate', 'steer rate']
 state_color = np.roll(sns.color_palette('Paired', 10), 2, axis=0)
+auxiliary_state_name = ['x', 'y', 'pitch angle']
+auxiliary_state_color = sns.color_palette(
+        len(auxiliary_state_name) * [flatgrey])
 control_name = ['roll torque', 'steer torque']
 control_color = sns.color_palette('deep', 6)
 
@@ -30,6 +35,10 @@ def unit(value, degrees=True):
         u = 's'
     elif value.endswith('torque'):
         u = 'N-m'
+    elif value == 'x':
+        u = 'm'
+    elif value == 'y':
+        u = 'm'
     else:
         raise NotImplementedError(
                 "No unit associated with '{}'.".format(value))
@@ -45,7 +54,6 @@ def _set_suptitle(fig, title, filename):
 
 
 def _grey_color(color):
-        flatgrey = '#95a5a6'
         cmap = sns.blend_palette([color, flatgrey], 6)
         return sns.color_palette(cmap)[4]
 
@@ -136,24 +144,77 @@ def plot_computation_time(samples, bins=10, logscale=None, filename=None):
     return fig, axes
 
 
-def plot_state(samples, degrees=True, confidence=True, filename=None):
+def plot_state(samples, degrees=True, confidence=True,
+               rear_contact_trajectory=True, filename=None):
     # get time from timestamp and sample time
     t = samples.bicycle.dt.mean() * samples.ts
 
     cols = 2
-    rows = math.ceil(samples.x.shape[1] / cols)
+    if not samples.aux.mask.any():
+        rows = math.ceil((samples.x.shape[1] + samples.aux.shape[1]) / cols)
+        aux_offset = int(rows*cols !=
+                         samples.x.shape[1] + samples.aux.shape[1])
+        state_offset = aux_offset + samples.aux.shape[1]
+    else:
+        rows = math.ceil(samples.x.shape[1] / cols)
+        aux_offset = int(rows*cols != samples.x.shape[1])
+        state_offset = aux_offset
     fig, axes = plt.subplots(rows, cols, sharex=True)
     axes = axes.ravel()
+    if aux_offset:
+        axes[0].axis('off')
 
     # We want C'*z so we have the measured state with noise at every timestep
     # (some states will be zero).
     # (C'*z)' = z'*C
     C = samples.bicycle.Cd[0] # C = Cd
 
+    # first element of auxiliary state is masked if all states are zero:
+    if samples.aux.mask[0].any() and not samples.aux.mask[1:].all():
+        samples.aux[0] = np.zeros(1, dtype=(samples.aux.dtype,
+                                            samples.aux.shape[1:]))
+    for n in range(samples.aux.shape[1]):
+        if rear_contact_trajectory:
+            if n == 0:
+                continue
+            elif n == 1:
+                trajectory = samples.aux[:, :2].transpose(0, 2, 1)
+                segments = np.concatenate([trajectory[:-1], trajectory[1:]],
+                                          axis=1)
+                lc = LineCollection(segments,
+                                    cmap=sns.dark_palette(flatgrey,
+                                                          as_cmap=True))
+                lc.set_array(t)
+                ax = plt.subplot2grid((rows, cols), (0, 0), colspan=2)
+                ax.add_collection(lc)
+                minima = np.min(trajectory, axis=0)[0]
+                maxima = np.max(trajectory, axis=0)[0]
+                ax.set_xlim(minima[0], maxima[0])
+                ax.set_ylim(minima[1], maxima[1])
+                ax.set_xlabel('{} [{}]'.format('x', unit('x')))
+                ax.set_ylabel('{} [{}]'.format('y', unit('y')))
+                ax.plot(trajectory[-1, 0, 0], trajectory[-1, 0, 1],
+                        color=auxiliary_state_color[0],
+                        label='rear contact point trajectory')
+                ax.invert_yaxis()
+                ax.legend()
+                axes[1] = ax
+                continue
+        ax = axes[n + aux_offset]
+        x_state = auxiliary_state_name[n]
+        x_unit = unit(x_state, degrees)
+
+        x = samples.aux[:, n]
+        if degrees and '°' in x_unit:
+            x = np.rad2deg(x)
+        ax.set_xlabel('{} [{}]'.format('time', unit('time')))
+        ax.set_ylabel('{} [{}]'.format(x_state, x_unit))
+        ax.plot(t, x, color=auxiliary_state_color[n], label='auxiliary state')
+        ax.legend()
+
     x_meas = np.dot(samples.z.transpose(0, 2, 1), C).transpose(0, 2, 1)
-    axes[0].axis('off')
     for n in range(samples.x.shape[1]):
-        ax = axes[n + 1]
+        ax = axes[n + state_offset]
         x_state = state_name[n]
         x_unit = unit(x_state, degrees)
 
@@ -170,10 +231,7 @@ def plot_state(samples, degrees=True, confidence=True, filename=None):
         ax.plot(t, x, color=state_color[2*n + 1], label='true', zorder=2)
 
         if not samples.z.mask.all() and z.any():
-            flatgrey = '#95a5a6'
-            cmap = sns.blend_palette([state_color[2*n + 1], flatgrey], 6)
-            grey_color = sns.color_palette(cmap)[4]
-            ax.plot(t[1:], z[1:], color=grey_color,
+            ax.plot(t[1:], z[1:], color=_grey_color(state_color[2*n + 1]),
                     label='measurement', zorder=1)
             ax.legend()
 
@@ -191,6 +249,28 @@ def plot_state(samples, degrees=True, confidence=True, filename=None):
                 ax.fill_between(t, low, high, alpha=0.2, color=state_color[2*n])
                 ax.set_ylim(limits)
             ax.legend()
+
+    # register axes callback - this will redraw the trajectory subplot if the
+    # x-axis (time) is changed on any ofther subplots
+    if rear_contact_trajectory:
+        class TrajectoryDisplay(object):
+            def __init__(self, ax, t, x, y):
+                self.ax = ax
+                self.t = t
+                self.x = x
+                self.y = y
+
+            def ax_update(self, ax):
+                tmin, tmax = ax.get_xlim()
+                imin = np.argmax(self.t >= tmin)
+                imax = self.t.shape[0] - np.argmax(self.t[::-1] < tmax)
+                x = self.x[imin:imax]
+                y = self.y[imin:imax]
+                self.ax.set_xlim(np.min(x), np.max(x))
+                self.ax.set_ylim(np.min(y), np.max(y))
+        td = TrajectoryDisplay(axes[1], t, samples.aux[:, 0], samples.aux[:, 1])
+        for n in range(2, rows*cols):
+            axes[n].callbacks.connect('xlim_changed', td.ax_update)
 
     title = 'system state'
     _set_suptitle(fig, title, filename)

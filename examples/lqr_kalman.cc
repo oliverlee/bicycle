@@ -34,12 +34,7 @@ int main(int argc, char* argv[]) {
     std::normal_distribution<> rn1(0,
             parameters::defaultvalue::kalman::R(1, 1));
 
-    model::Bicycle bicycle(parameters::benchmark::M, parameters::benchmark::C1,
-            parameters::benchmark::K0, parameters::benchmark::K2,
-            parameters::benchmark::wheelbase,
-            parameters::benchmark::trail,
-            parameters::benchmark::steer_axis_tilt,
-            v0, dt);
+    model::Bicycle bicycle(v0, dt);
     bicycle.set_C(parameters::defaultvalue::bicycle::C);
 
     controller::Lqr<model::Bicycle> lqr(bicycle,

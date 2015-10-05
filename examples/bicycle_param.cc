@@ -15,6 +15,8 @@ namespace {
         std::cout << "wheelbase: " << bicycle.wheelbase() << std::endl;
         std::cout << "trail: " << bicycle.trail() << std::endl;
         std::cout << "steer axis tilt: " << bicycle.steer_axis_tilt() << std::endl;
+        std::cout << "rear wheel radius: " << bicycle.rear_wheel_radius() << std::endl;
+        std::cout << "front wheel radius: " << bicycle.front_wheel_radius() << std::endl;
     }
 } // namespace
 
@@ -25,12 +27,7 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    model::Bicycle bicycle1(parameters::benchmark::M, parameters::benchmark::C1,
-            parameters::benchmark::K0, parameters::benchmark::K2,
-            parameters::benchmark::wheelbase,
-            parameters::benchmark::trail,
-            parameters::benchmark::steer_axis_tilt,
-            v0, dt);
+    model::Bicycle bicycle1(v0, dt);
     std::cout << "constructed bicycle from predefined parameters:\n";
     print_parameters(bicycle1);
     std::cout << "\n";

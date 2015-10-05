@@ -32,11 +32,11 @@ namespace {
     constexpr double q3 = q1/10; // roll rate cost weight
     constexpr double q4 = q2/10; // steer rate cost weight
 
-    constexpr double qi0 = 100.0; // output integral yaw angle cost weight
-    constexpr double qi1 = 0.0; // output integral roll angle cost weight
-    constexpr double qi2 = 0.0; // output integral steer angle cost weight
-    constexpr double qi3 = 0.0; // output integral roll rate cost weight
-    constexpr double qi4 = 0.0; // output integral steer rate cost weight
+    constexpr double qi0 = 100.0; // error integral yaw angle cost weight
+    constexpr double qi1 = 0.0; // error integral roll angle cost weight
+    constexpr double qi2 = 0.0; // error integral steer angle cost weight
+    constexpr double qi3 = 0.0; // error integral roll rate cost weight
+    constexpr double qi4 = 0.0; // error integral steer rate cost weight
 
     constexpr double rho = 0.01; // input cost weight scaling constant
     constexpr double r0 = 0.0; // roll torque cost weight (this is disabled)
@@ -46,6 +46,7 @@ namespace {
     const double sigma1 = 0.008 * constants::as_radians; // steer angle measurement noise variance
 
     bicycle_t::state_t x; // yaw angle, roll angle, steer angle, roll rate, steer rate
+    bicycle_t::auxiliary_state_t aux; // x, y, pitch angle
 
     /* used for serializing/logging */
     flatbuffers::FlatBufferBuilder builder;
@@ -77,15 +78,12 @@ int main(int argc, char* argv[]) {
     std::normal_distribution<> rn0(0, sigma0);
     std::normal_distribution<> rn1(0, sigma1);
 
-    bicycle_t bicycle(parameters::benchmark::M, parameters::benchmark::C1,
-            parameters::benchmark::K0, parameters::benchmark::K2,
-            parameters::benchmark::wheelbase,
-            parameters::benchmark::trail,
-            parameters::benchmark::steer_axis_tilt,
-            v0, dt);
+    bicycle_t bicycle(v0, dt);
     bicycle.set_C(parameters::defaultvalue::bicycle::C);
     x << 0, 3, 5, 0, 0; // define x0 in degrees
     x *= constants::as_radians; // convert to radians
+    aux.setZero();
+    aux[2] = bicycle.solve_constraint_pitch(x, 0);
 
     kalman_t kalman(bicycle,
             parameters::defaultvalue::kalman::Q(dt),
@@ -124,9 +122,10 @@ int main(int argc, char* argv[]) {
     auto fbs_state = fbs::state(x);
     auto fbs_input = fbs::input(bicycle_t::input_t::Zero());
     auto fbs_measurement = fbs::output(bicycle_t::output_t::Zero());
+    auto fbs_auxiliary_state = fbs::auxiliary_state(aux);
     builder.Finish(fbs::CreateSample(builder, current_sample, 0,
                 bicycle_location, kalman_location, lqr_location,
-                &fbs_state, 0, 0, &fbs_measurement));
+                &fbs_state, 0, 0, &fbs_measurement, &fbs_auxiliary_state));
 
     auto data = log_builder.CreateVector(builder.GetBufferPointer(), builder.GetSize());
     sample_locations[current_sample++] = fbs::CreateSampleBuffer(log_builder, data);
@@ -139,6 +138,9 @@ int main(int argc, char* argv[]) {
 
         /* system simulate */
         x = bicycle.x_next(x, u);
+
+        /* update auxiliary states */
+        aux = bicycle.x_aux_next(x, aux);
 
         /* measure output with noise */
         auto z = bicycle.y(x);
@@ -161,12 +163,14 @@ int main(int argc, char* argv[]) {
         fbs_state = fbs::state(x);
         fbs_input = fbs::input(u);
         fbs_measurement = fbs::output(z);
+        fbs_auxiliary_state = fbs::auxiliary_state(aux);
 
         auto comp_stop = std::chrono::high_resolution_clock::now();
         auto comp_time = std::chrono::duration<double>(comp_stop - comp_start);
         builder.Finish(fbs::CreateSample(builder, current_sample, comp_time.count(),
                     0, kalman_location, lqr_location,
-                    &fbs_state, &fbs_input, 0, &fbs_measurement));
+                    &fbs_state, &fbs_input, 0, &fbs_measurement,
+                    &fbs_auxiliary_state));
         /* sample is serialized */
 
         //uint8_t* p = nullptr;

@@ -47,6 +47,8 @@ namespace fbs;
 
 {{ vector('Output', 'y', 'l') }}
 
+{{ vector('AuxiliaryState', 'x', 'p') }}
+
 {{ matrix('SecondOrderMatrix', 'm', 'o', 'o') }}
 
 {{ matrix('LqrGainMatrix', 'k', 'm', 'n') }}
@@ -109,6 +111,7 @@ table Sample {
     input:Input; // applied input
     output:Output; // output without noise
     measurement:Output; // output with noise
+    auxiliary_state:AuxiliaryState; // auxiliary state
 }
 
 root_type Sample;

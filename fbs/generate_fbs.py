@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+from collections import OrderedDict
 import os
 import sys
 import jinja2
@@ -39,7 +40,7 @@ def template_setup(filename):
 
 if __name__ == "__main__":
     usage = 'generate flatbuffers schema files for given system size\n'
-    usage += '{0} <n> <m> <l> <o>'.format(__file__)
+    usage += '{0} <n> <m> <l> <o> <p>'.format(__file__)
     if len(sys.argv) < 5:
         print(usage)
         sys.exit(1)
@@ -48,7 +49,8 @@ if __name__ == "__main__":
     m = int(sys.argv[2])
     l = int(sys.argv[3])
     o = int(sys.argv[4])
-    size = {'n': n, 'm': m, 'l': l, 'o': o}
+    p = int(sys.argv[5])
+    size = OrderedDict(zip(['n', 'm', 'l', 'o', 'p'], [n, m, l, o, p]))
 
     template_dict = {'size': size}
     generate_source('sample.fbs.in', template_dict)

@@ -15,12 +15,7 @@ void ConvergenceTest::SetUp() {
     m_x << 0, 3, 5, 0, 0; // define x in degrees
     m_x *= constants::as_radians;
 
-    m_bicycle = new bicycle_t(parameters::benchmark::M, parameters::benchmark::C1,
-            parameters::benchmark::K0, parameters::benchmark::K2,
-            parameters::benchmark::wheelbase,
-            parameters::benchmark::trail,
-            parameters::benchmark::steer_axis_tilt,
-            GetParam(), m_dt);
+    m_bicycle = new bicycle_t(GetParam(), m_dt);
     m_bicycle->set_C(parameters::defaultvalue::bicycle::C);
     m_kalman = new kalman_t(*m_bicycle,
             parameters::defaultvalue::kalman::Q(m_dt),
