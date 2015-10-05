@@ -69,6 +69,8 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         static constexpr state_space_map_key_t make_state_space_map_key(double v, double dt);
         bool discrete_state_space_lookup(const state_space_map_key_t& k);
 
+        double solve_constraint_pitch(const state_t& x, double guess) const;
+
         // (pseudo) parameter accessors
         state_matrix_t A() const;
         input_matrix_t B() const;
@@ -109,8 +111,11 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         double m_w;
         double m_c;
         double m_lambda;
-        double m_rR;
-        double m_rF;
+        double m_rr;
+        double m_rf;
+        double m_d1; // Moore parameter. Luke calls this cR.
+        double m_d2; // Moore parameter. Luke calls this ls.
+        double m_d3; // Moore parameter. Luke calls this cF.
 
         state_matrix_t m_A;
         input_matrix_t m_B; // Use Cholesky decomposition of M if possible
@@ -145,6 +150,7 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
 
         void set_parameters_from_file(const char* param_file);
         void initialize_state_space_matrices();
+        void set_moore_parameters();
 }; // class Bicycle
 
 // define simple member functions using inline
@@ -203,10 +209,10 @@ inline double Bicycle::steer_axis_tilt() const {
     return m_lambda;
 }
 inline double Bicycle::rear_wheel_radius() const {
-    return m_rR;
+    return m_rr;
 }
 inline double Bicycle::front_wheel_radius() const {
-    return m_rF;
+    return m_rf;
 }
 inline double Bicycle::v() const {
     return m_v;

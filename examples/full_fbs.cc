@@ -46,7 +46,7 @@ namespace {
     const double sigma1 = 0.008 * constants::as_radians; // steer angle measurement noise variance
 
     bicycle_t::state_t x; // yaw angle, roll angle, steer angle, roll rate, steer rate
-    bicycle_t::auxiliary_state_t aux; // x, y, pitch angle (pitch is set to zero for now)
+    bicycle_t::auxiliary_state_t aux; // x, y, pitch angle
 
     /* used for serializing/logging */
     flatbuffers::FlatBufferBuilder builder;
@@ -83,6 +83,7 @@ int main(int argc, char* argv[]) {
     x << 0, 3, 5, 0, 0; // define x0 in degrees
     x *= constants::as_radians; // convert to radians
     aux.setZero();
+    aux[2] = bicycle.solve_constraint_pitch(x, 0);
 
     kalman_t kalman(bicycle,
             parameters::defaultvalue::kalman::Q(dt),
@@ -121,10 +122,10 @@ int main(int argc, char* argv[]) {
     auto fbs_state = fbs::state(x);
     auto fbs_input = fbs::input(bicycle_t::input_t::Zero());
     auto fbs_measurement = fbs::output(bicycle_t::output_t::Zero());
-    auto fbs_auxiliary_state = fbs::auxiliary_state(bicycle_t::auxiliary_state_t::Zero());
+    auto fbs_auxiliary_state = fbs::auxiliary_state(aux);
     builder.Finish(fbs::CreateSample(builder, current_sample, 0,
                 bicycle_location, kalman_location, lqr_location,
-                &fbs_state, 0, 0, &fbs_measurement));
+                &fbs_state, 0, 0, &fbs_measurement, &fbs_auxiliary_state));
 
     auto data = log_builder.CreateVector(builder.GetBufferPointer(), builder.GetSize());
     sample_locations[current_sample++] = fbs::CreateSampleBuffer(log_builder, data);
