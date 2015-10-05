@@ -12,9 +12,13 @@ import seaborn as sns
 import convert
 
 
+flatgrey = '#95a5a6'
 state_name = ['yaw angle', 'roll angle', 'steer angle',
               'roll rate', 'steer rate']
 state_color = np.roll(sns.color_palette('Paired', 10), 2, axis=0)
+auxiliary_state_name = ['x', 'y', 'pitch angle']
+auxiliary_state_color = sns.color_palette(
+        len(auxiliary_state_name) * [flatgrey])
 control_name = ['roll torque', 'steer torque']
 control_color = sns.color_palette('deep', 6)
 
@@ -30,6 +34,10 @@ def unit(value, degrees=True):
         u = 's'
     elif value.endswith('torque'):
         u = 'N-m'
+    elif value == 'x':
+        u = 'm'
+    elif value == 'y':
+        u = 'm'
     else:
         raise NotImplementedError(
                 "No unit associated with '{}'.".format(value))
@@ -45,7 +53,6 @@ def _set_suptitle(fig, title, filename):
 
 
 def _grey_color(color):
-        flatgrey = '#95a5a6'
         cmap = sns.blend_palette([color, flatgrey], 6)
         return sns.color_palette(cmap)[4]
 
@@ -141,19 +148,46 @@ def plot_state(samples, degrees=True, confidence=True, filename=None):
     t = samples.bicycle.dt.mean() * samples.ts
 
     cols = 2
-    rows = math.ceil(samples.x.shape[1] / cols)
+    if not samples.aux.mask.any():
+        rows = math.ceil((samples.x.shape[1] + samples.aux.shape[1]) / cols)
+        aux_offset = int(rows*cols !=
+                         samples.x.shape[1] + samples.aux.shape[1])
+        state_offset = aux_offset + samples.aux.shape[1]
+    else:
+        rows = math.ceil(samples.x.shape[1] / cols)
+        aux_offset = int(rows*cols != samples.x.shape[1])
+        state_offset = aux_offset
     fig, axes = plt.subplots(rows, cols, sharex=True)
     axes = axes.ravel()
+    if aux_offset:
+        axes[0].axis('off')
 
     # We want C'*z so we have the measured state with noise at every timestep
     # (some states will be zero).
     # (C'*z)' = z'*C
     C = samples.bicycle.Cd[0] # C = Cd
 
+    # first element of auxiliary state is masked if all states are zero:
+    if samples.aux.mask[0].any() and not samples.aux.mask[1:].all():
+        samples.aux[0] = np.zeros(1, dtype=(samples.aux.dtype,
+                                            samples.aux.shape[1:]))
+    for n in range(samples.aux.shape[1]):
+        ax = axes[n + aux_offset]
+        x_state = auxiliary_state_name[n]
+        x_unit = unit(x_state, degrees)
+
+        x = samples.aux[:, n]
+        if degrees and '°' in x_unit:
+            x = np.rad2deg(x)
+        ax.set_xlabel('{} [{}]'.format('time', unit('time')))
+        ax.set_ylabel('{} [{}]'.format(x_state, x_unit))
+        ax.plot(t, x, color=auxiliary_state_color[n],
+                label='auxiliary state', zorder=2)
+        ax.legend()
+
     x_meas = np.dot(samples.z.transpose(0, 2, 1), C).transpose(0, 2, 1)
-    axes[0].axis('off')
     for n in range(samples.x.shape[1]):
-        ax = axes[n + 1]
+        ax = axes[n + state_offset]
         x_state = state_name[n]
         x_unit = unit(x_state, degrees)
 
@@ -170,10 +204,7 @@ def plot_state(samples, degrees=True, confidence=True, filename=None):
         ax.plot(t, x, color=state_color[2*n + 1], label='true', zorder=2)
 
         if not samples.z.mask.all() and z.any():
-            flatgrey = '#95a5a6'
-            cmap = sns.blend_palette([state_color[2*n + 1], flatgrey], 6)
-            grey_color = sns.color_palette(cmap)[4]
-            ax.plot(t[1:], z[1:], color=grey_color,
+            ax.plot(t[1:], z[1:], color=_grey_color(state_color[2*n + 1]),
                     label='measurement', zorder=1)
             ax.legend()
 

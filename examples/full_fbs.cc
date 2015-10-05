@@ -121,6 +121,7 @@ int main(int argc, char* argv[]) {
     auto fbs_state = fbs::state(x);
     auto fbs_input = fbs::input(bicycle_t::input_t::Zero());
     auto fbs_measurement = fbs::output(bicycle_t::output_t::Zero());
+    auto fbs_auxiliary_state = fbs::auxiliary_state(bicycle_t::auxiliary_state_t::Zero());
     builder.Finish(fbs::CreateSample(builder, current_sample, 0,
                 bicycle_location, kalman_location, lqr_location,
                 &fbs_state, 0, 0, &fbs_measurement));
@@ -139,7 +140,6 @@ int main(int argc, char* argv[]) {
 
         /* update auxiliary states */
         aux = bicycle.x_aux_next(x, aux);
-        std::cout << aux.transpose() << std::endl;
 
         /* measure output with noise */
         auto z = bicycle.y(x);
@@ -162,12 +162,14 @@ int main(int argc, char* argv[]) {
         fbs_state = fbs::state(x);
         fbs_input = fbs::input(u);
         fbs_measurement = fbs::output(z);
+        fbs_auxiliary_state = fbs::auxiliary_state(aux);
 
         auto comp_stop = std::chrono::high_resolution_clock::now();
         auto comp_time = std::chrono::duration<double>(comp_stop - comp_start);
         builder.Finish(fbs::CreateSample(builder, current_sample, comp_time.count(),
                     0, kalman_location, lqr_location,
-                    &fbs_state, &fbs_input, 0, &fbs_measurement));
+                    &fbs_state, &fbs_input, 0, &fbs_measurement,
+                    &fbs_auxiliary_state));
         /* sample is serialized */
 
         //uint8_t* p = nullptr;
