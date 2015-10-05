@@ -198,6 +198,7 @@ def plot_state(samples, degrees=True, confidence=True,
                         label='rear contact point trajectory')
                 ax.invert_yaxis()
                 ax.legend()
+                axes[1] = ax
                 continue
         ax = axes[n + aux_offset]
         x_state = auxiliary_state_name[n]
@@ -248,6 +249,28 @@ def plot_state(samples, degrees=True, confidence=True,
                 ax.fill_between(t, low, high, alpha=0.2, color=state_color[2*n])
                 ax.set_ylim(limits)
             ax.legend()
+
+    # register axes callback - this will redraw the trajectory subplot if the
+    # x-axis (time) is changed on any ofther subplots
+    if rear_contact_trajectory:
+        class TrajectoryDisplay(object):
+            def __init__(self, ax, t, x, y):
+                self.ax = ax
+                self.t = t
+                self.x = x
+                self.y = y
+
+            def ax_update(self, ax):
+                tmin, tmax = ax.get_xlim()
+                imin = np.argmax(self.t >= tmin)
+                imax = self.t.shape[0] - np.argmax(self.t[::-1] < tmax)
+                x = self.x[imin:imax]
+                y = self.y[imin:imax]
+                self.ax.set_xlim(np.min(x), np.max(x))
+                self.ax.set_ylim(np.min(y), np.max(y))
+        td = TrajectoryDisplay(axes[1], t, samples.aux[:, 0], samples.aux[:, 1])
+        for n in range(2, rows*cols):
+            axes[n].callbacks.connect('xlim_changed', td.ax_update)
 
     title = 'system state'
     _set_suptitle(fig, title, filename)
