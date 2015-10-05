@@ -27,14 +27,7 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    model::Bicycle bicycle1(parameters::benchmark::M, parameters::benchmark::C1,
-            parameters::benchmark::K0, parameters::benchmark::K2,
-            parameters::benchmark::wheelbase,
-            parameters::benchmark::trail,
-            parameters::benchmark::steer_axis_tilt,
-            parameters::benchmark::rear_wheel_radius,
-            parameters::benchmark::front_wheel_radius,
-            v0, dt);
+    model::Bicycle bicycle1(v0, dt);
     std::cout << "constructed bicycle from predefined parameters:\n";
     print_parameters(bicycle1);
     std::cout << "\n";

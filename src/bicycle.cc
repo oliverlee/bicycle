@@ -5,7 +5,7 @@
 #include <Eigen/QR>
 #include <unsupported/Eigen/MatrixFunctions>
 #include "bicycle.h"
-#include "constants.h"
+#include "parameters.h"
 
 namespace {
     const double discretization_precision = Eigen::NumTraits<double>::dummy_precision();
@@ -37,6 +37,17 @@ Bicycle::Bicycle(const char* param_file, double v, double dt,
     // set forward speed, sampling time and update state matrices
     set_v(v, dt);
 }
+
+Bicycle::Bicycle(double v, double dt,
+        const state_space_map_t* discrete_state_space_map) :
+    Bicycle(parameters::benchmark::M, parameters::benchmark::C1,
+            parameters::benchmark::K0, parameters::benchmark::K2,
+            parameters::benchmark::wheelbase,
+            parameters::benchmark::trail,
+            parameters::benchmark::steer_axis_tilt,
+            parameters::benchmark::rear_wheel_radius,
+            parameters::benchmark::front_wheel_radius,
+            v, dt, discrete_state_space_map) { }
 
 Bicycle::state_t Bicycle::x_next(const Bicycle::state_t& x, const Bicycle::input_t& u) const {
     return m_Ad*x + m_Bd*u;

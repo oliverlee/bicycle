@@ -21,14 +21,7 @@ int main(int argc, char* argv[]) {
     (void)argc;
     (void)argv;
 
-    model::Bicycle bicycle(parameters::benchmark::M, parameters::benchmark::C1,
-            parameters::benchmark::K0, parameters::benchmark::K2,
-            parameters::benchmark::wheelbase,
-            parameters::benchmark::trail,
-            parameters::benchmark::steer_axis_tilt,
-            parameters::benchmark::rear_wheel_radius,
-            parameters::benchmark::front_wheel_radius,
-            v0, dt);
+    model::Bicycle bicycle(v0, dt);
 
     std::chrono::time_point<std::chrono::system_clock> cont_start, cont_stop;
     std::chrono::time_point<std::chrono::system_clock> disc_start, disc_stop;

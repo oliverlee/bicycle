@@ -34,14 +34,7 @@ int main(int argc, char* argv[]) {
     (void)argc;
     (void)argv;
 
-    bicycle_t bicycle(parameters::benchmark::M, parameters::benchmark::C1,
-            parameters::benchmark::K0, parameters::benchmark::K2,
-            parameters::benchmark::wheelbase,
-            parameters::benchmark::trail,
-            parameters::benchmark::steer_axis_tilt,
-            parameters::benchmark::rear_wheel_radius,
-            parameters::benchmark::front_wheel_radius,
-            v0, dt);
+    bicycle_t bicycle(v0, dt);
     lqr_t lqr(bicycle,
             lqr_t::state_cost_t::Identity(),
             (lqr_t::input_cost_t() <<

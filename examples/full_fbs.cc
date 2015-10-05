@@ -32,11 +32,11 @@ namespace {
     constexpr double q3 = q1/10; // roll rate cost weight
     constexpr double q4 = q2/10; // steer rate cost weight
 
-    constexpr double qi0 = 100.0; // output integral yaw angle cost weight
-    constexpr double qi1 = 0.0; // output integral roll angle cost weight
-    constexpr double qi2 = 0.0; // output integral steer angle cost weight
-    constexpr double qi3 = 0.0; // output integral roll rate cost weight
-    constexpr double qi4 = 0.0; // output integral steer rate cost weight
+    constexpr double qi0 = 100.0; // error integral yaw angle cost weight
+    constexpr double qi1 = 0.0; // error integral roll angle cost weight
+    constexpr double qi2 = 0.0; // error integral steer angle cost weight
+    constexpr double qi3 = 0.0; // error integral roll rate cost weight
+    constexpr double qi4 = 0.0; // error integral steer rate cost weight
 
     constexpr double rho = 0.01; // input cost weight scaling constant
     constexpr double r0 = 0.0; // roll torque cost weight (this is disabled)
@@ -77,14 +77,7 @@ int main(int argc, char* argv[]) {
     std::normal_distribution<> rn0(0, sigma0);
     std::normal_distribution<> rn1(0, sigma1);
 
-    bicycle_t bicycle(parameters::benchmark::M, parameters::benchmark::C1,
-            parameters::benchmark::K0, parameters::benchmark::K2,
-            parameters::benchmark::wheelbase,
-            parameters::benchmark::trail,
-            parameters::benchmark::steer_axis_tilt,
-            parameters::benchmark::rear_wheel_radius,
-            parameters::benchmark::front_wheel_radius,
-            v0, dt);
+    bicycle_t bicycle(v0, dt);
     bicycle.set_C(parameters::defaultvalue::bicycle::C);
     x << 0, 3, 5, 0, 0; // define x0 in degrees
     x *= constants::as_radians; // convert to radians

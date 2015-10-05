@@ -47,6 +47,8 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
                 const state_space_map_t* discrete_state_space_map = nullptr);
         Bicycle(const char* param_file, double v, double dt,
                 const state_space_map_t* discrete_state_space_map = nullptr);
+        Bicycle(double v, double dt,
+                const state_space_map_t* discrete_state_space_map = nullptr);
 
         virtual state_t x_next(const state_t& x, const input_t& u) const;
         state_t x_integrate(const state_t& x, const input_t& u, double dt) const;
