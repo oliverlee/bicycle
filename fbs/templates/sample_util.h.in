@@ -59,6 +59,10 @@ namespace fbs {
     return ::fbs::Output({{ vector('y', 'l') }});
 }
 
+::fbs::AuxiliaryState auxiliary_state(const model::Bicycle::auxiliary_state_t& x) {
+    return ::fbs::AuxiliaryState({{ vector('x', 'p') }});
+}
+
 ::fbs::StateMatrix state_matrix(const model::Bicycle::state_matrix_t& a) {
     return ::fbs::StateMatrix({{ matrix('a', 'n', 'n') }});
 }

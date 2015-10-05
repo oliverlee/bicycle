@@ -61,6 +61,8 @@ def convert_sample(rec_sample, fbs_sample):
                             convert_output)
     convert_record_subfield(rec_sample.z, fbs_sample.Measurement(),
                             convert_output)
+    convert_record_subfield(rec_sample.aux, fbs_sample.AuxiliaryState(),
+                            convert_auxiliary_state)
 
 
 def convert_bicycle(rec_bicycle, fbs_bicycle):
@@ -136,6 +138,14 @@ def convert_output(rec_field, fbs_output):
     t = fbs_output._tab
     ma = np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
         npt.output_size*fbfloat64.bytewidth], dtype=npt.output_t)
+    rec_field[0] = ma
+
+
+def convert_auxiliary_state(rec_field, fbs_auxiliary_state):
+    t = fbs_auxiliary_state._tab
+    ma = np.ma.frombuffer(t.Bytes[t.Pos : t.Pos +
+        npt.auxiliary_state_size*fbfloat64.bytewidth],
+        dtype=npt.auxiliary_state_t)
     rec_field[0] = ma
 
 

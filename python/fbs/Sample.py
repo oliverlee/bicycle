@@ -110,7 +110,18 @@ class Sample(object):
             return obj
         return None
 
-def SampleStart(builder): builder.StartObject(9)
+    # Sample
+    def AuxiliaryState(self):
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(22))
+        if o != 0:
+            x = o + self._tab.Pos
+            from .AuxiliaryState import AuxiliaryState
+            obj = AuxiliaryState()
+            obj.Init(self._tab.Bytes, x)
+            return obj
+        return None
+
+def SampleStart(builder): builder.StartObject(10)
 def SampleAddTimestamp(builder, timestamp): builder.PrependUint32Slot(0, timestamp, 0)
 def SampleAddComputationTime(builder, computationTime): builder.PrependFloat64Slot(1, computationTime, 0)
 def SampleAddBicycle(builder, bicycle): builder.PrependUOffsetTRelativeSlot(2, flatbuffers.number_types.UOffsetTFlags.py_type(bicycle), 0)
@@ -120,4 +131,5 @@ def SampleAddState(builder, state): builder.PrependStructSlot(5, flatbuffers.num
 def SampleAddInput(builder, input): builder.PrependStructSlot(6, flatbuffers.number_types.UOffsetTFlags.py_type(input), 0)
 def SampleAddOutput(builder, output): builder.PrependStructSlot(7, flatbuffers.number_types.UOffsetTFlags.py_type(output), 0)
 def SampleAddMeasurement(builder, measurement): builder.PrependStructSlot(8, flatbuffers.number_types.UOffsetTFlags.py_type(measurement), 0)
+def SampleAddAuxiliaryState(builder, auxiliaryState): builder.PrependStructSlot(9, flatbuffers.number_types.UOffsetTFlags.py_type(auxiliaryState), 0)
 def SampleEnd(builder): return builder.EndObject()

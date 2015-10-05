@@ -41,8 +41,8 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         using state_space_map_t = std::unordered_map<state_space_map_key_t,
               state_space_map_value_t, boost::hash<state_space_map_key_t>>;
 
-        static constexpr unsigned int n_aux = 3;
-        using auxiliary_state_t = Eigen::Matrix<double, n_aux, 1>;
+        static constexpr unsigned int p = 3;
+        using auxiliary_state_t = Eigen::Matrix<double, p, 1>;
 
         Bicycle(const second_order_matrix_t& M, const second_order_matrix_t& C1,
                 const second_order_matrix_t& K0, const second_order_matrix_t& K2,
@@ -138,7 +138,7 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         mutable boost::numeric::odeint::runge_kutta_dopri5<
             state_t, double, state_t, double,
             boost::numeric::odeint::vector_space_algebra> m_stepper_noinput;
-        using odeint_auxiliary_state_t = Eigen::Matrix<double, n_aux + n, 1>;
+        using odeint_auxiliary_state_t = Eigen::Matrix<double, p + n, 1>;
         mutable boost::numeric::odeint::runge_kutta_dopri5<
             odeint_auxiliary_state_t, double, odeint_auxiliary_state_t, double,
             boost::numeric::odeint::vector_space_algebra> m_auxiliary_stepper;

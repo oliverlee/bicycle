@@ -99,15 +99,15 @@ Bicycle::auxiliary_state_t Bicycle::x_aux_next(const state_t& x, const auxiliary
     m_auxiliary_stepper.do_step([this](
                 const odeint_auxiliary_state_t& x, odeint_auxiliary_state_t& dxdt, const double t) -> void {
                 (void)t;
-                dxdt[0] = m_v*std::cos(x[n_aux + 0]); // xdot = v*cos(psi)
-                dxdt[1] = m_v*std::sin(x[n_aux + 0]); // ydot = v*sin(psi)
+                dxdt[0] = m_v*std::cos(x[p + 0]); // xdot = v*cos(psi)
+                dxdt[1] = m_v*std::sin(x[p + 0]); // ydot = v*sin(psi)
                 // Linearizing the expression for thetadot with respect to the coordinates:
                 // thetadot = -c*cos(lambda)/w * (delta*phidot + (sin(lambda)*delta + phi)*deltadot)
                 dxdt[2] = -m_c*std::cos(m_lambda)/m_w *
-                    (x[n_aux + 2]*x[n_aux + 3] + (std::sin(m_lambda)*x[n_aux + 2] + x[n_aux + 1])*x[n_aux + 4]);
+                    (x[p + 2]*x[p + 3] + (std::sin(m_lambda)*x[p + 2] + x[p + 1])*x[p + 4]);
                 dxdt.tail<n>().setZero();
             }, xout, 0.0, m_dt);
-    return xout.head<n_aux>();
+    return xout.head<p>();
 }
 
 void Bicycle::set_v(double v, double dt) {
