@@ -10,6 +10,9 @@ find_package(Boost 1.58 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 include_directories(${Boost_INCLUDE_DIR})
 
+add_definitions("-DASIO_STANDALONE")
+include_directories(external/asio/asio/include)
+
 add_subdirectory(external/flatbuffers)
 include_directories(external/flatbuffers/include)
 set(FLATBUFFERS_BUILD_TESTS OFF CACHE BOOL "" FORCE)
