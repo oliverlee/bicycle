@@ -5,11 +5,13 @@
 namespace network {
 namespace udp {
 
-Server::Server(uint16_t port) :
-    m_remote_endpoint(asio::ip::udp::v4(), port),
-    m_socket(m_io_service, m_remote_endpoint),
+Server::Server(uint16_t server_port, uint16_t remote_port) :
+    m_remote_endpoint(asio::ip::udp::v4(), remote_port),
+    m_server_endpoint(asio::ip::udp::v4(), server_port),
+    m_socket(m_io_service, m_server_endpoint),
     m_service_thread(std::bind(&Server::run_service, this)) {
-        std::cout << "Starting UDP server on port " << port << "\n";
+        std::cout << "Starting UDP server, receiving on port " << server_port << "\n";
+        std::cout << "                  transmitting to port " << remote_port << "\n";
 }
 
 Server::~Server() {
@@ -22,8 +24,13 @@ asio::ip::udp::endpoint Server::remote_endpoint() const {
 
 }
 
+asio::ip::udp::endpoint Server::server_endpoint() const {
+    return m_server_endpoint;
+
+}
+
 void Server::start_receive() {
-    m_socket.async_receive_from(asio::buffer(m_receive_buffer), m_remote_endpoint,
+    m_socket.async_receive_from(asio::buffer(m_receive_buffer), m_server_endpoint,
             std::bind(&Server::handle_receive,
                 this,
                 std::placeholders::_1,
@@ -31,6 +38,7 @@ void Server::start_receive() {
 }
 
 void Server::handle_receive(const asio::error_code& error, size_t bytes_transferred) {
+    (void)bytes_transferred;
     if (!error) {
         //std::cout << "received " << bytes_transferred << " bytes\n";
     } else {
@@ -40,6 +48,7 @@ void Server::handle_receive(const asio::error_code& error, size_t bytes_transfer
 }
 
 void Server::handle_send(const asio::error_code& error, size_t bytes_transferred) {
+    (void)bytes_transferred;
     if (!error) {
         //std::cout << "sent " << bytes_transferred << " bytes\n";
     } else {

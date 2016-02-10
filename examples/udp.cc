@@ -65,7 +65,10 @@ int main(int argc, char* argv[]) {
     };
 
     network::udp::PeriodicTransmitServer<decltype(f)> server(
-            network::udp::default_port, transmission_period, std::cref(f));
+            network::udp::default_server_port,
+            network::udp::default_remote_port,
+            transmission_period,
+            std::cref(f));
 
     asio::io_service io_service;
     asio::high_resolution_timer simulation_timer(io_service, simulation_period);
