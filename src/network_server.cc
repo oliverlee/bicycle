@@ -1,4 +1,5 @@
 #include <functional>
+#include <iostream>
 #include "network_server.h"
 
 namespace network {
@@ -16,6 +17,11 @@ Server::~Server() {
     m_service_thread.join();
 }
 
+asio::ip::udp::endpoint Server::remote_endpoint() const {
+    return m_remote_endpoint;
+
+}
+
 void Server::start_receive() {
     m_socket.async_receive_from(asio::buffer(m_receive_buffer), m_remote_endpoint,
             std::bind(&Server::handle_receive,
@@ -26,21 +32,28 @@ void Server::start_receive() {
 
 void Server::handle_receive(const asio::error_code& error, size_t bytes_transferred) {
     if (!error) {
+        std::cout << "received " << bytes_transferred << " bytes\n";
     } else {
         std::cerr << error.message() << "\n";
     }
     start_receive();
 }
 
-// void Server::handle_send(const asio::error_code& error, size_t bytes_transferred) { }
+void Server::handle_send(const asio::error_code& error, size_t bytes_transferred) {
+    if (!error) {
+        std::cout << "sent " << bytes_transferred << " bytes\n";
+    } else {
+        std::cerr << error.message() << "\n";
+    }
+}
 
 void Server::async_send(uint8_t* buffer, size_t length) {
     // TODO: ensure that buffer data is not changed if transmission queued
     m_socket.async_send_to(asio::buffer(buffer, length), m_remote_endpoint,
             std::bind(&Server::handle_send,
-                this));
-                //std::placeholders::_1,
-                //std::placeholders::_2));
+                this,
+                std::placeholders::_1,
+                std::placeholders::_2));
 }
 
 void Server::run_service() {

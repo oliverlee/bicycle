@@ -1,6 +1,5 @@
 #pragma once
 #include <array>
-#include <iostream>
 #include <thread>
 #include <asio.hpp>
 
@@ -23,11 +22,13 @@ class Server {
         asio::ip::udp::socket m_socket;
         std::thread m_service_thread;
 
-        asio::ip::udp::socket remote_endpoint() const;
+        uint32_t m_transmit_count;
+
+        asio::ip::udp::endpoint remote_endpoint() const;
 
         void start_receive();
         void handle_receive(const asio::error_code& error, size_t bytes_tranferred);
-        void handle_send() { } // (const asio::error_code& error, size_t bytes_tranferred) { }
+        void handle_send(const asio::error_code& error, size_t bytes_tranferred);
 
         void run_service();
 };
