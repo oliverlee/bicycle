@@ -61,7 +61,8 @@ set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES
 
 set(BICYCLE_SOURCE
     ${BICYCLE_SOURCE_DIR}/src/bicycle.cc
-    ${BICYCLE_SOURCE_DIR}/src/parameters.cc)
+    ${BICYCLE_SOURCE_DIR}/src/parameters.cc
+    ${BICYCLE_SOURCE_DIR}/src/network_server.cc)
 
 option(BICYCLE_BUILD_TESTS "Build tests." ON)
 option(BICYCLE_BUILD_TOOLS "Build tools." ON)

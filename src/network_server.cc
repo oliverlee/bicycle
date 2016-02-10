@@ -8,7 +8,8 @@ namespace udp {
 Server::Server(uint16_t port) :
     m_remote_endpoint(asio::ip::udp::v4(), port),
     m_socket(m_io_service, m_remote_endpoint),
-    m_service_thread(std::bind(&Server::run_service, this)) {
+    m_service_thread(std::bind(&Server::run_service, this)),
+    m_transmit_count(0) {
         std::cout << "Starting UDP server on port " << port << "\n";
 }
 
@@ -40,8 +41,9 @@ void Server::handle_receive(const asio::error_code& error, size_t bytes_transfer
 }
 
 void Server::handle_send(const asio::error_code& error, size_t bytes_transferred) {
+    ++m_transmit_count;
     if (!error) {
-        std::cout << "sent " << bytes_transferred << " bytes\n";
+        std::cout << m_transmit_count << ": sent " << bytes_transferred << " bytes\n";
     } else {
         std::cerr << error.message() << "\n";
     }

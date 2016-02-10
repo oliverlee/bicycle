@@ -6,6 +6,7 @@ add_executable(lqr_kalman lqr_kalman.cc ${BICYCLE_SOURCE})
 add_executable(state_space_map state_space_map.cc ${BICYCLE_SOURCE})
 add_executable(bicycle_fbs bicycle_fbs.cc ${BICYCLE_SOURCE})
 add_executable(full_fbs full_fbs.cc ${BICYCLE_SOURCE})
+add_executable(udp udp.cc ${BICYCLE_SOURCE})
 
 add_dependencies(bicycle_fbs generate_flatbuffer_headers)
 target_link_libraries(bicycle_fbs flatbuffers)
