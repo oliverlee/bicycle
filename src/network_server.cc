@@ -8,8 +8,7 @@ namespace udp {
 Server::Server(uint16_t port) :
     m_remote_endpoint(asio::ip::udp::v4(), port),
     m_socket(m_io_service, m_remote_endpoint),
-    m_service_thread(std::bind(&Server::run_service, this)),
-    m_transmit_count(0) {
+    m_service_thread(std::bind(&Server::run_service, this)) {
         std::cout << "Starting UDP server on port " << port << "\n";
 }
 
@@ -33,7 +32,7 @@ void Server::start_receive() {
 
 void Server::handle_receive(const asio::error_code& error, size_t bytes_transferred) {
     if (!error) {
-        std::cout << "received " << bytes_transferred << " bytes\n";
+        //std::cout << "received " << bytes_transferred << " bytes\n";
     } else {
         std::cerr << error.message() << "\n";
     }
@@ -41,17 +40,28 @@ void Server::handle_receive(const asio::error_code& error, size_t bytes_transfer
 }
 
 void Server::handle_send(const asio::error_code& error, size_t bytes_transferred) {
-    ++m_transmit_count;
     if (!error) {
-        std::cout << m_transmit_count << ": sent " << bytes_transferred << " bytes\n";
+        //std::cout << "sent " << bytes_transferred << " bytes\n";
     } else {
         std::cerr << error.message() << "\n";
     }
 }
 
-void Server::async_send(uint8_t* buffer, size_t length) {
+//void Server::async_send(uint8_t* buffer, size_t length) {
+//    // TODO: ensure that buffer data is not changed if transmission queued
+//    m_socket.async_send_to(asio::buffer(buffer, length), m_remote_endpoint,
+//            std::bind(&Server::handle_send,
+//                this,
+//                std::placeholders::_1,
+//                std::placeholders::_2));
+//}
+
+void Server::async_send(asio::const_buffer buffer) {
     // TODO: ensure that buffer data is not changed if transmission queued
-    m_socket.async_send_to(asio::buffer(buffer, length), m_remote_endpoint,
+    //size_t bytes_copied = asio::buffer_copy(asio::buffer(m_transmit_buffer), buffer);
+    //m_socket.async_send_to(asio::buffer(m_transmit_buffer, bytes_copied),
+    m_socket.async_send_to(asio::buffer(buffer),
+            m_remote_endpoint,
             std::bind(&Server::handle_send,
                 this,
                 std::placeholders::_1,
