@@ -6,7 +6,6 @@
 #include <asio.hpp>
 #include <asio/high_resolution_timer.hpp>
 
-
 namespace network {
 namespace udp {
 
@@ -51,23 +50,27 @@ class PeriodicTransmitServer : public Server {
 
         // period must convert to an integer number of nanoseconds
         PeriodicTransmitServer(uint16_t server_port, uint16_t remote_port,
-                std::chrono::nanoseconds deadline_period, F function) :
+                std::chrono::nanoseconds deadline_period, F buffer_function) :
             Server(server_port, remote_port),
             m_deadline(deadline_period),
             m_transmit_time(deadline_timer::clock_type::now()),
             m_timer(m_io_service, m_deadline),
-            m_function(function) {
+            m_buffer_function(buffer_function) {
                 m_timer.async_wait(std::bind(&PeriodicTransmitServer::periodic_function, this));
+        }
+
+        deadline_timer::clock_type::time_point last_transmit_time() const {
+            return m_transmit_time;
         }
 
     private:
         std::chrono::nanoseconds m_deadline;
         deadline_timer::clock_type::time_point m_transmit_time;
         deadline_timer m_timer;
-        F m_function;
+        F m_buffer_function;
 
         void periodic_function() {
-            async_send(m_function());
+            async_send(m_buffer_function());
             m_transmit_time = deadline_timer::clock_type::now();
             m_timer.expires_at(m_timer.expires_at() + m_deadline);
             m_timer.async_wait(std::bind(&PeriodicTransmitServer::periodic_function, this));

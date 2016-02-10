@@ -18,27 +18,31 @@ namespace {
     std::array<int32_t, N> simulation_loop_period;
     std::array<int32_t, N> transmit_loop_period;
 
-    void update(const asio::error_code& e, asio::high_resolution_timer* timer,
-            int* count, model::Bicycle* bicycle, model::Bicycle::state_t* x,
+    void update(const asio::error_code& error, asio::high_resolution_timer* timer,
+            size_t* count, model::Bicycle* bicycle, model::Bicycle::state_t* x,
             std::chrono::high_resolution_clock::time_point time) {
-        if (*count < N) {
-            *x = bicycle->x_next(*x);
+        if (!error) {
+            if (*count < N) {
+                *x = bicycle->x_next(*x);
 
-            auto now = std::chrono::high_resolution_clock::now();
-            auto dt = std::chrono::duration_cast<std::chrono::microseconds>(now - time).count();
+                auto now = std::chrono::high_resolution_clock::now();
+                auto dt = std::chrono::duration_cast<std::chrono::microseconds>(now - time).count();
 
-            simulation_loop_period[*count] = dt; // store calculated loop period
-            discrete_time_system_state_n[(*count)++] = *x; // store system state
+                simulation_loop_period[*count] = dt; // store calculated loop period
+                discrete_time_system_state_n[(*count)++] = *x; // store system state
 
-            timer->expires_at(timer->expires_at() + simulation_period);
-            timer->async_wait(std::bind(update,
-                        std::placeholders::_1,
-                        timer,
-                        count,
-                        bicycle,
-                        x,
-                        now));
+                timer->expires_at(timer->expires_at() + simulation_period);
+                timer->async_wait(std::bind(update,
+                            std::placeholders::_1,
+                            timer,
+                            count,
+                            bicycle,
+                            x,
+                            now));
 
+            }
+        } else {
+            std::cerr << error.message() << "\n";
         }
     }
 } // namespace
@@ -72,7 +76,7 @@ int main(int argc, char* argv[]) {
 
     asio::io_service io_service;
     asio::high_resolution_timer simulation_timer(io_service, simulation_period);
-    int count = 0;
+    size_t count = 0;
 
     simulation_timer.async_wait(std::bind(update,
                 std::placeholders::_1,
