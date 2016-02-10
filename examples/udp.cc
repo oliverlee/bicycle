@@ -1,7 +1,9 @@
 #include <array>
+#include <chrono>
+#include <iostream>
+#include <thread>
 #include "bicycle.h"
 #include "parameters.h"
-
 #include "network_server.h"
 
 namespace {
@@ -24,6 +26,8 @@ int main(int argc, char* argv[]) {
 
     network::udp::Server server;
 
+    auto start = std::chrono::high_resolution_clock::now();
+
     for (auto& state: discrete_time_system_state_n) {
         state = bicycle.x_next(x);
         x = state;
@@ -31,4 +35,10 @@ int main(int argc, char* argv[]) {
         server.async_send(reinterpret_cast<uint8_t*>(x.data()), x.size()*sizeof(double));
     }
     server.wait_for_send_complete();
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+    std::cout << "simulation of 1000 iterations completed in "
+        << std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::high_resolution_clock::now() - start).count()
+        << "ms\n";
 }
