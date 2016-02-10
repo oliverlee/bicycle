@@ -16,6 +16,7 @@ class Server {
         Server(uint16_t port=default_port);
         ~Server();
         void async_send(uint8_t* buffer, size_t length);
+        void wait_for_receive_complete();
         void wait_for_send_complete();
 
     private:
@@ -24,6 +25,10 @@ class Server {
         asio::ip::udp::endpoint m_remote_endpoint;
         asio::ip::udp::socket m_socket;
         std::thread m_service_thread;
+
+        std::mutex m_receive_mutex;
+        std::condition_variable m_receive_condition_variable;
+        uint32_t m_pending_receptions;
 
         std::mutex m_send_mutex;
         std::condition_variable m_send_condition_variable;

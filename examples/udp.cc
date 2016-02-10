@@ -1,7 +1,6 @@
 #include <array>
 #include <chrono>
 #include <iostream>
-#include <thread>
 #include "bicycle.h"
 #include "parameters.h"
 #include "network_server.h"
@@ -35,7 +34,7 @@ int main(int argc, char* argv[]) {
         server.async_send(reinterpret_cast<uint8_t*>(x.data()), x.size()*sizeof(double));
     }
     server.wait_for_send_complete();
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    server.wait_for_receive_complete();
 
     std::cout << "simulation of 1000 iterations completed in "
         << std::chrono::duration_cast<std::chrono::milliseconds>(

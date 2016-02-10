@@ -9,6 +9,7 @@ Server::Server(uint16_t port) :
     m_remote_endpoint(asio::ip::udp::v4(), port),
     m_socket(m_io_service, m_remote_endpoint),
     m_service_thread(std::bind(&Server::run_service, this)),
+    m_pending_receptions(0),
     m_pending_transmissions(0),
     m_receive_count(0),
     m_transmit_count(0) {
@@ -34,6 +35,11 @@ void Server::start_receive() {
 }
 
 void Server::handle_receive(const asio::error_code& error, size_t bytes_transferred) {
+    {
+        std::lock_guard<std::mutex> lock(m_receive_mutex);
+        ++m_pending_receptions;
+    }
+
     ++m_receive_count;
     if (!error) {
         std::cout << m_receive_count << ": received ";
@@ -45,6 +51,12 @@ void Server::handle_receive(const asio::error_code& error, size_t bytes_transfer
         std::cerr << error.message() << "\n";
     }
     start_receive();
+
+    {
+        std::lock_guard<std::mutex> lock(m_receive_mutex);
+        --m_pending_receptions;
+    }
+    m_receive_condition_variable.notify_all();
 }
 
 void Server::handle_send(const asio::error_code& error, size_t bytes_transferred) {
@@ -83,6 +95,11 @@ void Server::run_service() {
     } catch (std::exception& e) {
         std::cerr << e.what() << "\n";
     }
+}
+
+void Server::wait_for_receive_complete() {
+    std::unique_lock<std::mutex> lock(m_receive_mutex);
+    m_receive_condition_variable.wait(lock, [this]{return m_pending_receptions == 0;});
 }
 
 void Server::wait_for_send_complete() {
