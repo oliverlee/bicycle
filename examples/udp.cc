@@ -1,6 +1,4 @@
 #include <array>
-#include <iostream>
-#include <thread>
 #include "bicycle.h"
 #include "parameters.h"
 
@@ -29,7 +27,8 @@ int main(int argc, char* argv[]) {
     for (auto& state: discrete_time_system_state_n) {
         state = bicycle.x_next(x);
         x = state;
+        server.wait_for_send_complete(); // wait for previous message to be sent
         server.async_send(reinterpret_cast<uint8_t*>(x.data()), x.size()*sizeof(double));
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
+    server.wait_for_send_complete();
 }
