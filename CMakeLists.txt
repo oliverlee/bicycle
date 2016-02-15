@@ -10,6 +10,9 @@ find_package(Boost 1.58 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 include_directories(${Boost_INCLUDE_DIR})
 
+add_definitions("-DASIO_STANDALONE")
+include_directories(external/asio/asio/include)
+
 add_subdirectory(external/flatbuffers)
 include_directories(external/flatbuffers/include)
 set(FLATBUFFERS_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -58,7 +61,8 @@ set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES
 
 set(BICYCLE_SOURCE
     ${BICYCLE_SOURCE_DIR}/src/bicycle.cc
-    ${BICYCLE_SOURCE_DIR}/src/parameters.cc)
+    ${BICYCLE_SOURCE_DIR}/src/parameters.cc
+    ${BICYCLE_SOURCE_DIR}/src/network_server.cc)
 
 option(BICYCLE_BUILD_TESTS "Build tests." ON)
 option(BICYCLE_BUILD_TOOLS "Build tools." ON)
