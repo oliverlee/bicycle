@@ -9,7 +9,11 @@ Server::Server(uint16_t server_port, uint16_t remote_port) :
     m_remote_endpoint(asio::ip::udp::v4(), remote_port),
     m_server_endpoint(asio::ip::udp::v4(), server_port),
     m_socket(m_io_service, m_server_endpoint),
-    m_service_thread(std::bind(&Server::run_service, this)) {
+    m_service_thread(std::bind(&Server::run_service, this)),
+    m_pending_receptions(0),
+    m_pending_transmissions(0),
+    m_receive_count(0),
+    m_transmit_count(0) {
         std::cout << "Starting UDP server, receiving on port " << server_port << "\n";
         std::cout << "                  transmitting to port " << remote_port << "\n";
 }
@@ -39,12 +43,28 @@ void Server::start_receive() {
 
 void Server::handle_receive(const asio::error_code& error, size_t bytes_transferred) {
     (void)bytes_transferred;
+    {
+        std::lock_guard<std::mutex> lock(m_receive_mutex);
+        ++m_pending_receptions;
+    }
+
+    ++m_receive_count;
     if (!error) {
-        //std::cout << "received " << bytes_transferred << " bytes\n";
+        std::cout << m_receive_count << ": received ";
+        for (size_t i = 0; i < bytes_transferred/sizeof(double); ++i) {
+            std::cout << *(reinterpret_cast<double*>(m_receive_buffer.data())+ i) << " ";
+        }
+        std::cout << "\n";
     } else {
         std::cerr << error.message() << "\n";
     }
     start_receive();
+
+    {
+        std::lock_guard<std::mutex> lock(m_receive_mutex);
+        --m_pending_receptions;
+    }
+    m_receive_condition_variable.notify_all();
 }
 
 void Server::handle_send(const asio::error_code& error, size_t bytes_transferred) {
@@ -54,6 +74,12 @@ void Server::handle_send(const asio::error_code& error, size_t bytes_transferred
     } else {
         std::cerr << error.message() << "\n";
     }
+
+    {
+        std::lock_guard<std::mutex> lock(m_send_mutex);
+        --m_pending_transmissions;
+    }
+    m_send_condition_variable.notify_all();
 }
 
 //void Server::async_send(uint8_t* buffer, size_t length) {
@@ -66,6 +92,11 @@ void Server::handle_send(const asio::error_code& error, size_t bytes_transferred
 //}
 
 void Server::async_send(asio::const_buffer buffer) {
+    {
+        std::lock_guard<std::mutex> lock(m_send_mutex);
+        ++m_pending_transmissions;
+    }
+
     // TODO: ensure that buffer data is not changed if transmission queued
     //size_t bytes_copied = asio::buffer_copy(asio::buffer(m_transmit_buffer), buffer);
     //m_socket.async_send_to(asio::buffer(m_transmit_buffer, bytes_copied),
@@ -84,6 +115,16 @@ void Server::run_service() {
     } catch (std::exception& e) {
         std::cerr << e.what() << "\n";
     }
+}
+
+void Server::wait_for_receive_complete() {
+    std::unique_lock<std::mutex> lock(m_receive_mutex);
+    m_receive_condition_variable.wait(lock, [this]{return m_pending_receptions == 0;});
+}
+
+void Server::wait_for_send_complete() {
+    std::unique_lock<std::mutex> lock(m_send_mutex);
+    m_send_condition_variable.wait(lock, [this]{return m_pending_transmissions == 0;});
 }
 
 } // namespace udp

@@ -3,7 +3,6 @@
 #include <thread>
 #include "bicycle.h"
 #include "parameters.h"
-
 #include "network_server.h"
 
 namespace {
