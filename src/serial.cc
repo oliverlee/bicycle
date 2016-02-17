@@ -1,6 +1,7 @@
 #include "serial.h"
 #include <iomanip>
 #include <iostream>
+#include <termios.h>
 
 namespace network {
 Serial::Serial(const char* devname, uint32_t baud_rate,
@@ -25,7 +26,18 @@ void Serial::open(const char* devname, uint32_t baud_rate,
         m_io_service.reset();
     }
     m_port.open(devname);
-    m_port.set_option(asio::serial_port_base::baud_rate(baud_rate));
+
+    asio::error_code error;
+    m_port.set_option(asio::serial_port_base::baud_rate(baud_rate), error);
+    if (error) {
+        asio::serial_port_service::native_handle_type native_handle = m_port.native_handle();
+        struct termios options;
+        tcgetattr(native_handle, &options);
+        cfsetispeed(&options, baud_rate);
+        cfsetospeed(&options, baud_rate);
+        tcsetattr(native_handle, TCSANOW, &options);
+    }
+
     m_port.set_option(parity);
     m_port.set_option(character_size);
     m_port.set_option(flow_control);
