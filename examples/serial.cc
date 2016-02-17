@@ -19,9 +19,10 @@ int main(int argc, char* argv[]) {
         << baud_rate << "\n";
 
     int i = 0;
-    for (; i < 10; ++i) {
+    while (true) {
         serial.async_write(asio::buffer(&i, 1));
         std::this_thread::sleep_for(std::chrono::seconds(1));
+        ++i;
     }
 }
 
