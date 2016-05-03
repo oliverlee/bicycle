@@ -50,8 +50,8 @@ class Server {
         asio::ip::udp::endpoint server_endpoint() const;
 
         void start_receive();
-        void handle_receive(const asio::error_code& error, size_t bytes_tranferred);
-        void handle_send(const asio::error_code& error, size_t bytes_tranferred);
+        void handle_receive(const asio::error_code& error, size_t bytes_transferred);
+        void handle_send(const asio::error_code& error, size_t bytes_transferred);
 
         void run_service();
 };
