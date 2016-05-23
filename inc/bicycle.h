@@ -22,7 +22,7 @@ namespace model {
 class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
     public:
         /*
-         * We normally treat speed v as a double. However to allow for constant
+         * We normally treat speed v as a double/float. However to allow for constant
          * time lookup along with quickly finding a key 'near' the requested
          * one, we convert speeds to a fixed precision integer.
          *
@@ -42,34 +42,34 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
               state_space_map_value_t, boost::hash<state_space_map_key_t>>;
 
         static constexpr unsigned int p = 3;
-        using auxiliary_state_t = Eigen::Matrix<double, p, 1>;
+        using auxiliary_state_t = Eigen::Matrix<real_t, p, 1>;
 
         Bicycle(const second_order_matrix_t& M, const second_order_matrix_t& C1,
                 const second_order_matrix_t& K0, const second_order_matrix_t& K2,
-                double wheelbase, double trail, double steer_axis_tilt,
-                double rear_wheel_radius, double front_wheel_radius,
-                double v, double dt,
+                real_t wheelbase, real_t trail, real_t steer_axis_tilt,
+                real_t rear_wheel_radius, real_t front_wheel_radius,
+                real_t v, real_t dt,
                 const state_space_map_t* discrete_state_space_map = nullptr);
-        Bicycle(const char* param_file, double v, double dt,
+        Bicycle(const char* param_file, real_t v, real_t dt,
                 const state_space_map_t* discrete_state_space_map = nullptr);
-        Bicycle(double v, double dt,
+        Bicycle(real_t v, real_t dt,
                 const state_space_map_t* discrete_state_space_map = nullptr);
 
         virtual state_t x_next(const state_t& x, const input_t& u) const;
-        state_t x_integrate(const state_t& x, const input_t& u, double dt) const;
+        state_t x_integrate(const state_t& x, const input_t& u, real_t dt) const;
         virtual output_t y(const state_t& x, const input_t& u) const;
         virtual state_t x_next(const state_t& x) const;
-        state_t x_integrate(const state_t& x, double dt) const;
+        state_t x_integrate(const state_t& x, real_t dt) const;
         virtual output_t y(const state_t& x) const;
         auxiliary_state_t x_aux_next(const state_t& x, const auxiliary_state_t& x_aux) const;
-        void set_v(double v, double dt);
+        void set_v(real_t v, real_t dt);
         void set_C(const output_matrix_t& C);
         void set_D(const feedthrough_matrix_t& D);
 
-        static constexpr state_space_map_key_t make_state_space_map_key(double v, double dt);
+        static constexpr state_space_map_key_t make_state_space_map_key(real_t v, real_t dt);
         bool discrete_state_space_lookup(const state_space_map_key_t& k);
 
-        double solve_constraint_pitch(const state_t& x, double guess) const;
+        real_t solve_constraint_pitch(const state_t& x, real_t guess) const;
 
         // (pseudo) parameter accessors
         state_matrix_t A() const;
@@ -84,13 +84,13 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         second_order_matrix_t C1() const;
         second_order_matrix_t K0() const;
         second_order_matrix_t K2() const;
-        double wheelbase() const;
-        double trail() const;
-        double steer_axis_tilt() const;
-        double rear_wheel_radius() const;
-        double front_wheel_radius() const;
-        double v() const;
-        virtual double dt() const;
+        real_t wheelbase() const;
+        real_t trail() const;
+        real_t steer_axis_tilt() const;
+        real_t rear_wheel_radius() const;
+        real_t front_wheel_radius() const;
+        real_t v() const;
+        virtual real_t dt() const;
 
     private:
         // The full state matrix A is singular as yaw rate, and all other
@@ -100,22 +100,22 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         // The continuous time state space is discretized using the following property:
         //      [ A  B ]         [ Ad  Bd ]
         // exp( [ 0  0 ] * T ) = [  0   I ]
-        using discretization_matrix_t = Eigen::Matrix<double, n + m, n + m>;
+        using discretization_matrix_t = Eigen::Matrix<real_t, n + m, n + m>;
 
-        double m_v; // parameterized forward speed
-        double m_dt; // sampling time of discrete time system
+        real_t m_v; // parameterized forward speed
+        real_t m_dt; // sampling time of discrete time system
         second_order_matrix_t m_M;
         second_order_matrix_t m_C1;
         second_order_matrix_t m_K0;
         second_order_matrix_t m_K2;
-        double m_w;
-        double m_c;
-        double m_lambda;
-        double m_rr;
-        double m_rf;
-        double m_d1; // Moore parameter. Luke calls this cR.
-        double m_d2; // Moore parameter. Luke calls this ls.
-        double m_d3; // Moore parameter. Luke calls this cF.
+        real_t m_w;
+        real_t m_c;
+        real_t m_lambda;
+        real_t m_rr;
+        real_t m_rf;
+        real_t m_d1; // Moore parameter. Luke calls this cR.
+        real_t m_d2; // Moore parameter. Luke calls this ls.
+        real_t m_d3; // Moore parameter. Luke calls this cF.
 
         state_matrix_t m_A;
         input_matrix_t m_B; // Use Cholesky decomposition of M if possible
@@ -136,16 +136,16 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
          * state is 'reset' when all calls to do_step() are completed and the integration
          * has completed, thus we can mark them as mutable.
          */
-        using odeint_state_t = Eigen::Matrix<double, n + m, 1>;
+        using odeint_state_t = Eigen::Matrix<real_t, n + m, 1>;
         mutable boost::numeric::odeint::runge_kutta_dopri5<
-            odeint_state_t, double, odeint_state_t, double,
+            odeint_state_t, real_t, odeint_state_t, real_t,
             boost::numeric::odeint::vector_space_algebra> m_stepper;
         mutable boost::numeric::odeint::runge_kutta_dopri5<
-            state_t, double, state_t, double,
+            state_t, real_t, state_t, real_t,
             boost::numeric::odeint::vector_space_algebra> m_stepper_noinput;
-        using odeint_auxiliary_state_t = Eigen::Matrix<double, p + n, 1>;
+        using odeint_auxiliary_state_t = Eigen::Matrix<real_t, p + n, 1>;
         mutable boost::numeric::odeint::runge_kutta_dopri5<
-            odeint_auxiliary_state_t, double, odeint_auxiliary_state_t, double,
+            odeint_auxiliary_state_t, real_t, odeint_auxiliary_state_t, real_t,
             boost::numeric::odeint::vector_space_algebra> m_auxiliary_stepper;
 
         void set_parameters_from_file(const char* param_file);
@@ -160,7 +160,7 @@ inline void Bicycle::set_C(const output_matrix_t& C) {
 inline void Bicycle::set_D(const feedthrough_matrix_t& D) {
     m_D = D;
 }
-inline constexpr Bicycle::state_space_map_key_t Bicycle::make_state_space_map_key(double v, double dt) {
+inline constexpr Bicycle::state_space_map_key_t Bicycle::make_state_space_map_key(real_t v, real_t dt) {
     return state_space_map_key_t(m_dt_key_precision*dt, m_v_key_precision*v);
 }
 inline Bicycle::state_matrix_t Bicycle::A() const {
@@ -199,25 +199,25 @@ inline Bicycle::second_order_matrix_t Bicycle::K0() const {
 inline Bicycle::second_order_matrix_t Bicycle::K2() const {
     return m_K2;
 }
-inline double Bicycle::wheelbase() const {
+inline real_t Bicycle::wheelbase() const {
     return m_w;
 }
-inline double Bicycle::trail() const {
+inline real_t Bicycle::trail() const {
     return m_c;
 }
-inline double Bicycle::steer_axis_tilt() const {
+inline real_t Bicycle::steer_axis_tilt() const {
     return m_lambda;
 }
-inline double Bicycle::rear_wheel_radius() const {
+inline real_t Bicycle::rear_wheel_radius() const {
     return m_rr;
 }
-inline double Bicycle::front_wheel_radius() const {
+inline real_t Bicycle::front_wheel_radius() const {
     return m_rf;
 }
-inline double Bicycle::v() const {
+inline real_t Bicycle::v() const {
     return m_v;
 }
-inline double Bicycle::dt() const {
+inline real_t Bicycle::dt() const {
     return m_dt;
 }
 

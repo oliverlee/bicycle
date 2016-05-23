@@ -6,6 +6,7 @@
 
 namespace controller {
 // TODO: Allow reference state to vary in horizon
+using real_t = model::real_t;
 
 template<typename T>
 class Lqr {
@@ -15,9 +16,9 @@ class Lqr {
         using input_t = typename T::input_t;
         using state_matrix_t = typename T::state_matrix_t;
         using input_matrix_t = typename T::input_matrix_t;
-        using lqr_gain_t = typename Eigen::Matrix<double, T::m, T::n>;
+        using lqr_gain_t = typename Eigen::Matrix<real_t, T::m, T::n>;
         using state_cost_t = state_matrix_t;
-        using input_cost_t = typename Eigen::Matrix<double, T::m, T::m>;
+        using input_cost_t = typename Eigen::Matrix<real_t, T::m, T::m>;
 
         Lqr(T& system, const state_cost_t& Q, const input_cost_t& R,
                 const state_t& r, uint32_t horizon_iterations,
@@ -45,13 +46,13 @@ class Lqr {
         state_cost_t Q() const;
         state_cost_t Qi() const;
         input_cost_t R() const;
-        double dt() const;
+        real_t dt() const;
 
     private:
         using control_mask_t = typename Eigen::Matrix<uint32_t, T::m, 1>;
-        using augmented_state_matrix_t = typename Eigen::Matrix<double, 2*T::n, 2*T::n>;
-        using augmented_input_matrix_t = typename Eigen::Matrix<double, 2*T::n, T::m>;
-        using augmented_lqr_gain_t = typename Eigen::Matrix<double, T::m, 2*T::n>;
+        using augmented_state_matrix_t = typename Eigen::Matrix<real_t, 2*T::n, 2*T::n>;
+        using augmented_input_matrix_t = typename Eigen::Matrix<real_t, 2*T::n, T::m>;
+        using augmented_lqr_gain_t = typename Eigen::Matrix<real_t, T::m, 2*T::n>;
         using augmented_state_cost_t = augmented_state_matrix_t;
 
         T& m_system;                        // controlled system or plant
@@ -109,7 +110,7 @@ inline void Lqr<T>::set_Qi(const state_cost_t& Qi) {
     m_Qi = Qi;
     // Look at diagonal entries of Qi and if zero, treat the output as unobserved.
     m_Ag.template bottomLeftCorner<T::n, T::n>() =
-        (m_Qi.diagonal().array() != 0.0).template cast<double>().matrix().asDiagonal();
+        (m_Qi.diagonal().array() != 0.0).template cast<real_t>().matrix().asDiagonal();
 }
 
 template<typename T>
@@ -170,7 +171,7 @@ inline typename Lqr<T>::input_cost_t Lqr<T>::R() const {
 }
 
 template<typename T>
-inline double Lqr<T>::dt() const {
+inline real_t Lqr<T>::dt() const {
     return m_system.dt();
 }
 

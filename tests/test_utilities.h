@@ -2,8 +2,12 @@
 #include <string>
 #include <sstream>
 #include <Eigen/Dense>
+#include "types.h"
 
-std::string output_matrices(Eigen::MatrixXd expected, Eigen::MatrixXd actual) {
+namespace test {
+using matrix_xr_t = Eigen::Matrix<model::real_t, Eigen::Dynamic, Eigen::Dynamic>;
+
+std::string output_matrices(matrix_xr_t expected, matrix_xr_t actual) {
     std::stringstream ss;
     ss << "expected:\n" << expected << "\nactual:\n" << actual << std::endl;
     return ss.str();
@@ -13,8 +17,6 @@ std::string output_matrices(Eigen::MatrixXd expected, Eigen::MatrixXd actual) {
  * allclose() function to match numpy.allclose
  * https://stackoverflow.com/questions/15051367/how-to-compare-vectors-approximately-in-eigen
  */
-namespace test {
-
 template<typename DerivedA, typename DerivedB>
 bool allclose(const Eigen::DenseBase<DerivedA>& a, const Eigen::DenseBase<DerivedB>& b,
               const typename DerivedA::RealScalar& reltol
