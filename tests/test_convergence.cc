@@ -1,12 +1,12 @@
 #include "test_convergence.h"
 #include "parameters.h"
 
-const double ConvergenceTest::m_yaw_tol = 1 * constants::as_radians;
-const double ConvergenceTest::m_roll_tol = 0.3 * constants::as_radians;
-const double ConvergenceTest::m_steer_tol = 0.3 * constants::as_radians;
-const double ConvergenceTest::m_roll_rate_tol = 10 * ConvergenceTest::m_roll_tol;
-const double ConvergenceTest::m_steer_rate_tol = 10 * ConvergenceTest::m_steer_tol;
-const double ConvergenceTest::m_dt = 1.0/200;
+const model::real_t ConvergenceTest::m_yaw_tol = 1 * constants::as_radians;
+const model::real_t ConvergenceTest::m_roll_tol = 0.3 * constants::as_radians;
+const model::real_t ConvergenceTest::m_steer_tol = 0.3 * constants::as_radians;
+const model::real_t ConvergenceTest::m_roll_rate_tol = 10 * ConvergenceTest::m_roll_tol;
+const model::real_t ConvergenceTest::m_steer_rate_tol = 10 * ConvergenceTest::m_steer_tol;
+const model::real_t ConvergenceTest::m_dt = 1.0/200;
 const uint32_t ConvergenceTest::m_N = 1000;
 const uint32_t ConvergenceTest::m_n = 100;
 
@@ -42,7 +42,7 @@ void ConvergenceTest::TearDown() {
 }
 
 void ConvergenceTest::test_state_near(bicycle_t::state_t actual,
-        bicycle_t::state_t expected, double tol_multiplier) {
+        bicycle_t::state_t expected, model::real_t tol_multiplier) {
     EXPECT_NEAR(actual(0), expected(0), tol_multiplier * m_yaw_tol);
     EXPECT_NEAR(actual(1), expected(1), tol_multiplier * m_roll_tol);
     EXPECT_NEAR(actual(2), expected(2), tol_multiplier * m_steer_tol);

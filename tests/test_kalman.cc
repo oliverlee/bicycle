@@ -49,4 +49,6 @@ TEST_P(KalmanConvergenceTest, RandomInput) {
 INSTANTIATE_TEST_CASE_P(
     ConvergenceRange_1_9,
     KalmanConvergenceTest,
-    ::testing::Range(0.5, 9.5, 0.5));
+    ::testing::Range(static_cast<model::real_t>(0.5),
+        static_cast<model::real_t>(9.5),
+        static_cast<model::real_t>(0.5)));

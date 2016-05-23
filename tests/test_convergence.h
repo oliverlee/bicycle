@@ -4,8 +4,9 @@
 #include "bicycle.h"
 #include "kalman.h"
 #include "lqr.h"
+#include "types.h"
 
-class ConvergenceTest: public ::testing::TestWithParam<double> {
+class ConvergenceTest: public ::testing::TestWithParam<model::real_t> {
     public:
         using bicycle_t = model::Bicycle;
         using kalman_t = observer::Kalman<bicycle_t>;
@@ -14,16 +15,16 @@ class ConvergenceTest: public ::testing::TestWithParam<double> {
         virtual void TearDown();
         virtual void simulate() = 0;
         void test_state_near(model::Bicycle::state_t actual,
-                model::Bicycle::state_t expected, double tol_multiplier = 1.0);
+                model::Bicycle::state_t expected, model::real_t tol_multiplier = 1.0);
         model::Bicycle::state_t x_true();
 
     protected:
-        static const double m_yaw_tol;
-        static const double m_roll_tol;
-        static const double m_steer_tol;
-        static const double m_roll_rate_tol;
-        static const double m_steer_rate_tol;
-        static const double m_dt;
+        static const model::real_t m_yaw_tol;
+        static const model::real_t m_roll_tol;
+        static const model::real_t m_steer_tol;
+        static const model::real_t m_roll_rate_tol;
+        static const model::real_t m_steer_rate_tol;
+        static const model::real_t m_dt;
         static const uint32_t m_N; // simulation length
         static const uint32_t m_n; // horizon length
         model::Bicycle* m_bicycle;
