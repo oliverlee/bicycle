@@ -68,10 +68,12 @@ set(BICYCLE_SOURCE
 option(BICYCLE_BUILD_TESTS "Build tests." ON)
 option(BICYCLE_BUILD_TOOLS "Build tools." ON)
 option(BICYCLE_BUILD_EXAMPLES "Build examples." ON)
-option(BICYCLE_DOUBLE_PRECISION_REAL "Use double precision for real types." ON)
+option(BICYCLE_USE_DOUBLE_PRECISION_REAL "Use double precision for real types." ON)
 
-if(BICYCLE_DOUBLE_PRECISION_REAL)
-    add_definitions("-DUSE_DOUBLE_PRECISION_REAL")
+if(BICYCLE_USE_DOUBLE_PRECISION_REAL)
+    add_definitions("-DBICYCLE_USE_DOUBLE_PRECISION_REAL=TRUE")
+else()
+    add_definitions("-DBICYCLE_USE_DOUBLE_PRECISION_REAL=FALSE")
 endif()
 
 if(BICYCLE_BUILD_EXAMPLES)
