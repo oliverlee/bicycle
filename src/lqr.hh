@@ -15,7 +15,7 @@ Lqr<T>::Lqr(T& system, const state_cost_t& Q, const input_cost_t& R,
     m_Pg(augmented_state_cost_t::Zero()) {
     m_Ag.template topLeftCorner<T::n, T::n>() = m_system.Ad();
     m_Ag.template bottomLeftCorner<T::n, T::n>() =
-        (m_Qi.diagonal().array() != 0.0).template cast<double>().matrix().asDiagonal();
+        (m_Qi.diagonal().array() != 0.0).template cast<real_t>().matrix().asDiagonal();
     set_control_mask();
 }
 

@@ -68,19 +68,27 @@ set(BICYCLE_SOURCE
 option(BICYCLE_BUILD_TESTS "Build tests." ON)
 option(BICYCLE_BUILD_TOOLS "Build tools." ON)
 option(BICYCLE_BUILD_EXAMPLES "Build examples." ON)
+option(BICYCLE_USE_DOUBLE_PRECISION_REAL "Use double precision for real types." ON)
 
-if (BICYCLE_BUILD_EXAMPLES)
+if(BICYCLE_USE_DOUBLE_PRECISION_REAL)
+    add_definitions("-DBICYCLE_USE_DOUBLE_PRECISION_REAL=TRUE")
+else()
+    add_definitions("-DBICYCLE_USE_DOUBLE_PRECISION_REAL=FALSE")
+endif()
+
+if(BICYCLE_BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
 
-if (BICYCLE_BUILD_TOOLS)
+if(BICYCLE_BUILD_TOOLS)
     add_subdirectory(tools)
 endif()
 
-if (BICYCLE_BUILD_TESTS)
+if(BICYCLE_BUILD_TESTS)
     enable_testing()
     include_directories(external/googletest)
     include_directories(external/googletest/include)
     add_subdirectory(external/googletest)
     add_subdirectory(tests)
 endif()
+

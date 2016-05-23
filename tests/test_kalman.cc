@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "test_convergence.h"
+#include <boost/math/constants/constants.hpp>
 
 // TODO: test estimation with model error
 class KalmanConvergenceTest: public ConvergenceTest {
@@ -14,6 +15,12 @@ class KalmanConvergenceTest: public ConvergenceTest {
 
                 m_kalman->time_update();
                 m_kalman->measurement_update(z);
+
+                // stop simulation if frame is horizontal (bike has fallen)
+                if ((m_x[1] >= boost::math::constants::half_pi<model::real_t>()) ||
+                        (m_x[1] < -boost::math::constants::half_pi<model::real_t>())) {
+                    break;
+                }
             }
         }
 
@@ -32,6 +39,12 @@ class KalmanConvergenceTest: public ConvergenceTest {
 
                 m_kalman->time_update(u);
                 m_kalman->measurement_update(z);
+
+                // stop simulation if frame is horizontal (bike has fallen)
+                if ((m_x[1] >= boost::math::constants::half_pi<model::real_t>()) ||
+                        (m_x[1] < -boost::math::constants::half_pi<model::real_t>())) {
+                    break;
+                }
             }
         }
 };
@@ -49,4 +62,6 @@ TEST_P(KalmanConvergenceTest, RandomInput) {
 INSTANTIATE_TEST_CASE_P(
     ConvergenceRange_1_9,
     KalmanConvergenceTest,
-    ::testing::Range(0.5, 9.5, 0.5));
+    ::testing::Range(static_cast<model::real_t>(0.5),
+        static_cast<model::real_t>(9.5),
+        static_cast<model::real_t>(0.5)));

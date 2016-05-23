@@ -4,6 +4,7 @@
 #include "discrete_linear.h"
 
 namespace observer {
+using real_t = model::real_t;
 
 template<typename T>
 class Kalman {
@@ -12,10 +13,10 @@ class Kalman {
         using state_t = typename T::state_t;
         using input_t = typename T::input_t;
         using measurement_t = typename T::output_t;
-        using kalman_gain_t = typename Eigen::Matrix<double, T::n, T::l>;
+        using kalman_gain_t = typename Eigen::Matrix<real_t, T::n, T::l>;
         using error_covariance_t = typename T::state_matrix_t;
         using process_noise_covariance_t = typename T::state_matrix_t;
-        using measurement_noise_covariance_t = typename Eigen::Matrix<double, T::l, T::l>;
+        using measurement_noise_covariance_t = typename Eigen::Matrix<real_t, T::l, T::l>;
 
         Kalman(T& system, const process_noise_covariance_t& Q,
                 const measurement_noise_covariance_t& R, const state_t& x0,
@@ -36,7 +37,7 @@ class Kalman {
         error_covariance_t P() const;
         process_noise_covariance_t Q() const;
         measurement_noise_covariance_t R() const;
-        double dt() const;
+        real_t dt() const;
 
     private:
         T& m_system;
@@ -88,7 +89,7 @@ inline typename Kalman<T>::measurement_noise_covariance_t Kalman<T>::R() const {
 }
 
 template<typename T>
-inline double Kalman<T>::dt() const {
+inline real_t Kalman<T>::dt() const {
     return m_system.dt();
 }
 
