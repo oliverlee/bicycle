@@ -32,10 +32,10 @@ class DiscreteLinear : private DiscreteLinearBase {
         virtual output_t y(const state_t& x, const input_t& u) const = 0;
         virtual state_t x_next(const state_t& x) const = 0;
         virtual output_t y(const state_t& x) const = 0;
-        virtual state_matrix_t Ad() const = 0;
-        virtual input_matrix_t Bd() const = 0;
-        virtual output_matrix_t Cd() const = 0;
-        virtual feedthrough_matrix_t Dd() const = 0;
+        virtual const state_matrix_t& Ad() const = 0;
+        virtual const input_matrix_t& Bd() const = 0;
+        virtual const output_matrix_t& Cd() const = 0;
+        virtual const feedthrough_matrix_t& Dd() const = 0;
         virtual real_t dt() const = 0;
 };
 

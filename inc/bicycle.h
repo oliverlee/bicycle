@@ -72,18 +72,18 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         real_t solve_constraint_pitch(const state_t& x, real_t guess) const;
 
         // (pseudo) parameter accessors
-        state_matrix_t A() const;
-        input_matrix_t B() const;
-        output_matrix_t C() const;
-        feedthrough_matrix_t D() const;
-        virtual state_matrix_t Ad() const;
-        virtual input_matrix_t Bd() const;
-        virtual output_matrix_t Cd() const;
-        virtual feedthrough_matrix_t Dd() const;
-        second_order_matrix_t M() const;
-        second_order_matrix_t C1() const;
-        second_order_matrix_t K0() const;
-        second_order_matrix_t K2() const;
+        const state_matrix_t& A() const;
+        const input_matrix_t& B() const;
+        const output_matrix_t& C() const;
+        const feedthrough_matrix_t& D() const;
+        virtual const state_matrix_t& Ad() const;
+        virtual const input_matrix_t& Bd() const;
+        virtual const output_matrix_t& Cd() const;
+        virtual const feedthrough_matrix_t& Dd() const;
+        const second_order_matrix_t& M() const;
+        const second_order_matrix_t& C1() const;
+        const second_order_matrix_t& K0() const;
+        const second_order_matrix_t& K2() const;
         real_t wheelbase() const;
         real_t trail() const;
         real_t steer_axis_tilt() const;
@@ -163,40 +163,40 @@ inline void Bicycle::set_D(const feedthrough_matrix_t& D) {
 inline constexpr Bicycle::state_space_map_key_t Bicycle::make_state_space_map_key(real_t v, real_t dt) {
     return state_space_map_key_t(m_dt_key_precision*dt, m_v_key_precision*v);
 }
-inline Bicycle::state_matrix_t Bicycle::A() const {
+inline const Bicycle::state_matrix_t& Bicycle::A() const {
     return m_A;
 }
-inline Bicycle::input_matrix_t Bicycle::B() const {
+inline const Bicycle::input_matrix_t& Bicycle::B() const {
     return m_B;
 }
-inline Bicycle::output_matrix_t Bicycle::C() const {
+inline const Bicycle::output_matrix_t& Bicycle::C() const {
     return m_C;
 }
-inline Bicycle::feedthrough_matrix_t Bicycle::D() const {
+inline const Bicycle::feedthrough_matrix_t& Bicycle::D() const {
     return m_D;
 }
-inline Bicycle::state_matrix_t Bicycle::Ad() const {
+inline const Bicycle::state_matrix_t& Bicycle::Ad() const {
     return m_Ad;
 }
-inline Bicycle::input_matrix_t Bicycle::Bd() const {
+inline const Bicycle::input_matrix_t& Bicycle::Bd() const {
     return m_Bd;
 }
-inline Bicycle::output_matrix_t Bicycle::Cd() const {
+inline const Bicycle::output_matrix_t& Bicycle::Cd() const {
     return m_C;
 }
-inline Bicycle::feedthrough_matrix_t Bicycle::Dd() const {
+inline const Bicycle::feedthrough_matrix_t& Bicycle::Dd() const {
     return m_D;
 }
-inline Bicycle::second_order_matrix_t Bicycle::M() const {
+inline const Bicycle::second_order_matrix_t& Bicycle::M() const {
     return m_M;
 }
-inline Bicycle::second_order_matrix_t Bicycle::C1() const {
+inline const Bicycle::second_order_matrix_t& Bicycle::C1() const {
     return m_C1;
 }
-inline Bicycle::second_order_matrix_t Bicycle::K0() const {
+inline const Bicycle::second_order_matrix_t& Bicycle::K0() const {
     return m_K0;
 }
-inline Bicycle::second_order_matrix_t Bicycle::K2() const {
+inline const Bicycle::second_order_matrix_t& Bicycle::K2() const {
     return m_K2;
 }
 inline real_t Bicycle::wheelbase() const {

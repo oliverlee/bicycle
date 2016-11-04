@@ -38,14 +38,14 @@ class Lqr {
         // accessors
         T& system() const;
         uint32_t horizon_iterations() const;
-        state_t r() const;
-        state_t q() const;
+        const state_t& r() const;
+        const state_t& q() const;
         lqr_gain_t K() const;
         lqr_gain_t Ki() const;
         state_cost_t P() const; // TODO: Also return augmented cost-to-go matrix?
-        state_cost_t Q() const;
-        state_cost_t Qi() const;
-        input_cost_t R() const;
+        const state_cost_t& Q() const;
+        const state_cost_t& Qi() const;
+        const input_cost_t& R() const;
         real_t dt() const;
 
     private:
@@ -131,12 +131,12 @@ inline uint32_t Lqr<T>::horizon_iterations() const {
 }
 
 template<typename T>
-inline typename Lqr<T>::state_t Lqr<T>::r() const {
+inline const typename Lqr<T>::state_t& Lqr<T>::r() const {
     return m_r;
 }
 
 template<typename T>
-inline typename Lqr<T>::state_t Lqr<T>::q() const {
+inline const typename Lqr<T>::state_t& Lqr<T>::q() const {
     return m_q;
 }
 
@@ -156,17 +156,17 @@ inline typename Lqr<T>::state_cost_t Lqr<T>::P() const {
 }
 
 template<typename T>
-inline typename Lqr<T>::state_cost_t Lqr<T>::Q() const {
+inline const typename Lqr<T>::state_cost_t& Lqr<T>::Q() const {
     return m_Q;
 }
 
 template<typename T>
-inline typename Lqr<T>::state_cost_t Lqr<T>::Qi() const {
+inline const typename Lqr<T>::state_cost_t& Lqr<T>::Qi() const {
     return m_Qi;
 }
 
 template<typename T>
-inline typename Lqr<T>::input_cost_t Lqr<T>::R() const {
+inline const typename Lqr<T>::input_cost_t& Lqr<T>::R() const {
     return m_R;
 }
 
