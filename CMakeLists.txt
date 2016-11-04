@@ -71,9 +71,9 @@ option(BICYCLE_BUILD_EXAMPLES "Build examples." ON)
 option(BICYCLE_USE_DOUBLE_PRECISION_REAL "Use double precision for real types." ON)
 
 if(BICYCLE_USE_DOUBLE_PRECISION_REAL)
-    add_definitions("-DBICYCLE_USE_DOUBLE_PRECISION_REAL=TRUE")
+    add_definitions("-DBICYCLE_USE_DOUBLE_PRECISION_REAL=true")
 else()
-    add_definitions("-DBICYCLE_USE_DOUBLE_PRECISION_REAL=FALSE")
+    add_definitions("-DBICYCLE_USE_DOUBLE_PRECISION_REAL=false")
 endif()
 
 if(BICYCLE_BUILD_EXAMPLES)

@@ -32,11 +32,11 @@ class Kalman {
 
         // accessors
         T& system() const;
-        state_t x() const;
-        kalman_gain_t K() const;
-        error_covariance_t P() const;
-        process_noise_covariance_t Q() const;
-        measurement_noise_covariance_t R() const;
+        const state_t& x() const;
+        const kalman_gain_t& K() const;
+        const error_covariance_t& P() const;
+        const process_noise_covariance_t& Q() const;
+        const measurement_noise_covariance_t& R() const;
         real_t dt() const;
 
     private:
@@ -64,27 +64,27 @@ inline T& Kalman<T>::system() const {
 }
 
 template<typename T>
-inline typename Kalman<T>::state_t Kalman<T>::x() const {
+inline const typename Kalman<T>::state_t& Kalman<T>::x() const {
     return m_x;
 }
 
 template<typename T>
-inline typename Kalman<T>::kalman_gain_t Kalman<T>::K() const {
+inline const typename Kalman<T>::kalman_gain_t& Kalman<T>::K() const {
     return m_K;
 }
 
 template<typename T>
-inline typename Kalman<T>::error_covariance_t Kalman<T>::P() const {
+inline const typename Kalman<T>::error_covariance_t& Kalman<T>::P() const {
     return m_P;
 }
 
 template<typename T>
-inline typename Kalman<T>::process_noise_covariance_t Kalman<T>::Q() const {
+inline const typename Kalman<T>::process_noise_covariance_t& Kalman<T>::Q() const {
     return m_Q;
 }
 
 template<typename T>
-inline typename Kalman<T>::measurement_noise_covariance_t Kalman<T>::R() const {
+inline const typename Kalman<T>::measurement_noise_covariance_t& Kalman<T>::R() const {
     return m_R;
 }
 
