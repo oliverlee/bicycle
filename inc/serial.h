@@ -26,7 +26,8 @@ class Serial {
                     asio::serial_port_base::stop_bits(asio::serial_port_base::stop_bits::one));
 
         void close();
-        void async_write(asio::const_buffer buffer);
+        void start_read();
+        void start_write(asio::const_buffer buffer);
 
         bool is_open();
         asio::serial_port_base::baud_rate get_baud_rate();
@@ -43,10 +44,10 @@ class Serial {
         std::thread m_service_thread;
         std::array<uint8_t, buffer_size> m_receive_buffer;
 
-        void start_read();
         void handle_read(const asio::error_code& error, size_t bytes_tranferred);
         void handle_write(const asio::error_code& error, size_t bytes_tranferred);
 
+        void start_read_imp();
         void run_service();
 };
 

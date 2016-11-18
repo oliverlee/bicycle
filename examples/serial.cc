@@ -17,6 +17,7 @@ int main(int argc, char* argv[]) {
     network::Serial serial(argv[1], baud_rate);
     std::cout << "Connected to serial device: " << argv[1] << " at baud rate: "
         << baud_rate << "\n";
+    serial.start_read();
 
     int i = 0;
     while (true) {

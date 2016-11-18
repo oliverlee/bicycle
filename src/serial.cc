@@ -9,7 +9,8 @@ Serial::Serial(const char* devname, uint32_t baud_rate,
         asio::serial_port_base::character_size character_size,
         asio::serial_port_base::flow_control flow_control,
         asio::serial_port_base::stop_bits stop_bits) :
-    m_port(m_io_service) {
+    m_port(m_io_service),
+    m_service_thread(nullptr) {
     open(devname, baud_rate, parity, character_size, flow_control, stop_bits);
 }
 
@@ -42,19 +43,21 @@ void Serial::open(const char* devname, uint32_t baud_rate,
     m_port.set_option(character_size);
     m_port.set_option(flow_control);
     m_port.set_option(stop_bits);
-    m_service_thread = std::thread(std::bind(&Serial::run_service, this));
+    //m_service_thread = std::thread(std::bind(&Serial::run_service, this));
 }
 
 void Serial::close() {
+    if (m_service_thread.joinable()) {
+        m_service_thread.join();
+    }
     if (is_open()) {
         m_port.cancel();
         m_port.close();
         m_io_service.stop();
-        m_service_thread.join();
     }
 }
 
-void Serial::async_write(asio::const_buffer buffer) {
+void Serial::start_write(asio::const_buffer buffer) {
     asio::async_write(m_port, asio::buffer(buffer),
             std::bind(&Serial::handle_write,
                 this,
@@ -97,6 +100,10 @@ asio::serial_port_base::stop_bits Serial::get_stop_bits() {
 }
 
 void Serial::start_read() {
+    m_service_thread = std::thread(std::bind(&Serial::run_service, this));
+}
+
+void Serial::start_read_imp() {
     m_port.async_read_some(asio::buffer(m_receive_buffer),
             std::bind(&Serial::handle_read,
                 this,
@@ -108,14 +115,14 @@ void Serial::handle_read(const asio::error_code& error, size_t bytes_transferred
     if (!error) {
         std::cout << std::hex;
         for (size_t i = 0; i < bytes_transferred; ++i) {
-            std::cout << std::setfill('0') << std::setw(2) << (int)m_receive_buffer[i];
+            std::cout << std::setfill('0') << std::setw(2) << (int)m_receive_buffer[i] << " ";
         }
         std::cout << "\n";
         std::cout << std::dec;
     } else {
         std::cerr << error.message() << "\n";
     }
-    start_read();
+    start_read_imp();
 }
 
 void Serial::handle_write(const asio::error_code& error, size_t bytes_transferred) {
@@ -127,7 +134,7 @@ void Serial::handle_write(const asio::error_code& error, size_t bytes_transferre
 }
 
 void Serial::run_service() {
-    start_read();
+    start_read_imp();
     try {
         m_io_service.run();
     } catch (std::exception& e) {
