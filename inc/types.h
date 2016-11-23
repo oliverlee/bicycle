@@ -1,5 +1,4 @@
 #pragma once
-#include <Eigen/Dense>
 
 namespace model {
 #if BICYCLE_USE_DOUBLE_PRECISION_REAL
