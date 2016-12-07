@@ -2,11 +2,13 @@ cmake_minimum_required(VERSION 3.2.2)
 project(BICYCLE CXX)
 
 set(CMAKE_MODULE_PATH
-    ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake/modules)
+    ${CMAKE_MODULE_PATH}
+    ${PROJECT_SOURCE_DIR}/cmake/modules)
 include(cmake/functions.cmake)
 
-find_package(Eigen3 3.2.4 REQUIRED)
+set(EIGEN3_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/external/eigen)
 find_package(Boost 1.58 REQUIRED)
+
 include_directories(${EIGEN3_INCLUDE_DIR})
 include_directories(${Boost_INCLUDE_DIR})
 
