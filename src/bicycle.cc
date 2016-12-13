@@ -2,9 +2,9 @@
 #include <cmath>
 #include <fstream>
 #include <stdexcept>
+#include <tuple>
 #include <Eigen/QR>
 #include <unsupported/Eigen/MatrixFunctions>
-#include <boost/math/tools/tuple.hpp>
 #include <boost/math/tools/roots.hpp>
 #include "bicycle.h"
 #include "parameters.h"
@@ -227,8 +227,8 @@ real_t Bicycle::solve_constraint_pitch(const state_t& x, real_t guess) const {
     static constexpr real_t two = static_cast<real_t>(2.0);
     static const real_t min = -constants::pi/2;
     static const real_t max = constants::pi/2;
-    auto constraint_function = [this, x](real_t pitch)->boost::math::tuple<real_t, real_t> {
-        return boost::math::make_tuple(
+    auto constraint_function = [this, x](real_t pitch)->std::tuple<real_t, real_t> {
+        return std::make_tuple(
 ((m_rf*std::pow(std::cos(pitch), two)*std::pow(std::cos(x[1]), two) +
 (m_d3*std::sqrt(std::pow(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) + std::sin(x[1])*std::sin(x[2]), two) +
 std::pow(std::cos(pitch), two)*std::pow(std::cos(x[1]), two)) +
