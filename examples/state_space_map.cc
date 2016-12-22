@@ -46,8 +46,8 @@ int main(int argc, char* argv[]) {
         bicycle1.Ad() << std::endl;
 
     std::cout << std::endl << "changing parameters..." << std::endl;
-    bicycle0.set_v(vc, dt);
-    bicycle1.set_v(vc, dt);
+    bicycle0.set_v_dt(vc, dt);
+    bicycle1.set_v_dt(vc, dt);
     std::cout << "for vc: " << vc << ", dt: " << dt << std::endl;
     std::cout << "with discrete state space map, Ad" << std::endl <<
         bicycle0.Ad() << std::endl;
@@ -55,8 +55,8 @@ int main(int argc, char* argv[]) {
         bicycle1.Ad() << std::endl;
 
     std::cout << std::endl << "changing parameters..." << std::endl;
-    bicycle0.set_v(5.0, dt);
-    bicycle1.set_v(5.0, dt);
+    bicycle0.set_v_dt(5.0, dt);
+    bicycle1.set_v_dt(5.0, dt);
     std::cout << "for v: 5.0, dt: " << dt << std::endl;
     std::cout << "with discrete state space map, Ad" << std::endl <<
         bicycle0.Ad() << std::endl;

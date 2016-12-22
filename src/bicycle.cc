@@ -22,24 +22,32 @@ Bicycle::Bicycle(const second_order_matrix_t& M, const second_order_matrix_t& C1
     m_M(M), m_C1(C1), m_K0(K0), m_K2(K2),
     m_w(wheelbase), m_c(trail), m_lambda(steer_axis_tilt),
     m_rr(rear_wheel_radius), m_rf(front_wheel_radius),
+    m_recalculate_state_space(true),
+    m_recalculate_moore_parameters(true),
     m_discrete_state_space_map(discrete_state_space_map) {
-    initialize_state_space_matrices();
     set_moore_parameters();
 
     // set forward speed, sampling time and update state matrices
-    set_v(v, dt);
+    // state space matrices are set in set_v_dt() as m_recalculate_state_space is set to true
+    set_v_dt(v, dt);
+    m_C.setZero();
+    m_D.setZero();
 }
 
 Bicycle::Bicycle(const char* param_file, real_t v, real_t dt,
         const state_space_map_t* discrete_state_space_map) :
+    m_recalculate_state_space(true),
+    m_recalculate_moore_parameters(true),
     m_discrete_state_space_map(discrete_state_space_map) {
-    // set M, C1, K0, K2 matrices from file
+    // set M, C1, K0, K2 matrices and w, c, lambda, rr, rf parameters from file
     set_parameters_from_file(param_file);
-    initialize_state_space_matrices();
     set_moore_parameters();
 
     // set forward speed, sampling time and update state matrices
-    set_v(v, dt);
+    // state space matrices are set in set_v_dt() as m_recalculate_state_space is set to true
+    set_v_dt(v, dt);
+    m_C.setZero();
+    m_D.setZero();
 }
 
 Bicycle::Bicycle(real_t v, real_t dt,
@@ -112,7 +120,11 @@ Bicycle::auxiliary_state_t Bicycle::x_aux_next(const state_t& x, const auxiliary
     return xout.head<p>();
 }
 
-void Bicycle::set_v(real_t v, real_t dt) {
+void Bicycle::set_v_dt(real_t v, real_t dt) {
+    if (m_recalculate_state_space) {
+        initialize_state_space_matrices();
+    }
+
     /* system state space is parameterized by forward speed v
      * this function sets forward speed and calculates the state space matrices
      * and additionally calculates discrete time state space if sampling time is nonzero
@@ -122,8 +134,8 @@ void Bicycle::set_v(real_t v, real_t dt) {
 
     // M is positive definite so use the Cholesky decomposition in solving the linear system
     m_A(0, 2) = v * std::cos(m_lambda) / m_w;
-    m_A.block<o, o>(3, 1) = -m_M_llt.solve(constants::g*m_K0 + m_v*m_v*m_K2);
-    m_A.bottomRightCorner<o, o>() = -m_M_llt.solve(m_v*m_C1);
+    m_A.block<o, o>(3, 1) = -m_M_llt.solve(constants::g*m_K0 + v*v*m_K2);
+    m_A.bottomRightCorner<o, o>() = -m_M_llt.solve(v*m_C1);
 
     // Calculate M^-1 as we need it for discretization
     if (o < 5) { // inverse calculation is okay if matrix size is small
@@ -132,7 +144,7 @@ void Bicycle::set_v(real_t v, real_t dt) {
         m_B.bottomRows<o>() = m_M_llt.solve(second_order_matrix_t::Identity());
     }
 
-    if (m_dt == 0.0) { // discrete time state does not change
+    if (dt == 0.0) { // discrete time state does not change
         m_Ad.setIdentity();
         m_Bd.setZero();
     } else {
@@ -152,6 +164,7 @@ void Bicycle::set_v(real_t v, real_t dt) {
             m_Bd = T.topRightCorner<n, m>();
         }
     }
+    m_recalculate_state_space = false;
 }
 
 bool Bicycle::discrete_state_space_lookup(const state_space_map_key_t& k) {
@@ -194,11 +207,12 @@ void Bicycle::set_parameters_from_file(const char* param_file) {
     m_rf = buffer[4*num_elem + 4];
 }
 
+/*
+ * Calculate constant parts of A, B from M, C1, K0, K2 matrices.
+ */
 void Bicycle::initialize_state_space_matrices() {
     m_A.setZero();
     m_B.setZero();
-    m_C.setZero();
-    m_D.setZero();
     m_Ad.setZero();
     m_Bd.setZero();
 
@@ -215,10 +229,16 @@ void Bicycle::initialize_state_space_matrices() {
     m_M_llt.compute(m_M);
 }
 
+void Bicycle::set_state_space() {
+    set_v_dt(m_v, m_dt);
+}
+
+/* set d1, d2, d3 used in pitch constraint calculation */
 void Bicycle::set_moore_parameters() {
     m_d1 = std::cos(m_lambda)*(m_c + m_w - m_rr*std::tan(m_lambda));
     m_d3 = -std::cos(m_lambda)*(m_c - m_rf*std::tan(m_lambda));
     m_d2 = (m_rr + m_d1*std::sin(m_lambda) - m_rf + m_d3*std::sin(m_lambda)) / std::cos(m_lambda);
+    m_recalculate_moore_parameters = false;
 }
 
 real_t Bicycle::solve_constraint_pitch(const state_t& x, real_t guess) const {

@@ -18,9 +18,9 @@ void ConvergenceTest::SetUp() {
     m_bicycle = new bicycle_t(GetParam(), m_dt);
     m_bicycle->set_C(parameters::defaultvalue::bicycle::C);
     m_kalman = new kalman_t(*m_bicycle,
+            bicycle_t::state_t::Zero(),
             parameters::defaultvalue::kalman::Q(m_dt),
             parameters::defaultvalue::kalman::R,
-            bicycle_t::state_t::Zero(),
             std::pow(m_x[1]/2, 2) * bicycle_t::state_matrix_t::Identity());
     m_lqr = new lqr_t(*m_bicycle,
             lqr_t::state_cost_t::Identity(),

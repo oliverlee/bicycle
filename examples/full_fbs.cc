@@ -86,11 +86,11 @@ int main(int argc, char* argv[]) {
     aux[2] = bicycle.solve_constraint_pitch(x, 0);
 
     kalman_t kalman(bicycle,
+            bicycle_t::state_t::Zero(), // starts at zero state
             parameters::defaultvalue::kalman::Q(dt),
             (kalman_t::measurement_noise_covariance_t() <<
              sigma0,      0,
                   0, sigma1).finished(),
-            bicycle_t::state_t::Zero(), // starts at zero state
             std::pow(x[1]/2, 2) * bicycle_t::state_matrix_t::Identity());
 
     lqr_t lqr(bicycle,
