@@ -14,16 +14,58 @@ namespace model {
  * state: [yaw angle, roll angle, steer angle, roll rate, steer rate]
  * input: [roll torque, steer torque]
  * output: [yaw angle, steer angle]
+ * auxiliary: [x rear contact, y rear contact, pitch angle]
  *
  * Note: 2 outputs are defined and are specified by the default C and D matrices,
  * however, C and D _can_ be set with member functions.
  *
- *
- * auxiliary: [x rear contact, y rear contact, pitch angle]
+ * As C and D can be changed, the corresponding output fields may change and the
+ * provided enum class output_index_t may longer be correct. It is the user's
+ * responsibility to ensure correct index access.
  */
 
 class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
     public:
+        static constexpr unsigned int p = 3;
+        using auxiliary_state_t = Eigen::Matrix<real_t, p, 1>;
+
+        // state enum definitions
+        enum class input_index_t: uint8_t {
+            roll_torque = 0,
+            steer_torque,
+            number_of_types
+        };
+        enum class state_index_t: uint8_t {
+            yaw_angle = 0,
+            roll_angle,
+            steer_angle,
+            roll_rate,
+            steer_rate,
+            number_of_types
+        };
+        enum class output_index_t: uint8_t {
+            yaw_angle = 0,
+            steer_angle,
+            number_of_types
+        };
+        enum class auxiliary_state_index_t: uint8_t {
+            x = 0,
+            y,
+            pitch_angle,
+            number_of_types
+        };
+        enum class full_state_index_t: uint8_t {
+            x = 0, /* always declare auxiliary state fields first */
+            y,
+            pitch_angle,
+            yaw_angle,
+            roll_angle,
+            steer_angle,
+            roll_rate,
+            steer_rate,
+            number_of_types
+        };
+
         /*
          * We normally treat speed v as a double/float. However to allow for constant
          * time lookup along with quickly finding a key 'near' the requested
@@ -44,9 +86,6 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         using state_space_map_t = std::unordered_map<state_space_map_key_t,
               state_space_map_value_t, boost::hash<state_space_map_key_t>>;
 
-        static constexpr unsigned int p = 3;
-        using auxiliary_state_t = Eigen::Matrix<real_t, p, 1>;
-
         Bicycle(const second_order_matrix_t& M, const second_order_matrix_t& C1,
                 const second_order_matrix_t& K0, const second_order_matrix_t& K2,
                 real_t wheelbase, real_t trail, real_t steer_axis_tilt,
@@ -57,6 +96,8 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
                 const state_space_map_t* discrete_state_space_map = nullptr);
         Bicycle(real_t v, real_t dt,
                 const state_space_map_t* discrete_state_space_map = nullptr);
+
+        bool auxiliary_state_field(full_state_index_t field) const;
 
         virtual state_t x_next(const state_t& x, const input_t& u) const;
         state_t x_integrate(const state_t& x, const input_t& u, real_t dt) const;
@@ -139,9 +180,9 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         bool m_recalculate_state_space;
         bool m_recalculate_moore_parameters;
 
-        state_matrix_t m_A;
-        input_matrix_t m_B; // Use Cholesky decomposition of M if possible
         Eigen::LLT<second_order_matrix_t> m_M_llt;
+        state_matrix_t m_A;
+        input_matrix_t m_B;
         output_matrix_t m_C;
         feedthrough_matrix_t m_D;
 
