@@ -30,6 +30,7 @@ class Kalman {
         void time_update(const input_t& u, const process_noise_covariance_t& Q);
         void measurement_update(const measurement_t& z);
         void measurement_update(const measurement_t& z, const measurement_noise_covariance_t& R);
+        void update(const input_t& u, const measurement_t& z); /* simplified time and measurement update */
 
         void set_x(const state_t& x);
         void set_P(const error_covariance_t& P);

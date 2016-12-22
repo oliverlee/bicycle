@@ -61,6 +61,12 @@ void Kalman<T>::measurement_update(const measurement_t& z, const measurement_noi
 }
 
 template <typename T>
+void Kalman<T>::update(const input_t& u, const measurement_t& z) {
+    time_update(u);
+    measurement_update(z);
+}
+
+template <typename T>
 void Kalman<T>::time_update_state() {
     m_x = m_system.Ad()*m_x;
 }
