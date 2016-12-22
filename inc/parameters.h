@@ -22,6 +22,7 @@ namespace parameters {
     namespace defaultvalue {
         namespace bicycle {
             extern const model::Bicycle::output_matrix_t C;
+            extern const model::Bicycle::feedthrough_matrix_t D;
         } // namespace bicycle
 
         namespace kalman {

@@ -11,9 +11,26 @@
 
 namespace {
     const model::real_t discretization_precision = Eigen::NumTraits<model::real_t>::dummy_precision();
+
+    template <typename E>
+    constexpr uint8_t index(E e) {
+        return static_cast<uint8_t>(e);
+    }
+
 } // namespace
 
 namespace model {
+static_assert(index(Bicycle::input_index_t::number_of_types) == Bicycle::m,
+        "Invalid number of elements defined in input_index_t");
+static_assert(index(Bicycle::state_index_t::number_of_types) == Bicycle::n,
+        "Invalid number of elements defined in state_index_t");
+static_assert(index(Bicycle::output_index_t::number_of_types) == Bicycle::l,
+        "Invalid number of elements defined in output_index_t");
+static_assert(index(Bicycle::auxiliary_state_index_t::number_of_types) == Bicycle::p,
+        "Invalid number of elements defined in auxiliary_state_index_t");
+static_assert(index(Bicycle::full_state_index_t::number_of_types) == (Bicycle::n + Bicycle::p),
+        "Invalid number of elements defined in full_state_index_t");
+
 Bicycle::Bicycle(const second_order_matrix_t& M, const second_order_matrix_t& C1,
         const second_order_matrix_t& K0, const second_order_matrix_t& K2,
         real_t wheelbase, real_t trail, real_t steer_axis_tilt,
@@ -24,20 +41,22 @@ Bicycle::Bicycle(const second_order_matrix_t& M, const second_order_matrix_t& C1
     m_rr(rear_wheel_radius), m_rf(front_wheel_radius),
     m_recalculate_state_space(true),
     m_recalculate_moore_parameters(true),
+    m_C(parameters::defaultvalue::bicycle::C),
+    m_D(parameters::defaultvalue::bicycle::D),
     m_discrete_state_space_map(discrete_state_space_map) {
     set_moore_parameters();
 
     // set forward speed, sampling time and update state matrices
     // state space matrices are set in set_v_dt() as m_recalculate_state_space is set to true
     set_v_dt(v, dt);
-    m_C.setZero();
-    m_D.setZero();
 }
 
 Bicycle::Bicycle(const char* param_file, real_t v, real_t dt,
         const state_space_map_t* discrete_state_space_map) :
     m_recalculate_state_space(true),
     m_recalculate_moore_parameters(true),
+    m_C(parameters::defaultvalue::bicycle::C),
+    m_D(parameters::defaultvalue::bicycle::D),
     m_discrete_state_space_map(discrete_state_space_map) {
     // set M, C1, K0, K2 matrices and w, c, lambda, rr, rf parameters from file
     set_parameters_from_file(param_file);
@@ -46,8 +65,6 @@ Bicycle::Bicycle(const char* param_file, real_t v, real_t dt,
     // set forward speed, sampling time and update state matrices
     // state space matrices are set in set_v_dt() as m_recalculate_state_space is set to true
     set_v_dt(v, dt);
-    m_C.setZero();
-    m_D.setZero();
 }
 
 Bicycle::Bicycle(real_t v, real_t dt,
@@ -60,6 +77,10 @@ Bicycle::Bicycle(real_t v, real_t dt,
             parameters::benchmark::rear_wheel_radius,
             parameters::benchmark::front_wheel_radius,
             v, dt, discrete_state_space_map) { }
+
+bool Bicycle::auxiliary_state_field(full_state_index_t field) const {
+    return index(field) < index(auxiliary_state_index_t::number_of_types);
+}
 
 Bicycle::state_t Bicycle::x_next(const Bicycle::state_t& x, const Bicycle::input_t& u) const {
     return m_Ad*x + m_Bd*u;
@@ -111,12 +132,16 @@ Bicycle::auxiliary_state_t Bicycle::x_aux_next(const state_t& x, const auxiliary
     m_auxiliary_stepper.do_step([this](
                 const odeint_auxiliary_state_t& x, odeint_auxiliary_state_t& dxdt, const real_t t) -> void {
                 (void)t;
-                dxdt[0] = m_v*std::cos(x[p + 0]); // xdot = v*cos(psi)
-                dxdt[1] = m_v*std::sin(x[p + 0]); // ydot = v*sin(psi)
-                dxdt.tail<n + 1>().setZero(); // pitch is calculated separately
+                dxdt[index(full_state_index_t::x)] =
+                    m_v*std::cos(x[index(full_state_index_t::yaw_angle)]); // xdot = v*cos(psi)
+                dxdt[index(full_state_index_t::y)] =
+                    m_v*std::sin(x[index(full_state_index_t::yaw_angle)]); // ydot = v*sin(psi)
+                dxdt.tail<n + 1>().setZero(); // set remaining values to zero, pitch is calculated separately
             }, xout, 0.0, m_dt);
 
-    xout[2] = solve_constraint_pitch(x, x_aux[2]); // use last pitch value as initial guess
+    // use last pitch angle as initial guess
+    xout[index(full_state_index_t::pitch_angle)] =
+        solve_constraint_pitch(x, x_aux[index(auxiliary_state_index_t::pitch_angle)]);
     return xout.head<p>();
 }
 
@@ -133,7 +158,7 @@ void Bicycle::set_v_dt(real_t v, real_t dt) {
     m_dt = dt;
 
     // M is positive definite so use the Cholesky decomposition in solving the linear system
-    m_A(0, 2) = v * std::cos(m_lambda) / m_w;
+    m_A(0, index(state_index_t::steer_angle)) = v * std::cos(m_lambda) / m_w; /* steer angle component of yaw rate */
     m_A.block<o, o>(3, 1) = -m_M_llt.solve(constants::g*m_K0 + v*v*m_K2);
     m_A.bottomRightCorner<o, o>() = -m_M_llt.solve(v*m_C1);
 
@@ -217,7 +242,7 @@ void Bicycle::initialize_state_space_matrices() {
     m_Bd.setZero();
 
     // set constant parts of state and input matrices
-    m_A(0, 4) = m_c * std::cos(m_lambda) / m_w;
+    m_A(0, index(state_index_t::steer_rate)) = m_c * std::cos(m_lambda) / m_w; /* steer rate component of yaw rate */
     m_A.block<o, o>(1, 3).setIdentity();
     m_B.topRows<o>() = second_order_matrix_t::Zero();
 
@@ -245,60 +270,61 @@ real_t Bicycle::solve_constraint_pitch(const state_t& x, real_t guess) const {
     // constraint function generated by script 'generate_pitch.py'.
     static constexpr int digits = std::numeric_limits<real_t>::digits*2/3;
     static constexpr real_t two = static_cast<real_t>(2.0);
+    static constexpr real_t one_five = static_cast<real_t>(1.5);
     static const real_t min = -constants::pi/2;
     static const real_t max = constants::pi/2;
     auto constraint_function = [this, x](real_t pitch)->std::tuple<real_t, real_t> {
         return std::make_tuple(
-((m_rf*std::pow(std::cos(pitch), two)*std::pow(std::cos(x[1]), two) +
-(m_d3*std::sqrt(std::pow(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) + std::sin(x[1])*std::sin(x[2]), two) +
-std::pow(std::cos(pitch), two)*std::pow(std::cos(x[1]), two)) +
-m_rf*(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) +
-std::sin(x[1])*std::sin(x[2])))*(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) +
-std::sin(x[1])*std::sin(x[2])))*std::sqrt(std::pow(std::cos(x[1]), two)) +
-std::sqrt(std::pow(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) + std::sin(x[1])*std::sin(x[2]), two) +
-std::pow(std::cos(pitch), two)*std::pow(std::cos(x[1]), two))*(-m_d1*std::sqrt(std::pow(std::cos(x[1]),
-two))*std::sin(pitch) + m_d2*std::sqrt(std::pow(std::cos(x[1]), two))*std::cos(pitch) -
-m_rr*std::cos(x[1]))*std::cos(x[1]))/(std::sqrt(std::pow(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) +
-std::sin(x[1])*std::sin(x[2]), two) + std::pow(std::cos(pitch), two)*std::pow(std::cos(x[1]),
-two))*std::sqrt(std::pow(std::cos(x[1]), two)))
+((m_rf*std::pow(std::cos(pitch), two)*std::pow(std::cos(x[index(state_index_t::roll_angle)]), two) +
+(m_d3*std::sqrt(std::pow(-std::sin(pitch)*std::cos(x[index(state_index_t::roll_angle)])*std::cos(x[index(state_index_t::steer_angle)]) + std::sin(x[index(state_index_t::roll_angle)])*std::sin(x[index(state_index_t::steer_angle)]), two) +
+std::pow(std::cos(pitch), two)*std::pow(std::cos(x[index(state_index_t::roll_angle)]), two)) +
+m_rf*(-std::sin(pitch)*std::cos(x[index(state_index_t::roll_angle)])*std::cos(x[index(state_index_t::steer_angle)]) +
+std::sin(x[index(state_index_t::roll_angle)])*std::sin(x[index(state_index_t::steer_angle)])))*(-std::sin(pitch)*std::cos(x[index(state_index_t::roll_angle)])*std::cos(x[index(state_index_t::steer_angle)]) +
+std::sin(x[index(state_index_t::roll_angle)])*std::sin(x[index(state_index_t::steer_angle)])))*std::sqrt(std::pow(std::cos(x[index(state_index_t::roll_angle)]), two)) +
+std::sqrt(std::pow(-std::sin(pitch)*std::cos(x[index(state_index_t::roll_angle)])*std::cos(x[index(state_index_t::steer_angle)]) + std::sin(x[index(state_index_t::roll_angle)])*std::sin(x[index(state_index_t::steer_angle)]), two) +
+std::pow(std::cos(pitch), two)*std::pow(std::cos(x[index(state_index_t::roll_angle)]), two))*(-m_d1*std::sqrt(std::pow(std::cos(x[index(state_index_t::roll_angle)]),
+two))*std::sin(pitch) + m_d2*std::sqrt(std::pow(std::cos(x[index(state_index_t::roll_angle)]), two))*std::cos(pitch) -
+m_rr*std::cos(x[index(state_index_t::roll_angle)]))*std::cos(x[index(state_index_t::roll_angle)]))/(std::sqrt(std::pow(-std::sin(pitch)*std::cos(x[index(state_index_t::roll_angle)])*std::cos(x[index(state_index_t::steer_angle)]) +
+std::sin(x[index(state_index_t::roll_angle)])*std::sin(x[index(state_index_t::steer_angle)]), two) + std::pow(std::cos(pitch), two)*std::pow(std::cos(x[index(state_index_t::roll_angle)]),
+two))*std::sqrt(std::pow(std::cos(x[index(state_index_t::roll_angle)]), two)))
                 ,
-((m_rf*std::pow(std::cos(pitch), two)*std::pow(std::cos(x[1]), two) +
-(m_d3*std::sqrt(std::pow(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) + std::sin(x[1])*std::sin(x[2]), two) +
-std::pow(std::cos(pitch), two)*std::pow(std::cos(x[1]), two)) +
-m_rf*(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) +
-std::sin(x[1])*std::sin(x[2])))*(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) +
-std::sin(x[1])*std::sin(x[2])))*std::sqrt(std::pow(std::cos(x[1]), two)) +
-std::sqrt(std::pow(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) + std::sin(x[1])*std::sin(x[2]), two) +
-std::pow(std::cos(pitch), two)*std::pow(std::cos(x[1]), two))*(-m_d1*std::sqrt(std::pow(std::cos(x[1]),
-two))*std::sin(pitch) + m_d2*std::sqrt(std::pow(std::cos(x[1]), two))*std::cos(pitch) -
-m_rr*std::cos(x[1]))*std::cos(x[1]))*((-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) +
-std::sin(x[1])*std::sin(x[2]))*std::cos(pitch)*std::cos(x[1])*std::cos(x[2]) +
-std::sin(pitch)*std::cos(pitch)*std::pow(std::cos(x[1]),
-two))/(std::pow(std::pow(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) + std::sin(x[1])*std::sin(x[2]), two) +
-std::pow(std::cos(pitch), two)*std::pow(std::cos(x[1]), two), 1.5)*std::sqrt(std::pow(std::cos(x[1]), two))) +
-((-m_d1*std::sqrt(std::pow(std::cos(x[1]), two))*std::cos(pitch) - m_d2*std::sqrt(std::pow(std::cos(x[1]),
-two))*std::sin(pitch))*std::sqrt(std::pow(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) +
-std::sin(x[1])*std::sin(x[2]), two) + std::pow(std::cos(pitch), two)*std::pow(std::cos(x[1]), two))*std::cos(x[1]) +
-(-(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) +
-std::sin(x[1])*std::sin(x[2]))*std::cos(pitch)*std::cos(x[1])*std::cos(x[2]) -
-std::sin(pitch)*std::cos(pitch)*std::pow(std::cos(x[1]), two))*(-m_d1*std::sqrt(std::pow(std::cos(x[1]),
-two))*std::sin(pitch) + m_d2*std::sqrt(std::pow(std::cos(x[1]), two))*std::cos(pitch) -
-m_rr*std::cos(x[1]))*std::cos(x[1])/std::sqrt(std::pow(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) +
-std::sin(x[1])*std::sin(x[2]), two) + std::pow(std::cos(pitch), two)*std::pow(std::cos(x[1]), two)) +
-(-2*m_rf*std::sin(pitch)*std::cos(pitch)*std::pow(std::cos(x[1]), two) -
-(m_d3*std::sqrt(std::pow(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) + std::sin(x[1])*std::sin(x[2]), two) +
-std::pow(std::cos(pitch), two)*std::pow(std::cos(x[1]), two)) +
-m_rf*(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) +
-std::sin(x[1])*std::sin(x[2])))*std::cos(pitch)*std::cos(x[1])*std::cos(x[2]) +
-(m_d3*(-(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) +
-std::sin(x[1])*std::sin(x[2]))*std::cos(pitch)*std::cos(x[1])*std::cos(x[2]) -
-std::sin(pitch)*std::cos(pitch)*std::pow(std::cos(x[1]),
-two))/std::sqrt(std::pow(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) + std::sin(x[1])*std::sin(x[2]), two) +
-std::pow(std::cos(pitch), two)*std::pow(std::cos(x[1]), two)) -
-m_rf*std::cos(pitch)*std::cos(x[1])*std::cos(x[2]))*(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) +
-std::sin(x[1])*std::sin(x[2])))*std::sqrt(std::pow(std::cos(x[1]),
-two)))/(std::sqrt(std::pow(-std::sin(pitch)*std::cos(x[1])*std::cos(x[2]) + std::sin(x[1])*std::sin(x[2]), two) +
-std::pow(std::cos(pitch), two)*std::pow(std::cos(x[1]), two))*std::sqrt(std::pow(std::cos(x[1]), two)))
+((m_rf*std::pow(std::cos(pitch), two)*std::pow(std::cos(x[index(state_index_t::roll_angle)]), two) +
+(m_d3*std::sqrt(std::pow(-std::sin(pitch)*std::cos(x[index(state_index_t::roll_angle)])*std::cos(x[index(state_index_t::steer_angle)]) + std::sin(x[index(state_index_t::roll_angle)])*std::sin(x[index(state_index_t::steer_angle)]), two) +
+std::pow(std::cos(pitch), two)*std::pow(std::cos(x[index(state_index_t::roll_angle)]), two)) +
+m_rf*(-std::sin(pitch)*std::cos(x[index(state_index_t::roll_angle)])*std::cos(x[index(state_index_t::steer_angle)]) +
+std::sin(x[index(state_index_t::roll_angle)])*std::sin(x[index(state_index_t::steer_angle)])))*(-std::sin(pitch)*std::cos(x[index(state_index_t::roll_angle)])*std::cos(x[index(state_index_t::steer_angle)]) +
+std::sin(x[index(state_index_t::roll_angle)])*std::sin(x[index(state_index_t::steer_angle)])))*std::sqrt(std::pow(std::cos(x[index(state_index_t::roll_angle)]), two)) +
+std::sqrt(std::pow(-std::sin(pitch)*std::cos(x[index(state_index_t::roll_angle)])*std::cos(x[index(state_index_t::steer_angle)]) + std::sin(x[index(state_index_t::roll_angle)])*std::sin(x[index(state_index_t::steer_angle)]), two) +
+std::pow(std::cos(pitch), two)*std::pow(std::cos(x[index(state_index_t::roll_angle)]), two))*(-m_d1*std::sqrt(std::pow(std::cos(x[index(state_index_t::roll_angle)]),
+two))*std::sin(pitch) + m_d2*std::sqrt(std::pow(std::cos(x[index(state_index_t::roll_angle)]), two))*std::cos(pitch) -
+m_rr*std::cos(x[index(state_index_t::roll_angle)]))*std::cos(x[index(state_index_t::roll_angle)]))*((-std::sin(pitch)*std::cos(x[index(state_index_t::roll_angle)])*std::cos(x[index(state_index_t::steer_angle)]) +
+std::sin(x[index(state_index_t::roll_angle)])*std::sin(x[index(state_index_t::steer_angle)]))*std::cos(pitch)*std::cos(x[index(state_index_t::roll_angle)])*std::cos(x[index(state_index_t::steer_angle)]) +
+std::sin(pitch)*std::cos(pitch)*std::pow(std::cos(x[index(state_index_t::roll_angle)]),
+two))/(std::pow(std::pow(-std::sin(pitch)*std::cos(x[index(state_index_t::roll_angle)])*std::cos(x[index(state_index_t::steer_angle)]) + std::sin(x[index(state_index_t::roll_angle)])*std::sin(x[index(state_index_t::steer_angle)]), two) +
+std::pow(std::cos(pitch), two)*std::pow(std::cos(x[index(state_index_t::roll_angle)]), two), one_five)*std::sqrt(std::pow(std::cos(x[index(state_index_t::roll_angle)]), two))) +
+((-m_d1*std::sqrt(std::pow(std::cos(x[index(state_index_t::roll_angle)]), two))*std::cos(pitch) - m_d2*std::sqrt(std::pow(std::cos(x[index(state_index_t::roll_angle)]),
+two))*std::sin(pitch))*std::sqrt(std::pow(-std::sin(pitch)*std::cos(x[index(state_index_t::roll_angle)])*std::cos(x[index(state_index_t::steer_angle)]) +
+std::sin(x[index(state_index_t::roll_angle)])*std::sin(x[index(state_index_t::steer_angle)]), two) + std::pow(std::cos(pitch), two)*std::pow(std::cos(x[index(state_index_t::roll_angle)]), two))*std::cos(x[index(state_index_t::roll_angle)]) +
+(-(-std::sin(pitch)*std::cos(x[index(state_index_t::roll_angle)])*std::cos(x[index(state_index_t::steer_angle)]) +
+std::sin(x[index(state_index_t::roll_angle)])*std::sin(x[index(state_index_t::steer_angle)]))*std::cos(pitch)*std::cos(x[index(state_index_t::roll_angle)])*std::cos(x[index(state_index_t::steer_angle)]) -
+std::sin(pitch)*std::cos(pitch)*std::pow(std::cos(x[index(state_index_t::roll_angle)]), two))*(-m_d1*std::sqrt(std::pow(std::cos(x[index(state_index_t::roll_angle)]),
+two))*std::sin(pitch) + m_d2*std::sqrt(std::pow(std::cos(x[index(state_index_t::roll_angle)]), two))*std::cos(pitch) -
+m_rr*std::cos(x[index(state_index_t::roll_angle)]))*std::cos(x[index(state_index_t::roll_angle)])/std::sqrt(std::pow(-std::sin(pitch)*std::cos(x[index(state_index_t::roll_angle)])*std::cos(x[index(state_index_t::steer_angle)]) +
+std::sin(x[index(state_index_t::roll_angle)])*std::sin(x[index(state_index_t::steer_angle)]), two) + std::pow(std::cos(pitch), two)*std::pow(std::cos(x[index(state_index_t::roll_angle)]), two)) +
+(-two*m_rf*std::sin(pitch)*std::cos(pitch)*std::pow(std::cos(x[index(state_index_t::roll_angle)]), two) -
+(m_d3*std::sqrt(std::pow(-std::sin(pitch)*std::cos(x[index(state_index_t::roll_angle)])*std::cos(x[index(state_index_t::steer_angle)]) + std::sin(x[index(state_index_t::roll_angle)])*std::sin(x[index(state_index_t::steer_angle)]), two) +
+std::pow(std::cos(pitch), two)*std::pow(std::cos(x[index(state_index_t::roll_angle)]), two)) +
+m_rf*(-std::sin(pitch)*std::cos(x[index(state_index_t::roll_angle)])*std::cos(x[index(state_index_t::steer_angle)]) +
+std::sin(x[index(state_index_t::roll_angle)])*std::sin(x[index(state_index_t::steer_angle)])))*std::cos(pitch)*std::cos(x[index(state_index_t::roll_angle)])*std::cos(x[index(state_index_t::steer_angle)]) +
+(m_d3*(-(-std::sin(pitch)*std::cos(x[index(state_index_t::roll_angle)])*std::cos(x[index(state_index_t::steer_angle)]) +
+std::sin(x[index(state_index_t::roll_angle)])*std::sin(x[index(state_index_t::steer_angle)]))*std::cos(pitch)*std::cos(x[index(state_index_t::roll_angle)])*std::cos(x[index(state_index_t::steer_angle)]) -
+std::sin(pitch)*std::cos(pitch)*std::pow(std::cos(x[index(state_index_t::roll_angle)]),
+two))/std::sqrt(std::pow(-std::sin(pitch)*std::cos(x[index(state_index_t::roll_angle)])*std::cos(x[index(state_index_t::steer_angle)]) + std::sin(x[index(state_index_t::roll_angle)])*std::sin(x[index(state_index_t::steer_angle)]), two) +
+std::pow(std::cos(pitch), two)*std::pow(std::cos(x[index(state_index_t::roll_angle)]), two)) -
+m_rf*std::cos(pitch)*std::cos(x[index(state_index_t::roll_angle)])*std::cos(x[index(state_index_t::steer_angle)]))*(-std::sin(pitch)*std::cos(x[index(state_index_t::roll_angle)])*std::cos(x[index(state_index_t::steer_angle)]) +
+std::sin(x[index(state_index_t::roll_angle)])*std::sin(x[index(state_index_t::steer_angle)])))*std::sqrt(std::pow(std::cos(x[index(state_index_t::roll_angle)]),
+two)))/(std::sqrt(std::pow(-std::sin(pitch)*std::cos(x[index(state_index_t::roll_angle)])*std::cos(x[index(state_index_t::steer_angle)]) + std::sin(x[index(state_index_t::roll_angle)])*std::sin(x[index(state_index_t::steer_angle)]), two) +
+std::pow(std::cos(pitch), two)*std::pow(std::cos(x[index(state_index_t::roll_angle)]), two))*std::sqrt(std::pow(std::cos(x[index(state_index_t::roll_angle)]), two)))
                 );
     };
     return boost::math::tools::newton_raphson_iterate(constraint_function, guess, min, max, digits);

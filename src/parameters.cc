@@ -30,6 +30,7 @@ namespace bicycle {
             (model::Bicycle::output_matrix_t() <<
              1, 0, 0, 0, 0,                // yaw angle
              0, 0, 1, 0, 0).finished());   // steer angle
+    const model::Bicycle::feedthrough_matrix_t D(model::Bicycle::feedthrough_matrix_t::Zero());
 } // namespace bicycle
 
 namespace kalman {

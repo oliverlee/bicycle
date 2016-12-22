@@ -35,7 +35,6 @@ int main(int argc, char* argv[]) {
             parameters::defaultvalue::kalman::R(1, 1));
 
     model::Bicycle bicycle(v0, dt);
-    bicycle.set_C(parameters::defaultvalue::bicycle::C);
 
     controller::Lqr<model::Bicycle> lqr(bicycle,
             controller::Lqr<model::Bicycle>::state_cost_t::Identity(),
