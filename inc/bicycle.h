@@ -62,7 +62,7 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         state_t x_integrate(const state_t& x, real_t dt) const;
         virtual output_t y(const state_t& x) const;
         auxiliary_state_t x_aux_next(const state_t& x, const auxiliary_state_t& x_aux) const;
-        void set_v(real_t v, real_t dt);
+        void set_v_dt(real_t v, real_t dt);
         void set_C(const output_matrix_t& C);
         void set_D(const feedthrough_matrix_t& D);
 

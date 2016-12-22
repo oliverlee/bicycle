@@ -27,7 +27,7 @@ Bicycle::Bicycle(const second_order_matrix_t& M, const second_order_matrix_t& C1
     set_moore_parameters();
 
     // set forward speed, sampling time and update state matrices
-    set_v(v, dt);
+    set_v_dt(v, dt);
 }
 
 Bicycle::Bicycle(const char* param_file, real_t v, real_t dt,
@@ -39,7 +39,7 @@ Bicycle::Bicycle(const char* param_file, real_t v, real_t dt,
     set_moore_parameters();
 
     // set forward speed, sampling time and update state matrices
-    set_v(v, dt);
+    set_v_dt(v, dt);
 }
 
 Bicycle::Bicycle(real_t v, real_t dt,
@@ -112,7 +112,7 @@ Bicycle::auxiliary_state_t Bicycle::x_aux_next(const state_t& x, const auxiliary
     return xout.head<p>();
 }
 
-void Bicycle::set_v(real_t v, real_t dt) {
+void Bicycle::set_v_dt(real_t v, real_t dt) {
     /* system state space is parameterized by forward speed v
      * this function sets forward speed and calculates the state space matrices
      * and additionally calculates discrete time state space if sampling time is nonzero
@@ -122,8 +122,8 @@ void Bicycle::set_v(real_t v, real_t dt) {
 
     // M is positive definite so use the Cholesky decomposition in solving the linear system
     m_A(0, 2) = v * std::cos(m_lambda) / m_w;
-    m_A.block<o, o>(3, 1) = -m_M_llt.solve(constants::g*m_K0 + m_v*m_v*m_K2);
-    m_A.bottomRightCorner<o, o>() = -m_M_llt.solve(m_v*m_C1);
+    m_A.block<o, o>(3, 1) = -m_M_llt.solve(constants::g*m_K0 + v*v*m_K2);
+    m_A.bottomRightCorner<o, o>() = -m_M_llt.solve(v*m_C1);
 
     // Calculate M^-1 as we need it for discretization
     if (o < 5) { // inverse calculation is okay if matrix size is small
@@ -132,7 +132,7 @@ void Bicycle::set_v(real_t v, real_t dt) {
         m_B.bottomRows<o>() = m_M_llt.solve(second_order_matrix_t::Identity());
     }
 
-    if (m_dt == 0.0) { // discrete time state does not change
+    if (dt == 0.0) { // discrete time state does not change
         m_Ad.setIdentity();
         m_Bd.setZero();
     } else {

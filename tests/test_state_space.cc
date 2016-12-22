@@ -52,7 +52,7 @@ namespace {
 } // namespace
 
 TEST_F(StateSpaceTest, ContinuousV1) {
-    bicycle->set_v(1.0, 0);
+    bicycle->set_v_dt(1.0, 0);
 
     A <<
     0.0000000000000000, 0.0000000000000000, 0.9324083493089740, 0.0000000000000000, 0.0745926679447179,
@@ -66,7 +66,7 @@ TEST_F(StateSpaceTest, ContinuousV1) {
 }
 
 TEST_F(StateSpaceTest, ContinuousV3) {
-    bicycle->set_v(3.0, 0);
+    bicycle->set_v_dt(3.0, 0);
 
     A <<
     0.0000000000000000, 0.0000000000000000, 2.7972250479269221, 0.0000000000000000, 0.0745926679447179,
@@ -80,7 +80,7 @@ TEST_F(StateSpaceTest, ContinuousV3) {
 }
 
 TEST_F(StateSpaceTest, ContinuousV5) {
-    bicycle->set_v(5.0, 0);
+    bicycle->set_v_dt(5.0, 0);
 
     A <<
     0.0000000000000000e+00, 0.0000000000000000e+00, 4.6620417465448698e+00, 0.0000000000000000e+00, 7.4592667944717930e-02,
@@ -94,7 +94,7 @@ TEST_F(StateSpaceTest, ContinuousV5) {
 }
 
 TEST_F(StateSpaceTest, DiscreteV1) {
-    bicycle->set_v(1.0, dt);
+    bicycle->set_v_dt(1.0, dt);
 
     Ad <<
     1.0000000000000000e+00, 1.1150047433809632e-05, 4.6894277236451910e-03, 3.4999489288757183e-06, 3.8174051320656106e-04,
@@ -115,7 +115,7 @@ TEST_F(StateSpaceTest, DiscreteV1) {
 }
 
 TEST_F(StateSpaceTest, DISABLED_DiscreteV3) {
-    bicycle->set_v(3.0, dt);
+    bicycle->set_v_dt(3.0, dt);
 
     Ad <<
     1.0000000000000000e+00, 1.1150047433809632e-05, 4.6894277236451910e-03, 3.4999489288757183e-06, 3.8174051320656106e-04,
@@ -136,7 +136,7 @@ TEST_F(StateSpaceTest, DISABLED_DiscreteV3) {
 }
 
 TEST_F(StateSpaceTest, DiscreteV5) {
-    bicycle->set_v(5.0, dt);
+    bicycle->set_v_dt(5.0, dt);
 
     Ad <<
     1.0000000000000000e+00, 1.2049991484992133e-05, 2.3291048326765866e-02, 1.8462645918076634e-05, 4.1567060022420490e-04,
@@ -179,8 +179,8 @@ TEST(StateSpace, LookupFound) {
     EXPECT_TRUE(bicycle0.Ad().isApprox(Ad_vw)) << test::output_matrices(bicycle0.Ad(), Ad_vw);
     EXPECT_TRUE(bicycle0.Bd().isApprox(Bd_vw)) << test::output_matrices(bicycle0.Bd(), Bd_vw);
 
-    bicycle0.set_v(vc, dt);
-    bicycle1.set_v(vc, dt);
+    bicycle0.set_v_dt(vc, dt);
+    bicycle1.set_v_dt(vc, dt);
 
     EXPECT_FALSE(bicycle0.Ad().isApprox(bicycle1.Ad())) << test::output_matrices(bicycle0.Ad(), bicycle1.Ad());
     EXPECT_FALSE(bicycle0.Bd().isApprox(bicycle1.Bd())) << test::output_matrices(bicycle0.Bd(), bicycle1.Bd());
@@ -211,8 +211,8 @@ TEST(StateSpace, LookupNotFound) {
     EXPECT_TRUE(bicycle0.Bd().isApprox(bicycle1.Bd())) << test::output_matrices(bicycle0.Bd(), bicycle1.Bd());
 
     v = 5.0;
-    bicycle0.set_v(v, dt);
-    bicycle1.set_v(v, dt);
+    bicycle0.set_v_dt(v, dt);
+    bicycle1.set_v_dt(v, dt);
 
     EXPECT_TRUE(bicycle0.Ad().isApprox(bicycle1.Ad())) << test::output_matrices(bicycle0.Ad(), bicycle1.Ad());
     EXPECT_TRUE(bicycle0.Bd().isApprox(bicycle1.Bd())) << test::output_matrices(bicycle0.Bd(), bicycle1.Bd());
