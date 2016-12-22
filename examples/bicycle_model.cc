@@ -67,7 +67,7 @@ int main(int argc, char* argv[]) {
     std::cout << "simulating (no input) continuous time system at constant speed..." << std::endl;
     x = x0;
     for (auto& state: continuous_time_system_state_n) {
-        state = bicycle.x_integrate(x, dt);
+        state = bicycle.integrate_state(x, dt);
         x = state;
     }
 
@@ -75,7 +75,7 @@ int main(int argc, char* argv[]) {
     cont_start = std::chrono::system_clock::now();
     x = x0;
     for (auto& state: continuous_time_system_state_0) {
-        state = bicycle.x_integrate(x, model::Bicycle::input_t::Zero(), dt);
+        state = bicycle.integrate_state(x, model::Bicycle::input_t::Zero(), dt);
         x = state;
     }
     cont_stop = std::chrono::system_clock::now();
@@ -83,7 +83,7 @@ int main(int argc, char* argv[]) {
     std::cout << "simulating (no input) discrete time system at constant speed..." << std::endl;
     x = x0;
     for (auto& state: discrete_time_system_state_n) {
-        state = bicycle.x_next(x);
+        state = bicycle.update_state(x);
         x = state;
     }
 
@@ -91,7 +91,7 @@ int main(int argc, char* argv[]) {
     disc_start = std::chrono::system_clock::now();
     x = x0;
     for (auto& state: discrete_time_system_state_0) {
-        state = bicycle.x_next(x, model::Bicycle::input_t::Zero());
+        state = bicycle.update_state(x, model::Bicycle::input_t::Zero());
         x = state;
     }
     disc_stop = std::chrono::system_clock::now();

@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
     auto start = std::chrono::high_resolution_clock::now();
 
     for (auto& state: discrete_time_system_state_n) {
-        state = bicycle.x_next(x);
+        state = bicycle.update_state(x);
         x = state;
         server.wait_for_send_complete(); // wait for previous message to be sent
         server.async_send(asio::buffer(reinterpret_cast<uint8_t*>(x.data()),

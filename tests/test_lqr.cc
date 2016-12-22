@@ -15,7 +15,7 @@ class LqrTrackingTest: public ConvergenceTest {
         void simulate() {
             for(unsigned int i = 0; i < m_N; ++i) {
                 auto u = m_lqr->control_calculate(m_x);
-                m_x = m_bicycle->x_next(m_x, u);
+                m_x = m_bicycle->update_state(m_x, u);
             }
         }
 };
@@ -44,7 +44,7 @@ TEST_P(LqrTrackingTest, ZeroReferenceWithPeriodicRollTorqueDisturbance) {
             u[0] += 1.0;
         }
 
-        m_x = m_bicycle->x_next(m_x, u);
+        m_x = m_bicycle->update_state(m_x, u);
     }
 
     test_state_near(x_true(), bicycle_t::state_t::Zero());
@@ -57,7 +57,7 @@ TEST_P(LqrTrackingTest, ZeroReferenceWithConstantRollTorqueDisturbance) {
         auto u = m_lqr->control_calculate(m_x);
         u[0] += 1.0;
 
-        m_x = m_bicycle->x_next(m_x, u);
+        m_x = m_bicycle->update_state(m_x, u);
     }
 
     test_state_near(x_true(), bicycle_t::state_t::Zero());

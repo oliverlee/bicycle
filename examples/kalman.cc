@@ -52,16 +52,16 @@ int main(int argc, char* argv[]) {
     auto it_xh = system_state_estimate.begin();
 
     *it_x++ = x;
-    *it_y++ = bicycle.y(x);
-    *it_z++ = bicycle.y(x); // first measurement isn't used
+    *it_y++ = bicycle.calculate_output(x);
+    *it_z++ = bicycle.calculate_output(x); // first measurement isn't used
     *it_xh++ = kalman.x();
 
     std::cout << std::endl << "simulating..." << std::endl;
     for (; it_x != system_state.end(); ++it_x, ++it_y, ++it_z, ++it_xh) {
         // simulate bicycle system
-        x = bicycle.x_next(x);
+        x = bicycle.update_state(x);
         *it_x = x;
-        *it_y = bicycle.y(x);
+        *it_y = bicycle.calculate_output(x);
 
         // add measurement noise
         *it_z = *it_y;
