@@ -79,7 +79,7 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         static constexpr state_space_map_key_t make_state_space_map_key(real_t v, real_t dt);
         bool discrete_state_space_lookup(const state_space_map_key_t& k);
 
-        void initialize_state_space_matrices(bool calculate_state_space = true);
+        void set_state_space();
         void set_moore_parameters();
 
         real_t solve_constraint_pitch(const state_t& x, real_t guess) const;
@@ -104,6 +104,9 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         real_t front_wheel_radius() const;
         real_t v() const;
         virtual real_t dt() const;
+
+        bool need_recalculate_state_space() const;
+        bool need_recalculate_moore_parameters() const;
 
     private:
         // The full state matrix A is singular as yaw rate, and all other
@@ -165,13 +168,14 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
             boost::numeric::odeint::vector_space_algebra> m_auxiliary_stepper;
 
         void set_parameters_from_file(const char* param_file);
+        void initialize_state_space_matrices();
 }; // class Bicycle
 
 // define simple member functions using inline
 inline void Bicycle::set_M(second_order_matrix_t& M, bool recalculate_state_space) {
     m_M = M;
     if (recalculate_state_space) {
-        initialize_state_space_matrices();
+        set_state_space();
     } else {
         m_recalculate_state_space = true;
     }
@@ -179,7 +183,7 @@ inline void Bicycle::set_M(second_order_matrix_t& M, bool recalculate_state_spac
 inline void Bicycle::set_C1(second_order_matrix_t& C1, bool recalculate_state_space) {
     m_C1 = C1;
     if (recalculate_state_space) {
-        initialize_state_space_matrices();
+        set_state_space();
     } else {
         m_recalculate_state_space = true;
     }
@@ -187,7 +191,7 @@ inline void Bicycle::set_C1(second_order_matrix_t& C1, bool recalculate_state_sp
 inline void Bicycle::set_K0(second_order_matrix_t& K0, bool recalculate_state_space) {
     m_K0 = K0;
     if (recalculate_state_space) {
-        initialize_state_space_matrices();
+        set_state_space();
     } else {
         m_recalculate_state_space = true;
     }
@@ -195,7 +199,7 @@ inline void Bicycle::set_K0(second_order_matrix_t& K0, bool recalculate_state_sp
 inline void Bicycle::set_K2(second_order_matrix_t& K2, bool recalculate_state_space) {
     m_K2 = K2;
     if (recalculate_state_space) {
-        initialize_state_space_matrices();
+        set_state_space();
     } else {
         m_recalculate_state_space = true;
     }
@@ -203,8 +207,8 @@ inline void Bicycle::set_K2(second_order_matrix_t& K2, bool recalculate_state_sp
 inline void Bicycle::set_wheelbase(real_t w, bool recalculate_parameters) {
     m_w = w;
     if (recalculate_parameters) {
-        initialize_state_space_matrices();
         set_moore_parameters();
+        set_state_space();
     } else {
         m_recalculate_state_space = true;
         m_recalculate_moore_parameters = true;
@@ -213,8 +217,8 @@ inline void Bicycle::set_wheelbase(real_t w, bool recalculate_parameters) {
 inline void Bicycle::set_trail(real_t c, bool recalculate_parameters) {
     m_c = c;
     if (recalculate_parameters) {
-        initialize_state_space_matrices();
         set_moore_parameters();
+        set_state_space();
     } else {
         m_recalculate_state_space = true;
         m_recalculate_moore_parameters = true;
@@ -223,8 +227,8 @@ inline void Bicycle::set_trail(real_t c, bool recalculate_parameters) {
 inline void Bicycle::set_steer_axis_tilt(real_t lambda, bool recalculate_parameters) {
     m_lambda = lambda;
     if (recalculate_parameters) {
-        initialize_state_space_matrices();
         set_moore_parameters();
+        set_state_space();
     } else {
         m_recalculate_state_space = true;
         m_recalculate_moore_parameters = true;
@@ -312,5 +316,10 @@ inline real_t Bicycle::v() const {
 inline real_t Bicycle::dt() const {
     return m_dt;
 }
-
+inline bool Bicycle::need_recalculate_state_space() const {
+    return m_recalculate_state_space;
+}
+inline bool Bicycle::need_recalculate_moore_parameters() const {
+    return m_recalculate_moore_parameters;
+}
 } // namespace model
