@@ -16,7 +16,6 @@ void ConvergenceTest::SetUp() {
     m_x *= constants::as_radians;
 
     m_bicycle = new bicycle_t(GetParam(), m_dt);
-    m_bicycle->set_C(parameters::defaultvalue::bicycle::C);
     m_kalman = new kalman_t(*m_bicycle,
             bicycle_t::state_t::Zero(),
             parameters::defaultvalue::kalman::Q(m_dt),

@@ -30,7 +30,6 @@ int main(int argc, char* argv[]) {
     std::normal_distribution<> r1(0, parameters::defaultvalue::kalman::R(1, 1));
 
     model::Bicycle bicycle(v0, dt);
-    bicycle.set_C(parameters::defaultvalue::bicycle::C);
     x << 0, 0, 10, 10, 0; // define x in degrees
     x *= constants::as_radians; // convert degrees to radians
 

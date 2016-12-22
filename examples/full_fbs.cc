@@ -79,7 +79,6 @@ int main(int argc, char* argv[]) {
     std::normal_distribution<> rn1(0, sigma1);
 
     bicycle_t bicycle(v0, dt);
-    bicycle.set_C(parameters::defaultvalue::bicycle::C);
     x << 0, 3, 5, 0, 0; // define x0 in degrees
     x *= constants::as_radians; // convert to radians
     aux.setZero();

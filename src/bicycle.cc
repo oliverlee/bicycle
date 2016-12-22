@@ -24,20 +24,22 @@ Bicycle::Bicycle(const second_order_matrix_t& M, const second_order_matrix_t& C1
     m_rr(rear_wheel_radius), m_rf(front_wheel_radius),
     m_recalculate_state_space(true),
     m_recalculate_moore_parameters(true),
+    m_C(parameters::defaultvalue::bicycle::C),
+    m_D(parameters::defaultvalue::bicycle::D),
     m_discrete_state_space_map(discrete_state_space_map) {
     set_moore_parameters();
 
     // set forward speed, sampling time and update state matrices
     // state space matrices are set in set_v_dt() as m_recalculate_state_space is set to true
     set_v_dt(v, dt);
-    m_C.setZero();
-    m_D.setZero();
 }
 
 Bicycle::Bicycle(const char* param_file, real_t v, real_t dt,
         const state_space_map_t* discrete_state_space_map) :
     m_recalculate_state_space(true),
     m_recalculate_moore_parameters(true),
+    m_C(parameters::defaultvalue::bicycle::C),
+    m_D(parameters::defaultvalue::bicycle::D),
     m_discrete_state_space_map(discrete_state_space_map) {
     // set M, C1, K0, K2 matrices and w, c, lambda, rr, rf parameters from file
     set_parameters_from_file(param_file);
@@ -46,8 +48,6 @@ Bicycle::Bicycle(const char* param_file, real_t v, real_t dt,
     // set forward speed, sampling time and update state matrices
     // state space matrices are set in set_v_dt() as m_recalculate_state_space is set to true
     set_v_dt(v, dt);
-    m_C.setZero();
-    m_D.setZero();
 }
 
 Bicycle::Bicycle(real_t v, real_t dt,

@@ -13,8 +13,11 @@ namespace model {
 /* State, Input, and Output Definitions
  * state: [yaw angle, roll angle, steer angle, roll rate, steer rate]
  * input: [roll torque, steer torque]
- * output: [*, *] - 2 outputs are defined, but must be specified by
- *                  setting the C and D matrices
+ * output: [yaw angle, steer angle]
+ *
+ * Note: 2 outputs are defined and are specified by the default C and D matrices,
+ * however, C and D _can_ be set with member functions.
+ *
  *
  * auxiliary: [x rear contact, y rear contact, pitch angle]
  */
