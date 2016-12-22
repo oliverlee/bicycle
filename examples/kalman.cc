@@ -35,9 +35,9 @@ int main(int argc, char* argv[]) {
     x *= constants::as_radians; // convert degrees to radians
 
     observer::Kalman<model::Bicycle> kalman(bicycle,
+            model::Bicycle::state_t::Zero(),
             parameters::defaultvalue::kalman::Q(dt),
             parameters::defaultvalue::kalman::R,
-            model::Bicycle::state_t::Zero(),
             std::pow(x[2]/2, 2) * model::Bicycle::state_matrix_t::Identity());
 
     std::cout << "simulating bicycle model with measurement noise (equal to R)" << std::endl;

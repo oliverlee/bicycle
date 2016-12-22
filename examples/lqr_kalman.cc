@@ -42,9 +42,9 @@ int main(int argc, char* argv[]) {
             0.1 * controller::Lqr<model::Bicycle>::input_cost_t::Identity(),
             model::Bicycle::state_t::Zero(), n);
     observer::Kalman<model::Bicycle> kalman(bicycle,
+            model::Bicycle::state_t::Zero(), // starts at zero state
             parameters::defaultvalue::kalman::Q(dt),
             parameters::defaultvalue::kalman::R,
-            model::Bicycle::state_t::Zero(), // starts at zero state
             std::pow(x[1]/2, 2) * model::Bicycle::state_matrix_t::Identity());
 
     std::cout << "initial state:          [" << x.transpose() * constants::as_degrees << "]' deg" << std::endl;

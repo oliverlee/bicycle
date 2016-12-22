@@ -6,7 +6,7 @@
 namespace observer {
 using real_t = model::real_t;
 
-template<typename T>
+template <typename T>
 class Kalman {
     static_assert(std::is_base_of<model::DiscreteLinearBase, T>::value, "Invalid template parameter type for Kalman");
     public:
@@ -18,10 +18,11 @@ class Kalman {
         using process_noise_covariance_t = typename T::state_matrix_t;
         using measurement_noise_covariance_t = typename Eigen::Matrix<real_t, T::l, T::l>;
 
-        Kalman(T& system, const process_noise_covariance_t& Q,
-                const measurement_noise_covariance_t& R, const state_t& x0,
-                const error_covariance_t& P0) :
-            m_system(system), m_x(x0), m_P(P0), m_Q(Q), m_R(R) { }
+        Kalman(T& system);
+        Kalman(T& system, const state_t& x0,
+                const process_noise_covariance_t& Q,
+                const measurement_noise_covariance_t& R,
+                const error_covariance_t& P0);
 
         void time_update();
         void time_update(const process_noise_covariance_t& Q);
@@ -29,6 +30,11 @@ class Kalman {
         void time_update(const input_t& u, const process_noise_covariance_t& Q);
         void measurement_update(const measurement_t& z);
         void measurement_update(const measurement_t& z, const measurement_noise_covariance_t& R);
+
+        void set_x(const state_t& x);
+        void set_P(const error_covariance_t& P);
+        void set_Q(const process_noise_covariance_t& Q);
+        void set_R(const measurement_noise_covariance_t& R);
 
         // accessors
         T& system() const;
@@ -58,37 +64,37 @@ class Kalman {
 }; // class Kalman
 
 
-template<typename T>
+template <typename T>
 inline T& Kalman<T>::system() const {
     return m_system;
 }
 
-template<typename T>
+template <typename T>
 inline const typename Kalman<T>::state_t& Kalman<T>::x() const {
     return m_x;
 }
 
-template<typename T>
+template <typename T>
 inline const typename Kalman<T>::kalman_gain_t& Kalman<T>::K() const {
     return m_K;
 }
 
-template<typename T>
+template <typename T>
 inline const typename Kalman<T>::error_covariance_t& Kalman<T>::P() const {
     return m_P;
 }
 
-template<typename T>
+template <typename T>
 inline const typename Kalman<T>::process_noise_covariance_t& Kalman<T>::Q() const {
     return m_Q;
 }
 
-template<typename T>
+template <typename T>
 inline const typename Kalman<T>::measurement_noise_covariance_t& Kalman<T>::R() const {
     return m_R;
 }
 
-template<typename T>
+template <typename T>
 inline real_t Kalman<T>::dt() const {
     return m_system.dt();
 }
