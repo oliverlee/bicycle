@@ -64,6 +64,25 @@ class Kalman {
         void measurement_update_error_covariance();
 }; // class Kalman
 
+template <typename T>
+inline void Kalman<T>::set_x(const state_t& x) {
+    m_x = x;
+}
+
+template <typename T>
+inline void Kalman<T>::set_P(const error_covariance_t& P) {
+    m_P = P;
+}
+
+template <typename T>
+inline void Kalman<T>::set_Q(const process_noise_covariance_t& Q) {
+    m_Q = Q;
+}
+
+template <typename T>
+inline void Kalman<T>::set_R(const measurement_noise_covariance_t& R) {
+    m_R = R;
+}
 
 template <typename T>
 inline T& Kalman<T>::system() const {
