@@ -7,11 +7,15 @@
 namespace observer {
 
 template <typename T>
-Kalman<T>::Kalman(T& system) :
-    Kalman(system, state_t::Zero(),
-        error_covariance_t::Identity(),
-        process_noise_covariance_t::Identity(),
-        measurement_noise_covariance_t::Identity()) { }
+Kalman<T>::Kalman(T& system) : m_system(system) {
+    reset();
+}
+
+template <typename T>
+Kalman<T>::Kalman(T& system, const state_t& x0) : m_system(system) {
+    reset();
+    m_x = x0;
+}
 
 template <typename T>
 Kalman<T>::Kalman(T& system, const state_t& x0,
@@ -20,6 +24,21 @@ Kalman<T>::Kalman(T& system, const state_t& x0,
         const error_covariance_t& P0) :
             m_system(system), m_x(x0), m_P(P0), m_Q(Q), m_R(R) {
     m_K.setZero();
+}
+
+template <typename T>
+void Kalman<T>::reset() {
+    m_x.setZero();
+    m_P.setIdentity();
+    m_Q.setIdentity();
+    m_R.setIdentity();
+    m_K.setZero();
+}
+
+template <typename T>
+void Kalman<T>::update_state(const input_t& u, const measurement_t& z) {
+    time_update(u);
+    measurement_update(z);
 }
 
 template <typename T>
@@ -58,12 +77,6 @@ void Kalman<T>::measurement_update(const measurement_t& z, const measurement_noi
     measurement_update_kalman_gain(R);
     measurement_update_state(z);
     measurement_update_error_covariance();
-}
-
-template <typename T>
-void Kalman<T>::update(const input_t& u, const measurement_t& z) {
-    time_update(u);
-    measurement_update(z);
 }
 
 template <typename T>
