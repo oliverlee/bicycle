@@ -99,6 +99,7 @@ class Bicycle final : public DiscreteLinear<5, 2, 2, 2> {
 
         bool auxiliary_state_field(full_state_index_t field) const;
 
+        virtual state_t update_state(const state_t& x, const input_t& u, const output_t& z) const override;
         virtual state_t update_state(const state_t& x, const input_t& u) const override;
         virtual output_t calculate_output(const state_t& x, const input_t& u) const override;
         virtual state_t update_state(const state_t& x) const override;

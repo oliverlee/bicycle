@@ -4,6 +4,9 @@
 
 namespace observer {
 
+/*
+ * This template class implements a discrete-time Kalman Filter.
+ */
 template <typename T>
 class Kalman final : public Observer<T> {
     public:

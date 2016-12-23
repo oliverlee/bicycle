@@ -27,6 +27,9 @@ class DiscreteLinear : private DiscreteLinearBase {
         using feedthrough_matrix_t = Eigen::Matrix<real_t, l, m>;
         using second_order_matrix_t = Eigen::Matrix<real_t, o, o>;
 
+        // The member function update_state(x, u, z) may not be any different than update_state(x, u)
+        // depending on model implementation but must be defined for use with Oracle observer.
+        virtual state_t update_state(const state_t& x, const input_t& u, const output_t& z) const = 0;
         virtual state_t update_state(const state_t& x, const input_t& u) const = 0;
         virtual output_t calculate_output(const state_t& x, const input_t& u) const = 0;
         virtual state_t update_state(const state_t& x) const = 0;

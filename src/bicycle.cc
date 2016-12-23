@@ -82,6 +82,11 @@ bool Bicycle::auxiliary_state_field(full_state_index_t field) const {
     return index(field) < index(auxiliary_state_index_t::number_of_types);
 }
 
+Bicycle::state_t Bicycle::update_state(const Bicycle::state_t& x, const Bicycle::input_t& u, const Bicycle::output_t& z) const {
+    (void)z;
+    return update_state(x, u);
+}
+
 Bicycle::state_t Bicycle::update_state(const Bicycle::state_t& x, const Bicycle::input_t& u) const {
     return m_Ad*x + m_Bd*u;
 }
