@@ -1,15 +1,22 @@
 #pragma once
-#include <type_traits>
 #include <Eigen/Core>
-#include "discrete_linear.h"
+#include "observer.h"
 
 namespace observer {
-using real_t = model::real_t;
 
+/*
+ * This template class implements a discrete-time Kalman Filter.
+ */
 template <typename T>
-class Kalman {
-    static_assert(std::is_base_of<model::DiscreteLinearBase, T>::value, "Invalid template parameter type for Kalman");
+class Kalman final : public Observer<T> {
     public:
+        /*
+         * Although state_t, input_t, measurement_t are declared in the Observer<T> class
+         * and are inherited, the type aliases are dependent names as the base class (Observer)
+         * is a template dependent on the template parameter of Kalman. In order to refer to
+         * the type alias, we would need to specify 'typename Kalman::state_t', thus it is
+         * easier to simply redeclare the type aliases.
+         */
         using state_t = typename T::state_t;
         using input_t = typename T::input_t;
         using measurement_t = typename T::output_t;
@@ -19,10 +26,15 @@ class Kalman {
         using measurement_noise_covariance_t = typename Eigen::Matrix<real_t, T::l, T::l>;
 
         Kalman(T& system);
+        Kalman(T& system, const state_t& x0);
         Kalman(T& system, const state_t& x0,
                 const process_noise_covariance_t& Q,
                 const measurement_noise_covariance_t& R,
                 const error_covariance_t& P0);
+
+        virtual void reset() override;
+        // simplified time and measurement update
+        virtual void update_state(const input_t& u, const measurement_t& z) override;
 
         void time_update();
         void time_update(const process_noise_covariance_t& Q);
@@ -30,21 +42,22 @@ class Kalman {
         void time_update(const input_t& u, const process_noise_covariance_t& Q);
         void measurement_update(const measurement_t& z);
         void measurement_update(const measurement_t& z, const measurement_noise_covariance_t& R);
-        void update(const input_t& u, const measurement_t& z); /* simplified time and measurement update */
 
+        virtual void set_state(const state_t& x) override;
         void set_x(const state_t& x);
         void set_P(const error_covariance_t& P);
         void set_Q(const process_noise_covariance_t& Q);
         void set_R(const measurement_noise_covariance_t& R);
 
         // accessors
-        T& system() const;
+        virtual T& system() const override;
+        virtual real_t dt() const override;
+        virtual const state_t& state() const override;
         const state_t& x() const;
         const kalman_gain_t& K() const;
         const error_covariance_t& P() const;
         const process_noise_covariance_t& Q() const;
         const measurement_noise_covariance_t& R() const;
-        real_t dt() const;
 
     private:
         T& m_system;
@@ -64,10 +77,44 @@ class Kalman {
         void measurement_update_error_covariance();
 }; // class Kalman
 
+template <typename T>
+inline void Kalman<T>::set_state(const state_t& x) {
+    set_x(x);
+}
+
+template <typename T>
+inline void Kalman<T>::set_x(const state_t& x) {
+    m_x = x;
+}
+
+template <typename T>
+inline void Kalman<T>::set_P(const error_covariance_t& P) {
+    m_P = P;
+}
+
+template <typename T>
+inline void Kalman<T>::set_Q(const process_noise_covariance_t& Q) {
+    m_Q = Q;
+}
+
+template <typename T>
+inline void Kalman<T>::set_R(const measurement_noise_covariance_t& R) {
+    m_R = R;
+}
 
 template <typename T>
 inline T& Kalman<T>::system() const {
     return m_system;
+}
+
+template <typename T>
+inline real_t Kalman<T>::dt() const {
+    return m_system.dt();
+}
+
+template <typename T>
+inline const typename Kalman<T>::state_t& Kalman<T>::state() const {
+    return x();
 }
 
 template <typename T>
@@ -93,11 +140,6 @@ inline const typename Kalman<T>::process_noise_covariance_t& Kalman<T>::Q() cons
 template <typename T>
 inline const typename Kalman<T>::measurement_noise_covariance_t& Kalman<T>::R() const {
     return m_R;
-}
-
-template <typename T>
-inline real_t Kalman<T>::dt() const {
-    return m_system.dt();
 }
 
 } // namespace observer

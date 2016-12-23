@@ -7,9 +7,9 @@ class KalmanConvergenceTest: public ConvergenceTest {
     public:
         void simulate() {
             for (unsigned int i = 0; i < m_N; ++i) {
-                m_x = m_bicycle->x_next(m_x);
+                m_x = m_bicycle->update_state(m_x);
 
-                auto z = m_bicycle->y(m_x);
+                auto z = m_bicycle->calculate_output(m_x);
                 z(0) += m_r0(m_gen);
                 z(1) += m_r1(m_gen);
 
@@ -31,9 +31,9 @@ class KalmanConvergenceTest: public ConvergenceTest {
 
             for (unsigned int i = 0; i < m_N; ++i) {
                 u(1) = ru(m_gen);
-                m_x = m_bicycle->x_next(m_x, u);
+                m_x = m_bicycle->update_state(m_x, u);
 
-                auto z = m_bicycle->y(m_x, u);
+                auto z = m_bicycle->calculate_output(m_x, u);
                 z(0) += m_r0(m_gen);
                 z(1) += m_r1(m_gen);
 

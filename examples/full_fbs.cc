@@ -136,13 +136,13 @@ int main(int argc, char* argv[]) {
         auto u = lqr.control_calculate(kalman.x(), reference(dt*current_sample));
 
         /* system simulate */
-        x = bicycle.x_next(x, u);
+        x = bicycle.update_state(x, u);
 
         /* update auxiliary states */
-        aux = bicycle.x_aux_next(x, aux);
+        aux = bicycle.update_auxiliary_state(x, aux);
 
         /* measure output with noise */
-        auto z = bicycle.y(x);
+        auto z = bicycle.calculate_output(x);
         z(0) += rn0(gen);
         z(1) += rn1(gen);
 

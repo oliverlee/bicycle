@@ -82,23 +82,28 @@ bool Bicycle::auxiliary_state_field(full_state_index_t field) const {
     return index(field) < index(auxiliary_state_index_t::number_of_types);
 }
 
-Bicycle::state_t Bicycle::x_next(const Bicycle::state_t& x, const Bicycle::input_t& u) const {
+Bicycle::state_t Bicycle::update_state(const Bicycle::state_t& x, const Bicycle::input_t& u, const Bicycle::output_t& z) const {
+    (void)z;
+    return update_state(x, u);
+}
+
+Bicycle::state_t Bicycle::update_state(const Bicycle::state_t& x, const Bicycle::input_t& u) const {
     return m_Ad*x + m_Bd*u;
 }
 
-Bicycle::output_t Bicycle::y(const Bicycle::state_t& x, const Bicycle::input_t& u) const {
+Bicycle::output_t Bicycle::calculate_output(const Bicycle::state_t& x, const Bicycle::input_t& u) const {
     return m_C*x + m_D*u;
 }
 
-Bicycle::state_t Bicycle::x_next(const Bicycle::state_t& x) const {
+Bicycle::state_t Bicycle::update_state(const Bicycle::state_t& x) const {
     return m_Ad*x;
 }
 
-Bicycle::output_t Bicycle::y(const Bicycle::state_t& x) const {
+Bicycle::output_t Bicycle::calculate_output(const Bicycle::state_t& x) const {
     return m_C*x;
 }
 
-Bicycle::state_t Bicycle::x_integrate(const Bicycle::state_t& x, const Bicycle::input_t& u, real_t dt) const {
+Bicycle::state_t Bicycle::integrate_state(const Bicycle::state_t& x, const Bicycle::input_t& u, real_t dt) const {
     odeint_state_t xout;
 
     xout << x, u;
@@ -115,7 +120,7 @@ Bicycle::state_t Bicycle::x_integrate(const Bicycle::state_t& x, const Bicycle::
     return xout.head<n>();
 }
 
-Bicycle::state_t Bicycle::x_integrate(const Bicycle::state_t& x, real_t dt) const {
+Bicycle::state_t Bicycle::integrate_state(const Bicycle::state_t& x, real_t dt) const {
     state_t xout;
 
     m_stepper_noinput.do_step([this](const state_t& x, state_t& dxdt, const real_t t) -> void {
@@ -125,7 +130,7 @@ Bicycle::state_t Bicycle::x_integrate(const Bicycle::state_t& x, real_t dt) cons
     return xout;
 }
 
-Bicycle::auxiliary_state_t Bicycle::x_aux_next(const state_t& x, const auxiliary_state_t& x_aux) const {
+Bicycle::auxiliary_state_t Bicycle::update_auxiliary_state(const state_t& x, const auxiliary_state_t& x_aux) const {
     odeint_auxiliary_state_t xout;
 
     xout << x_aux, x;

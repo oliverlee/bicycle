@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
     auto it_x = system_state.begin();
     start = std::chrono::system_clock::now();
     for (; it_x != system_state.end(); ++it_x) {
-        x = bicycle.x_next(x);
+        x = bicycle.update_state(x);
         *it_x = x;
     }
     stop = std::chrono::system_clock::now();
@@ -67,7 +67,7 @@ int main(int argc, char* argv[]) {
     start = std::chrono::system_clock::now();
     for (; it_x != system_state.end(); ++it_x, ++it_u) {
         *it_u = lqr.control_calculate(x);
-        x = bicycle.x_next(x, *it_u);
+        x = bicycle.update_state(x, *it_u);
         *it_x = x;
     }
     stop = std::chrono::system_clock::now();

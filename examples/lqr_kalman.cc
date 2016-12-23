@@ -62,10 +62,10 @@ int main(int argc, char* argv[]) {
         auto u = lqr.control_calculate(kalman.x());
 
         // system simulate
-        x = bicycle.x_next(x, u);
+        x = bicycle.update_state(x, u);
 
         // measure output with noise
-        auto y = bicycle.y(x);
+        auto y = bicycle.calculate_output(x);
         auto z = y;
         z(0) += rn0(gen);
         z(1) += rn1(gen);

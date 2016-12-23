@@ -24,7 +24,7 @@ namespace model {
  * responsibility to ensure correct index access.
  */
 
-class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
+class Bicycle final : public DiscreteLinear<5, 2, 2, 2> {
     public:
         static constexpr unsigned int p = 3;
         using auxiliary_state_t = Eigen::Matrix<real_t, p, 1>;
@@ -99,13 +99,14 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
 
         bool auxiliary_state_field(full_state_index_t field) const;
 
-        virtual state_t x_next(const state_t& x, const input_t& u) const;
-        state_t x_integrate(const state_t& x, const input_t& u, real_t dt) const;
-        virtual output_t y(const state_t& x, const input_t& u) const;
-        virtual state_t x_next(const state_t& x) const;
-        state_t x_integrate(const state_t& x, real_t dt) const;
-        virtual output_t y(const state_t& x) const;
-        auxiliary_state_t x_aux_next(const state_t& x, const auxiliary_state_t& x_aux) const;
+        virtual state_t update_state(const state_t& x, const input_t& u, const output_t& z) const override;
+        virtual state_t update_state(const state_t& x, const input_t& u) const override;
+        virtual output_t calculate_output(const state_t& x, const input_t& u) const override;
+        virtual state_t update_state(const state_t& x) const override;
+        virtual output_t calculate_output(const state_t& x) const override;
+        state_t integrate_state(const state_t& x, const input_t& u, real_t dt) const;
+        state_t integrate_state(const state_t& x, real_t dt) const;
+        auxiliary_state_t update_auxiliary_state(const state_t& x, const auxiliary_state_t& x_aux) const;
 
         void set_v_dt(real_t v, real_t dt);
         void set_M(second_order_matrix_t& M, bool recalculate_state_space = true);
@@ -133,10 +134,10 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         const input_matrix_t& B() const;
         const output_matrix_t& C() const;
         const feedthrough_matrix_t& D() const;
-        virtual const state_matrix_t& Ad() const;
-        virtual const input_matrix_t& Bd() const;
-        virtual const output_matrix_t& Cd() const;
-        virtual const feedthrough_matrix_t& Dd() const;
+        virtual const state_matrix_t& Ad() const override;
+        virtual const input_matrix_t& Bd() const override;
+        virtual const output_matrix_t& Cd() const override;
+        virtual const feedthrough_matrix_t& Dd() const override;
         const second_order_matrix_t& M() const;
         const second_order_matrix_t& C1() const;
         const second_order_matrix_t& K0() const;
@@ -147,7 +148,7 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         real_t rear_wheel_radius() const;
         real_t front_wheel_radius() const;
         real_t v() const;
-        virtual real_t dt() const;
+        virtual real_t dt() const override;
 
         bool need_recalculate_state_space() const;
         bool need_recalculate_moore_parameters() const;

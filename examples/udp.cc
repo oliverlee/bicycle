@@ -22,7 +22,7 @@ namespace {
             std::chrono::high_resolution_clock::time_point time) {
         if (!error) {
             if (*count < N) {
-                *x = bicycle->x_next(*x);
+                *x = bicycle->update_state(*x);
 
                 auto now = std::chrono::high_resolution_clock::now();
                 auto dt = std::chrono::duration_cast<std::chrono::microseconds>(now - time).count();

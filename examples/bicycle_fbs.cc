@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
         N << " steps at " << fs << " Hz) ..." << std::endl;
     auto disc_start = std::chrono::system_clock::now();
     for (; current_sample < N; ++current_sample) {
-        x = bicycle.x_next(x);
+        x = bicycle.update_state(x);
         system_state[current_sample] = x;
         system_state[current_sample] = x;
 
