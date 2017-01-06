@@ -141,7 +141,9 @@ Bicycle::auxiliary_state_t Bicycle::update_auxiliary_state(const state_t& x, con
                     m_v*std::cos(x[index(full_state_index_t::yaw_angle)]); // xdot = v*cos(psi)
                 dxdt[index(full_state_index_t::y)] =
                     m_v*std::sin(x[index(full_state_index_t::yaw_angle)]); // ydot = v*sin(psi)
-                dxdt.tail<n + 1>().setZero(); // set remaining values to zero, pitch is calculated separately
+                dxdt[index(full_state_index_t::rear_wheel_angle)] =
+                    -m_v/m_rr;                                             // theta_rdot = -v/rr
+                dxdt.tail<n + 1>().setZero(); // set state values + pitch angle to zero
             }, xout, 0.0, m_dt);
 
     // use last pitch angle as initial guess

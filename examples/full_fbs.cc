@@ -46,7 +46,7 @@ namespace {
     const double sigma1 = 0.008 * constants::as_radians; // steer angle measurement noise variance
 
     bicycle_t::state_t x; // yaw angle, roll angle, steer angle, roll rate, steer rate
-    bicycle_t::auxiliary_state_t aux; // x, y, pitch angle
+    bicycle_t::auxiliary_state_t aux; // x, y, rear wheel angle, pitch angle
 
     /* used for serializing/logging */
     flatbuffers::FlatBufferBuilder builder;
@@ -82,7 +82,8 @@ int main(int argc, char* argv[]) {
     x << 0, 3, 5, 0, 0; // define x0 in degrees
     x *= constants::as_radians; // convert to radians
     aux.setZero();
-    aux[2] = bicycle.solve_constraint_pitch(x, 0);
+    aux[static_cast<uint8_t>(bicycle_t::auxiliary_state_index_t::pitch_angle)]
+        = bicycle.solve_constraint_pitch(x, 0);
 
     kalman_t kalman(bicycle,
             bicycle_t::state_t::Zero(), // starts at zero state
