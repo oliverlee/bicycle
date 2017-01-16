@@ -20,7 +20,7 @@ void Oracle<T>::reset() {
 
 template <typename T>
 void Oracle<T>::update_state(const input_t& u, const measurement_t& z) {
-    m_x = m_system.update_state(m_x, u, z);
+    m_x = m_system.normalize_state(m_system.update_state(m_x, u, z));
 }
 
 } // namespace observer

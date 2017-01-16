@@ -80,12 +80,12 @@ void Kalman<T>::measurement_update(const measurement_t& z, const measurement_noi
 
 template <typename T>
 void Kalman<T>::time_update_state() {
-    m_x = m_system.Ad()*m_x;
+    m_x = m_system.normalize_state(m_system.Ad()*m_x);
 }
 
 template <typename T>
 void Kalman<T>::time_update_state(const input_t& u) {
-    m_x = m_system.Ad()*m_x + m_system.Bd()*u;
+    m_x = m_system.normalize_state(m_system.Ad()*m_x + m_system.Bd()*u);
 }
 
 template <typename T>
@@ -118,7 +118,7 @@ void Kalman<T>::measurement_update_kalman_gain(const measurement_noise_covarianc
 
 template <typename T>
 void Kalman<T>::measurement_update_state(const measurement_t& z) {
-    m_x = m_x + m_K*(z - m_system.Cd()*m_x);
+    m_x = m_system.normalize_state(m_x + m_K*(z - m_system.Cd()*m_x));
 }
 
 template <typename T>
