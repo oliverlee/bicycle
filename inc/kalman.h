@@ -43,16 +43,12 @@ class Kalman final : public Observer<T> {
         void measurement_update(const measurement_t& z);
         void measurement_update(const measurement_t& z, const measurement_noise_covariance_t& R);
 
-        virtual void set_state(const state_t& x) override;
         void set_x(const state_t& x);
         void set_P(const error_covariance_t& P);
         void set_Q(const process_noise_covariance_t& Q);
         void set_R(const measurement_noise_covariance_t& R);
 
         // accessors
-        virtual T& system() const override;
-        virtual real_t dt() const override;
-        virtual const state_t& state() const override;
         const state_t& x() const;
         const kalman_gain_t& K() const;
         const error_covariance_t& P() const;
@@ -60,8 +56,8 @@ class Kalman final : public Observer<T> {
         const measurement_noise_covariance_t& R() const;
 
     private:
-        T& m_system;
-        state_t m_x;
+        using Observer<T>::m_system;
+        using Observer<T>::m_x;
         kalman_gain_t m_K;
         error_covariance_t m_P;
         process_noise_covariance_t m_Q;
@@ -78,13 +74,8 @@ class Kalman final : public Observer<T> {
 }; // class Kalman
 
 template <typename T>
-inline void Kalman<T>::set_state(const state_t& x) {
-    set_x(x);
-}
-
-template <typename T>
 inline void Kalman<T>::set_x(const state_t& x) {
-    m_x = x;
+    set_state(x);
 }
 
 template <typename T>
@@ -103,23 +94,8 @@ inline void Kalman<T>::set_R(const measurement_noise_covariance_t& R) {
 }
 
 template <typename T>
-inline T& Kalman<T>::system() const {
-    return m_system;
-}
-
-template <typename T>
-inline real_t Kalman<T>::dt() const {
-    return m_system.dt();
-}
-
-template <typename T>
-inline const typename Kalman<T>::state_t& Kalman<T>::state() const {
-    return x();
-}
-
-template <typename T>
 inline const typename Kalman<T>::state_t& Kalman<T>::x() const {
-    return m_x;
+    return this->state();
 }
 
 template <typename T>

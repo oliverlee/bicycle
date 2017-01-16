@@ -27,37 +27,10 @@ class Oracle final : public Observer<T> {
         virtual void reset() override;
         virtual void update_state(const input_t& u, const measurement_t& z) override;
 
-        virtual void set_state(const state_t& x) override;
-
-        virtual T& system() const override;
-        virtual real_t dt() const override;
-        virtual const state_t& state() const override;
-
     private:
-        // TODO: consolidate these common fields in the Observer base class
-        T& m_system;
-        state_t m_state;
+        using Observer<T>::m_system;
+        using Observer<T>::m_x;
 };
-
-template <typename T>
-inline void Oracle<T>::set_state(const state_t& x) {
-    m_state = x;
-}
-
-template <typename T>
-inline T& Oracle<T>::system() const {
-    return m_system;
-}
-
-template <typename T>
-inline real_t Oracle<T>::dt() const {
-    return m_system.dt();
-}
-
-template <typename T>
-inline const typename Oracle<T>::state_t& Oracle<T>::state() const {
-    return m_state;
-}
 
 } // namespace observer
 

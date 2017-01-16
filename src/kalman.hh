@@ -7,22 +7,21 @@
 namespace observer {
 
 template <typename T>
-Kalman<T>::Kalman(T& system) : m_system(system) {
+Kalman<T>::Kalman(T& system) : Observer<T>(system, state_t::Zero()) {
     reset();
 }
 
 template <typename T>
-Kalman<T>::Kalman(T& system, const state_t& x0) : m_system(system) {
+Kalman<T>::Kalman(T& system, const state_t& x0) : Observer<T>(system, x0) {
     reset();
-    m_x = x0;
 }
 
 template <typename T>
 Kalman<T>::Kalman(T& system, const state_t& x0,
         const process_noise_covariance_t& Q,
         const measurement_noise_covariance_t& R,
-        const error_covariance_t& P0) :
-            m_system(system), m_x(x0), m_P(P0), m_Q(Q), m_R(R) {
+        const error_covariance_t& P0) : Observer<T>(system, x0),
+            m_P(P0), m_Q(Q), m_R(R) {
     m_K.setZero();
 }
 
