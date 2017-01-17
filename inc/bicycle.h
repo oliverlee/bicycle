@@ -155,6 +155,11 @@ class Bicycle final : public DiscreteLinear<5, 2, 2, 2> {
         bool need_recalculate_state_space() const;
         bool need_recalculate_moore_parameters() const;
 
+        // utility class static member functions
+        virtual state_t normalize_state(const state_t& x) const override;
+        virtual output_t normalize_output(const output_t& y) const override;
+        auxiliary_state_t normalize_auxiliary_state(const auxiliary_state_t& x_aux) const;
+
     private:
         // The full state matrix A is singular as yaw rate, and all other
         // states, are independent of yaw angle. As we discretize the continuous

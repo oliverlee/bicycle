@@ -24,11 +24,17 @@ class Observer : private ObserverBase {
         virtual void reset() = 0;
         virtual void update_state(const input_t& u, const measurement_t& z) = 0;
 
-        virtual void set_state(const state_t& x) = 0;
+        virtual void set_state(const state_t& x) { m_x = m_system.normalize_state(x); }
 
-        virtual T& system() const = 0;
-        virtual real_t dt() const = 0;
-        virtual const state_t& state() const = 0;
+        virtual T& system() const { return m_system; }
+        virtual real_t dt() const { return m_system.dt(); }
+        virtual const state_t& state() const { return m_x; }
+
+    protected:
+        T& m_system;
+        state_t m_x;
+
+        Observer(T& system, const state_t& x) : m_system(system), m_x(x) { }
 };
 
 } // namespace observer

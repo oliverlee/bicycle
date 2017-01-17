@@ -337,4 +337,72 @@ std::pow(std::cos(pitch), two)*std::pow(std::cos(x[index(state_index_t::roll_ang
     return boost::math::tools::newton_raphson_iterate(constraint_function, guess, min, max, digits);
 }
 
+Bicycle::state_t Bicycle::normalize_state(const state_t& x) const {
+    // static asserts to ensure this function is updated if state indices change
+    static_assert(index(Bicycle::state_index_t::yaw_angle) == 0,
+        "Invalid underlying value for state index element");
+    static_assert(index(Bicycle::state_index_t::roll_angle) == 1,
+        "Invalid underlying value for state index element");
+    static_assert(index(Bicycle::state_index_t::steer_angle) == 2,
+        "Invalid underlying value for state index element");
+    static_assert(index(Bicycle::state_index_t::roll_rate) == 3,
+        "Invalid underlying value for state index element");
+    static_assert(index(Bicycle::state_index_t::steer_rate) == 4,
+        "Invalid underlying value for state index element");
+    static_assert(index(Bicycle::state_index_t::number_of_types) == 5,
+        "Invalid underlying value for state index element");
+
+    constexpr auto yaw_index = index(Bicycle::state_index_t::yaw_angle);
+    constexpr auto roll_index = index(Bicycle::state_index_t::roll_angle);
+    constexpr auto steer_index = index(Bicycle::state_index_t::steer_angle);
+
+    // We use 2*pi as the second argument simply to keep these angles from
+    // growing toward infinity.
+    // NOTE: This does not prevent the roll rate and steer rate from
+    // growing to infinity.
+    state_t normalized_x = x;
+    normalized_x[yaw_index] = std::fmod(x[yaw_index], constants::two_pi);
+    normalized_x[roll_index] = std::fmod(x[roll_index], constants::two_pi);
+    normalized_x[steer_index] = std::fmod(x[steer_index], constants::two_pi);
+    return normalized_x;
+}
+
+Bicycle::output_t Bicycle::normalize_output(const output_t& y) const {
+    static_assert(index(Bicycle::output_index_t::yaw_angle) == 0,
+        "Invalid underlying value for output index element");
+    static_assert(index(Bicycle::output_index_t::steer_angle) == 1,
+        "Invalid underlying value for output index element");
+    static_assert(index(Bicycle::output_index_t::number_of_types) == 2,
+        "Invalid underlying value for output index element");
+
+    constexpr auto yaw_index = index(Bicycle::output_index_t::yaw_angle);
+    constexpr auto steer_index = index(Bicycle::output_index_t::steer_angle);
+
+    output_t normalized_y = y;
+    normalized_y[yaw_index] = std::fmod(y[yaw_index], constants::two_pi);
+    normalized_y[steer_index] = std::fmod(y[steer_index], constants::two_pi);
+    return normalized_y;
+}
+
+Bicycle::auxiliary_state_t Bicycle::normalize_auxiliary_state(const auxiliary_state_t& x_aux) const {
+    static_assert(index(Bicycle::auxiliary_state_index_t::x) == 0,
+        "Invalid underlying value for auxiliary state index element");
+    static_assert(index(Bicycle::auxiliary_state_index_t::y) == 1,
+        "Invalid underlying value for auxiliary state index element");
+    static_assert(index(Bicycle::auxiliary_state_index_t::rear_wheel_angle) == 2,
+        "Invalid underlying value for auxiliary state index element");
+    static_assert(index(Bicycle::auxiliary_state_index_t::pitch_angle) == 3,
+        "Invalid underlying value for auxiliary state index element");
+    static_assert(index(Bicycle::auxiliary_state_index_t::number_of_types) == 4,
+        "Invalid underlying value for auxiliary state index element");
+
+    constexpr auto rear_wheel_index = index(Bicycle::auxiliary_state_index_t::rear_wheel_angle);
+    constexpr auto pitch_index = index(Bicycle::auxiliary_state_index_t::pitch_angle);
+
+    auxiliary_state_t normalized_x_aux = x_aux;
+    normalized_x_aux[rear_wheel_index] = std::fmod(x_aux[rear_wheel_index], constants::two_pi);
+    normalized_x_aux[pitch_index] = std::fmod(x_aux[pitch_index], constants::two_pi);
+    return normalized_x_aux;
+}
+
 } // namespace model

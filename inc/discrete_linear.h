@@ -40,6 +40,9 @@ class DiscreteLinear : private DiscreteLinearBase {
         virtual const output_matrix_t& Cd() const = 0;
         virtual const feedthrough_matrix_t& Dd() const = 0;
         virtual real_t dt() const = 0;
+
+        virtual state_t normalize_state(const state_t& x) const = 0;
+        virtual output_t normalize_output(const output_t& y) const = 0;
 };
 
 } // namespace model
