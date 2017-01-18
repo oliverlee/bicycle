@@ -78,7 +78,7 @@ Bicycle::Bicycle(real_t v, real_t dt,
             parameters::benchmark::front_wheel_radius,
             v, dt, discrete_state_space_map) { }
 
-bool Bicycle::auxiliary_state_field(full_state_index_t field) const {
+bool Bicycle::is_auxiliary_state_field(full_state_index_t field) {
     return index(field) < index(auxiliary_state_index_t::number_of_types);
 }
 
