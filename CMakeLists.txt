@@ -63,7 +63,8 @@ set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES
     ${PROJECT_BINARY_DIR}/generated)
 
 set(BICYCLE_SOURCE
-    ${BICYCLE_SOURCE_DIR}/src/bicycle.cc
+    ${BICYCLE_SOURCE_DIR}/src/bicycle/bicycle.cc
+    ${BICYCLE_SOURCE_DIR}/src/bicycle/whipple.cc
     ${BICYCLE_SOURCE_DIR}/src/parameters.cc
     ${BICYCLE_SOURCE_DIR}/src/network_server.cc
     ${BICYCLE_SOURCE_DIR}/src/serial.cc)

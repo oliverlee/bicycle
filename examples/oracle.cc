@@ -1,7 +1,7 @@
 #include <array>
 #include <iostream>
 #include <random>
-#include "bicycle.h"
+#include "bicycle/whipple.h"
 #include "oracle.h"
 #include "parameters.h"
 
@@ -11,7 +11,7 @@ namespace {
     constexpr double v0 = 4.0; // forward speed [m/s]
     constexpr size_t N = 1000; // length of simulation in samples
 
-    using bicycle_t = model::Bicycle;
+    using bicycle_t = model::BicycleWhipple;
     using observer_t = observer::Oracle<bicycle_t>;
 
     bicycle_t::state_t x;

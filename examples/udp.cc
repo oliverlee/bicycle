@@ -1,7 +1,7 @@
 #include <array>
 #include <iostream>
 #include <thread>
-#include "bicycle.h"
+#include "bicycle/whipple.h"
 #include "parameters.h"
 #include "network_server.h"
 
@@ -13,12 +13,12 @@ namespace {
     const auto simulation_period = std::chrono::microseconds(100);
     const auto transmission_period = std::chrono::milliseconds(1);
 
-    std::array<model::Bicycle::state_t, N> discrete_time_system_state_n;
+    std::array<model::BicycleWhipple::state_t, N> discrete_time_system_state_n;
     std::array<int32_t, N> simulation_loop_period;
     std::array<int32_t, N> transmit_loop_period;
 
     void update(const asio::error_code& error, asio::high_resolution_timer* timer,
-            size_t* count, model::Bicycle* bicycle, model::Bicycle::state_t* x,
+            size_t* count, model::BicycleWhipple* bicycle, model::BicycleWhipple::state_t* x,
             std::chrono::high_resolution_clock::time_point time) {
         if (!error) {
             if (*count < N) {
@@ -50,8 +50,8 @@ int main(int argc, char* argv[]) {
     (void)argc;
     (void)argv;
 
-    model::Bicycle bicycle(v0, dt);
-    model::Bicycle::state_t x;
+    model::BicycleWhipple bicycle(v0, dt);
+    model::BicycleWhipple::state_t x;
     x << 0, 0, 10, 10, 0; // define in degrees
     x *= constants::as_radians;
 

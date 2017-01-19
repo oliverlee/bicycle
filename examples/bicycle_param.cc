@@ -1,5 +1,5 @@
 #include <iostream>
-#include "bicycle.h"
+#include "bicycle/whipple.h"
 #include "parameters.h"
 
 namespace {
@@ -7,7 +7,7 @@ namespace {
     const double dt = 1.0/fs; // sample time [s]
     const double v0 = 4.0; // forward speed [m/s]
 
-    void print_parameters(const model::Bicycle& bicycle) {
+    void print_parameters(const model::BicycleWhipple& bicycle) {
         std::cout << "M:\n" << bicycle.M() << std::endl;
         std::cout << "C1:\n" << bicycle.C1() << std::endl;
         std::cout << "K0:\n" << bicycle.K0() << std::endl;
@@ -27,12 +27,12 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    model::Bicycle bicycle1(v0, dt);
+    model::BicycleWhipple bicycle1(v0, dt);
     std::cout << "constructed bicycle from predefined parameters:\n";
     print_parameters(bicycle1);
     std::cout << "\n";
 
-    model::Bicycle bicycle2(argv[1], v0, dt);
+    model::BicycleWhipple bicycle2(argv[1], v0, dt);
     std::cout << "constructed bicycle from input file: " << argv[1] << "\n";
     print_parameters(bicycle2);
     std::cout << "\n";

@@ -2,7 +2,7 @@
 #include <chrono>
 #include <iostream>
 #include <boost/math/constants/constants.hpp>
-#include "bicycle.h"
+#include "bicycle/whipple.h"
 #include "parameters.h"
 
 namespace {
@@ -11,17 +11,17 @@ namespace {
     const double v0 = 4.0; // forward speed [m/s]
     const size_t N = 1000; // length of simulation in samples
 
-    std::array<model::Bicycle::state_t, N> continuous_time_system_state_n;
-    std::array<model::Bicycle::state_t, N> continuous_time_system_state_0;
-    std::array<model::Bicycle::state_t, N> discrete_time_system_state_n;
-    std::array<model::Bicycle::state_t, N> discrete_time_system_state_0;
+    std::array<model::BicycleWhipple::state_t, N> continuous_time_system_state_n;
+    std::array<model::BicycleWhipple::state_t, N> continuous_time_system_state_0;
+    std::array<model::BicycleWhipple::state_t, N> discrete_time_system_state_n;
+    std::array<model::BicycleWhipple::state_t, N> discrete_time_system_state_0;
 } // namespace
 
 int main(int argc, char* argv[]) {
     (void)argc;
     (void)argv;
 
-    model::Bicycle bicycle(v0, dt);
+    model::BicycleWhipple bicycle(v0, dt);
 
     std::chrono::time_point<std::chrono::system_clock> cont_start, cont_stop;
     std::chrono::time_point<std::chrono::system_clock> disc_start, disc_stop;
@@ -57,7 +57,7 @@ int main(int argc, char* argv[]) {
     std::cout << "Ad: " << std::endl << bicycle.Ad() << std::endl;
     std::cout << "Bd: " << std::endl << bicycle.Bd() << std::endl << std::endl;
 
-    model::Bicycle::state_t x, x0;
+    model::BicycleWhipple::state_t x, x0;
     x0 << 0, 0, 10, 10, 0; // define in degrees
     x0 *= constants::as_radians;
 
@@ -67,7 +67,7 @@ int main(int argc, char* argv[]) {
     std::cout << "simulating (no input) continuous time system at constant speed..." << std::endl;
     x = x0;
     for (auto& state: continuous_time_system_state_n) {
-        state = bicycle.integrate_state(x, dt);
+        state = bicycle.integrate_state(x, model::BicycleWhipple::input_t::Zero(), dt);
         x = state;
     }
 
@@ -75,7 +75,7 @@ int main(int argc, char* argv[]) {
     cont_start = std::chrono::system_clock::now();
     x = x0;
     for (auto& state: continuous_time_system_state_0) {
-        state = bicycle.integrate_state(x, model::Bicycle::input_t::Zero(), dt);
+        state = bicycle.integrate_state(x, model::BicycleWhipple::input_t::Zero(), dt);
         x = state;
     }
     cont_stop = std::chrono::system_clock::now();
@@ -91,7 +91,7 @@ int main(int argc, char* argv[]) {
     disc_start = std::chrono::system_clock::now();
     x = x0;
     for (auto& state: discrete_time_system_state_0) {
-        state = bicycle.update_state(x, model::Bicycle::input_t::Zero());
+        state = bicycle.update_state(x, model::BicycleWhipple::input_t::Zero());
         x = state;
     }
     disc_stop = std::chrono::system_clock::now();

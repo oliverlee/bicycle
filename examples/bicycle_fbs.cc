@@ -2,7 +2,7 @@
 #include <chrono>
 #include <cstdio>
 #include <iostream>
-#include "bicycle.h"
+#include "bicycle/whipple.h"
 #include "parameters.h"
 
 #include "flatbuffers/flatbuffers.h"
@@ -15,7 +15,7 @@ namespace {
     const double v0 = 4.0; // forward speed [m/s]
     const size_t N = 1000; // length of simulation in samples
 
-    std::array<model::Bicycle::state_t, N> system_state;
+    std::array<model::BicycleWhipple::state_t, N> system_state;
     flatbuffers::FlatBufferBuilder builder;
     flatbuffers::FlatBufferBuilder log_builder;
     flatbuffers::Offset<fbs::SampleBuffer> sample_locations[N];
@@ -26,9 +26,9 @@ int main(int argc, char* argv[]) {
     (void)argc;
     (void)argv;
 
-    model::Bicycle bicycle(v0, dt);
+    model::BicycleWhipple bicycle(v0, dt);
 
-    model::Bicycle::state_t x; // yaw angle, roll angle, steer angle, roll rate, steer rate
+    model::BicycleWhipple::state_t x; // yaw angle, roll angle, steer angle, roll rate, steer rate
     x << 0, 0, 10, 10, 0; // define x0 in degrees
     x *= constants::as_radians; // convert to radians
     system_state[0] = x;

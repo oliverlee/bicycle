@@ -27,7 +27,7 @@ class KalmanConvergenceTest: public ConvergenceTest {
         void simulate_with_random_steer_input() {
             // observed steer torques in experiments are between 1 to 3 Nm
             std::normal_distribution<> ru = std::normal_distribution<>(0, 2); // Nm, steer torque
-            model::Bicycle::input_t u = model::Bicycle::input_t::Zero();
+            model::BicycleWhipple::input_t u = model::BicycleWhipple::input_t::Zero();
 
             for (unsigned int i = 0; i < m_N; ++i) {
                 u(1) = ru(m_gen);

@@ -5,7 +5,7 @@
 #include <iostream>
 #include <random>
 
-#include "bicycle.h"
+#include "bicycle/whipple.h"
 #include "kalman.h"
 #include "lqr.h"
 #include "parameters.h"
@@ -16,7 +16,7 @@
 
 
 namespace {
-    using bicycle_t = model::Bicycle;
+    using bicycle_t = model::BicycleWhipple;
     using kalman_t = observer::Kalman<bicycle_t>;
     using lqr_t = controller::Lqr<bicycle_t>;
 
@@ -83,7 +83,10 @@ int main(int argc, char* argv[]) {
     x *= constants::as_radians; // convert to radians
     aux.setZero();
     aux[static_cast<uint8_t>(bicycle_t::auxiliary_state_index_t::pitch_angle)]
-        = bicycle.solve_constraint_pitch(x, 0);
+        = bicycle.solve_constraint_pitch(
+                x[static_cast<uint8_t>(bicycle_t::state_index_t::roll_angle)],
+                x[static_cast<uint8_t>(bicycle_t::state_index_t::steer_angle)],
+                0);
 
     kalman_t kalman(bicycle,
             bicycle_t::state_t::Zero(), // starts at zero state
@@ -140,7 +143,7 @@ int main(int argc, char* argv[]) {
         x = bicycle.update_state(x, u);
 
         /* update auxiliary states */
-        aux = bicycle.update_auxiliary_state(x, aux);
+        aux = bicycle.integrate_auxiliary_state(x, aux, bicycle.dt());
 
         /* measure output with noise */
         auto z = bicycle.calculate_output(x);
