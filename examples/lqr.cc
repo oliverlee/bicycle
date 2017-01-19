@@ -1,12 +1,12 @@
 #include <array>
 #include <chrono>
 #include <iostream>
-#include "bicycle.h"
+#include "bicycle/whipple.h"
 #include "lqr.h"
 #include "parameters.h"
 
 namespace {
-    using bicycle_t = model::Bicycle;
+    using bicycle_t = model::BicycleWhipple;
     using lqr_t = controller::Lqr<bicycle_t>;
 
     const double fs = 200; // sample rate [Hz]

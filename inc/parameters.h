@@ -1,7 +1,7 @@
 #pragma once
 #include <Eigen/Dense>
 #include "constants.h"
-#include "bicycle.h"
+#include "bicycle/bicycle.h"
 #include "kalman.h"
 #include "types.h"
 

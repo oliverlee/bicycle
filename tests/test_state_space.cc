@@ -1,6 +1,6 @@
 #include <Eigen/Dense>
 #include "gtest/gtest.h"
-#include "bicycle.h"
+#include "bicycle/whipple.h"
 #include "parameters.h"
 #include "test_utilities.h"
 #include "test_state_space.h"
@@ -13,41 +13,41 @@
 
 namespace {
     const model::real_t dt = 1.0/200;
-    model::Bicycle::state_matrix_t A;
-    model::Bicycle::input_matrix_t B(
-        (model::Bicycle::input_matrix_t() <<
+    model::BicycleWhipple::state_matrix_t A;
+    model::BicycleWhipple::input_matrix_t B(
+        (model::BicycleWhipple::input_matrix_t() <<
             0.                ,  0.                ,
             0.                ,  0.                ,
             0.                ,  0.                ,
             0.0159349789179135, -0.1240920254115741,
            -0.1240920254115741,  4.3238401808042282).finished()
         );
-    model::Bicycle::state_matrix_t Ad;
-    model::Bicycle::input_matrix_t Bd;
+    model::BicycleWhipple::state_matrix_t Ad;
+    model::BicycleWhipple::input_matrix_t Bd;
 
     const model::real_t vw = 4.29238253634111; // forward speed [m/s]
     const model::real_t vc = 6.02426201538837; // forward speed [m/s]
 
     // These matrices are (obviously) not correct and are used only to
     // determine if discrete state space matrices are correctly looked up.
-    const model::Bicycle::state_matrix_t Ad_vw(
-            2 * model::Bicycle::state_matrix_t::Identity()
+    const model::BicycleWhipple::state_matrix_t Ad_vw(
+            2 * model::BicycleWhipple::state_matrix_t::Identity()
             );
-    const model::Bicycle::input_matrix_t Bd_vw(
-            3 * model::Bicycle::input_matrix_t::Identity()
+    const model::BicycleWhipple::input_matrix_t Bd_vw(
+            3 * model::BicycleWhipple::input_matrix_t::Identity()
             );
-    const model::Bicycle::state_matrix_t Ad_vc(
-            4 * model::Bicycle::state_matrix_t::Identity()
+    const model::BicycleWhipple::state_matrix_t Ad_vc(
+            4 * model::BicycleWhipple::state_matrix_t::Identity()
             );
-    const model::Bicycle::input_matrix_t Bd_vc(
-            5 * model::Bicycle::input_matrix_t::Identity()
+    const model::BicycleWhipple::input_matrix_t Bd_vc(
+            5 * model::BicycleWhipple::input_matrix_t::Identity()
             );
 
-    const model::Bicycle::state_space_map_t state_space_map {
-        {model::Bicycle::make_state_space_map_key(vw, dt),
-            model::Bicycle::state_space_map_value_t(Ad_vw, Bd_vw)},
-        {model::Bicycle::make_state_space_map_key(vc, dt),
-            model::Bicycle::state_space_map_value_t(Ad_vc, Bd_vc)},
+    const model::BicycleWhipple::state_space_map_t state_space_map {
+        {model::BicycleWhipple::make_state_space_map_key(vw, dt),
+            model::BicycleWhipple::state_space_map_value_t(Ad_vw, Bd_vw)},
+        {model::BicycleWhipple::make_state_space_map_key(vc, dt),
+            model::BicycleWhipple::state_space_map_value_t(Ad_vc, Bd_vc)},
     };
 } // namespace
 
@@ -157,7 +157,7 @@ TEST_F(StateSpaceTest, DiscreteV5) {
 }
 
 TEST(StateSpace, LookupFound) {
-    model::Bicycle bicycle0(parameters::benchmark::M, parameters::benchmark::C1,
+    model::BicycleWhipple bicycle0(parameters::benchmark::M, parameters::benchmark::C1,
             parameters::benchmark::K0, parameters::benchmark::K2,
             parameters::benchmark::wheelbase,
             parameters::benchmark::trail,
@@ -165,7 +165,7 @@ TEST(StateSpace, LookupFound) {
             parameters::benchmark::rear_wheel_radius,
             parameters::benchmark::front_wheel_radius,
             vw, dt, &state_space_map);
-    model::Bicycle bicycle1(parameters::benchmark::M, parameters::benchmark::C1,
+    model::BicycleWhipple bicycle1(parameters::benchmark::M, parameters::benchmark::C1,
             parameters::benchmark::K0, parameters::benchmark::K2,
             parameters::benchmark::wheelbase,
             parameters::benchmark::trail,
@@ -190,7 +190,7 @@ TEST(StateSpace, LookupFound) {
 
 TEST(StateSpace, LookupNotFound) {
     model::real_t v = 1.0;
-    model::Bicycle bicycle0(parameters::benchmark::M, parameters::benchmark::C1,
+    model::BicycleWhipple bicycle0(parameters::benchmark::M, parameters::benchmark::C1,
             parameters::benchmark::K0, parameters::benchmark::K2,
             parameters::benchmark::wheelbase,
             parameters::benchmark::trail,
@@ -198,7 +198,7 @@ TEST(StateSpace, LookupNotFound) {
             parameters::benchmark::rear_wheel_radius,
             parameters::benchmark::front_wheel_radius,
             v, dt, &state_space_map);
-    model::Bicycle bicycle1(parameters::benchmark::M, parameters::benchmark::C1,
+    model::BicycleWhipple bicycle1(parameters::benchmark::M, parameters::benchmark::C1,
             parameters::benchmark::K0, parameters::benchmark::K2,
             parameters::benchmark::wheelbase,
             parameters::benchmark::trail,

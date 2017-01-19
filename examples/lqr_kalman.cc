@@ -2,7 +2,7 @@
 #include <chrono>
 #include <iostream>
 #include <random>
-#include "bicycle.h"
+#include "bicycle/whipple.h"
 #include "lqr.h"
 #include "kalman.h"
 #include "parameters.h"
@@ -14,12 +14,12 @@ namespace {
     const size_t N = 1000; // length of simulation in samples
     const size_t n = 100;  // length of horizon in samples
 
-    model::Bicycle::state_t x(
-            (model::Bicycle::state_t() <<
+    model::BicycleWhipple::state_t x(
+            (model::BicycleWhipple::state_t() <<
                 0, 5, 5, 0, 0).finished() * constants::as_radians);
 
-    std::array<model::Bicycle::state_t, N> system_state;
-    std::array<model::Bicycle::state_t, N> system_state_estimate;
+    std::array<model::BicycleWhipple::state_t, N> system_state;
+    std::array<model::BicycleWhipple::state_t, N> system_state_estimate;
 
     std::random_device rd; // used only to seed rng
 } // namespace
@@ -34,17 +34,17 @@ int main(int argc, char* argv[]) {
     std::normal_distribution<> rn1(0,
             parameters::defaultvalue::kalman::R(1, 1));
 
-    model::Bicycle bicycle(v0, dt);
+    model::BicycleWhipple bicycle(v0, dt);
 
-    controller::Lqr<model::Bicycle> lqr(bicycle,
-            controller::Lqr<model::Bicycle>::state_cost_t::Identity(),
-            0.1 * controller::Lqr<model::Bicycle>::input_cost_t::Identity(),
-            model::Bicycle::state_t::Zero(), n);
-    observer::Kalman<model::Bicycle> kalman(bicycle,
-            model::Bicycle::state_t::Zero(), // starts at zero state
+    controller::Lqr<model::BicycleWhipple> lqr(bicycle,
+            controller::Lqr<model::BicycleWhipple>::state_cost_t::Identity(),
+            0.1 * controller::Lqr<model::BicycleWhipple>::input_cost_t::Identity(),
+            model::BicycleWhipple::state_t::Zero(), n);
+    observer::Kalman<model::BicycleWhipple> kalman(bicycle,
+            model::BicycleWhipple::state_t::Zero(), // starts at zero state
             parameters::defaultvalue::kalman::Q(dt),
             parameters::defaultvalue::kalman::R,
-            std::pow(x[1]/2, 2) * model::Bicycle::state_matrix_t::Identity());
+            std::pow(x[1]/2, 2) * model::BicycleWhipple::state_matrix_t::Identity());
 
     std::cout << "initial state:          [" << x.transpose() * constants::as_degrees << "]' deg" << std::endl;
     std::cout << "initial state estimate: [" << kalman.x().transpose() * constants::as_degrees << "]' deg" << std::endl;

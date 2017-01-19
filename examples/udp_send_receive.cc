@@ -2,7 +2,7 @@
 #include <chrono>
 #include <iostream>
 #include <asio.hpp>
-#include "bicycle.h"
+#include "bicycle/whipple.h"
 #include "parameters.h"
 #include "network_server.h"
 
@@ -14,15 +14,15 @@ namespace {
     const auto simulation_period = std::chrono::microseconds(100);
     const auto transmission_period = std::chrono::milliseconds(1);
 
-    std::array<model::Bicycle::state_t, N> discrete_time_system_state_n;
+    std::array<model::BicycleWhipple::state_t, N> discrete_time_system_state_n;
 } // namespace
 
 int main(int argc, char* argv[]) {
     (void)argc;
     (void)argv;
 
-    model::Bicycle bicycle(v0, dt);
-    model::Bicycle::state_t x;
+    model::BicycleWhipple bicycle(v0, dt);
+    model::BicycleWhipple::state_t x;
     x << 0, 0, 10, 10, 0; // define in degrees
     x *= constants::as_radians;
 

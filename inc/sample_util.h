@@ -3,7 +3,7 @@
 // Generated with settings: OrderedDict([('n', 5), ('m', 2), ('l', 2), ('o', 2), ('p', 4)])
 
 #pragma once
-#include "bicycle.h"
+#include "bicycle/whipple.h"
 #include "kalman.h"
 #include "lqr.h"
 #include "sample_generated.h"
@@ -11,7 +11,7 @@
 namespace fbs {
 
 // TODO: generate per DiscreteLinear derived class
-::fbs::State state(const model::Bicycle::state_t& x) {
+::fbs::State state(const model::BicycleWhipple::state_t& x) {
     return ::fbs::State(
     x(0),
     x(1),
@@ -20,19 +20,19 @@ namespace fbs {
     x(4));
 }
 
-::fbs::Input input(const model::Bicycle::input_t& u) {
+::fbs::Input input(const model::BicycleWhipple::input_t& u) {
     return ::fbs::Input(
     u(0),
     u(1));
 }
 
-::fbs::Output output(const model::Bicycle::output_t& y) {
+::fbs::Output output(const model::BicycleWhipple::output_t& y) {
     return ::fbs::Output(
     y(0),
     y(1));
 }
 
-::fbs::AuxiliaryState auxiliary_state(const model::Bicycle::auxiliary_state_t& x) {
+::fbs::AuxiliaryState auxiliary_state(const model::BicycleWhipple::auxiliary_state_t& x) {
     return ::fbs::AuxiliaryState(
     x(0),
     x(1),
@@ -40,7 +40,7 @@ namespace fbs {
     x(3));
 }
 
-::fbs::StateMatrix state_matrix(const model::Bicycle::state_matrix_t& a) {
+::fbs::StateMatrix state_matrix(const model::BicycleWhipple::state_matrix_t& a) {
     return ::fbs::StateMatrix(
     a(0, 0),
     a(0, 1),
@@ -69,7 +69,7 @@ namespace fbs {
     a(4, 4));
 }
 
-::fbs::InputMatrix input_matrix(const model::Bicycle::input_matrix_t& b) {
+::fbs::InputMatrix input_matrix(const model::BicycleWhipple::input_matrix_t& b) {
     return ::fbs::InputMatrix(
     b(0, 0),
     b(0, 1),
@@ -83,7 +83,7 @@ namespace fbs {
     b(4, 1));
 }
 
-::fbs::OutputMatrix output_matrix(const model::Bicycle::output_matrix_t& c) {
+::fbs::OutputMatrix output_matrix(const model::BicycleWhipple::output_matrix_t& c) {
     return ::fbs::OutputMatrix(
     c(0, 0),
     c(0, 1),
@@ -97,7 +97,7 @@ namespace fbs {
     c(1, 4));
 }
 
-::fbs::FeedthroughMatrix feedthrough_matrix(const model::Bicycle::feedthrough_matrix_t& d) {
+::fbs::FeedthroughMatrix feedthrough_matrix(const model::BicycleWhipple::feedthrough_matrix_t& d) {
     return ::fbs::FeedthroughMatrix(
     d(0, 0),
     d(0, 1),
@@ -105,7 +105,7 @@ namespace fbs {
     d(1, 1));
 }
 
-::fbs::SymmetricStateMatrix symmetric_state_matrix(const model::Bicycle::state_matrix_t& m) {
+::fbs::SymmetricStateMatrix symmetric_state_matrix(const model::BicycleWhipple::state_matrix_t& m) {
     return ::fbs::SymmetricStateMatrix(
     m(0, 0),
     m(0, 1),
@@ -124,7 +124,7 @@ namespace fbs {
     m(4, 4));
 }
 
-::fbs::SymmetricInputMatrix symmetric_input_matrix(const controller::Lqr<model::Bicycle>::input_cost_t& m) {
+::fbs::SymmetricInputMatrix symmetric_input_matrix(const controller::Lqr<model::BicycleWhipple>::input_cost_t& m) {
     return ::fbs::SymmetricInputMatrix(
     m(0, 0),
     m(0, 1),
@@ -132,14 +132,14 @@ namespace fbs {
 }
 
 ::fbs::SymmetricOutputMatrix symmetric_output_matrix(
-        const observer::Kalman<model::Bicycle>::measurement_noise_covariance_t& m) {
+        const observer::Kalman<model::BicycleWhipple>::measurement_noise_covariance_t& m) {
     return ::fbs::SymmetricOutputMatrix(
     m(0, 0),
     m(0, 1),
     m(1, 1));
 }
 
-::fbs::SecondOrderMatrix second_order_matrix(const model::Bicycle::second_order_matrix_t& m) {
+::fbs::SecondOrderMatrix second_order_matrix(const model::BicycleWhipple::second_order_matrix_t& m) {
     return ::fbs::SecondOrderMatrix(
     m(0, 0),
     m(0, 1),
@@ -147,7 +147,7 @@ namespace fbs {
     m(1, 1));
 }
 
-::fbs::KalmanGainMatrix kalman_gain_matrix(const observer::Kalman<model::Bicycle>::kalman_gain_t& k) {
+::fbs::KalmanGainMatrix kalman_gain_matrix(const observer::Kalman<model::BicycleWhipple>::kalman_gain_t& k) {
     return ::fbs::KalmanGainMatrix(
     k(0, 0),
     k(0, 1),
@@ -161,7 +161,7 @@ namespace fbs {
     k(4, 1));
 }
 
-::fbs::LqrGainMatrix lqr_gain_matrix(const controller::Lqr<model::Bicycle>::lqr_gain_t& k) {
+::fbs::LqrGainMatrix lqr_gain_matrix(const controller::Lqr<model::BicycleWhipple>::lqr_gain_t& k) {
     return ::fbs::LqrGainMatrix(
     k(0, 0),
     k(0, 1),
@@ -178,7 +178,7 @@ namespace fbs {
 
 flatbuffers::Offset<::fbs::Bicycle> create_bicycle(
         flatbuffers::FlatBufferBuilder& fbb,
-        const model::Bicycle& bicycle, bool dt = true, bool v = true,
+        const model::BicycleWhipple& bicycle, bool dt = true, bool v = true,
         bool M = true, bool C1 = true, bool K0 = true, bool K2 = true,
         bool Ad = true, bool Bd = true, bool Cd = true, bool Dd = true) {
     double v_ = 0;
@@ -236,7 +236,7 @@ flatbuffers::Offset<::fbs::Bicycle> create_bicycle(
 
 flatbuffers::Offset<::fbs::Kalman> create_kalman(
         flatbuffers::FlatBufferBuilder& fbb,
-        const observer::Kalman<model::Bicycle>& kalman, bool x = true,
+        const observer::Kalman<model::BicycleWhipple>& kalman, bool x = true,
         bool P = true, bool Q = true, bool R = true, bool K = true) {
     auto x_ = state(kalman.x());
     auto P_ = symmetric_state_matrix(kalman.P());
@@ -270,7 +270,7 @@ flatbuffers::Offset<::fbs::Kalman> create_kalman(
 
 flatbuffers::Offset<::fbs::Lqr> create_lqr(
         flatbuffers::FlatBufferBuilder& fbb,
-        const controller::Lqr<model::Bicycle>& lqr, bool n = true,
+        const controller::Lqr<model::BicycleWhipple>& lqr, bool n = true,
         bool r = true, bool P = true, bool Q = true, bool R = true,
         bool K = true, bool Qi = true, bool q = true) {
     uint32_t n_ = 0;

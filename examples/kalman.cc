@@ -1,7 +1,7 @@
 #include <array>
 #include <iostream>
 #include <random>
-#include "bicycle.h"
+#include "bicycle/whipple.h"
 #include "kalman.h"
 #include "parameters.h"
 
@@ -11,12 +11,12 @@ namespace {
     const double v0 = 4.0; // forward speed [m/s]
     const size_t N = 1000; // length of simulation in samples
 
-    model::Bicycle::state_t x;
+    model::BicycleWhipple::state_t x;
 
-    std::array<model::Bicycle::state_t, N> system_state;
-    std::array<model::Bicycle::state_t, N> system_state_estimate;
-    std::array<model::Bicycle::output_t, N> system_output;
-    std::array<model::Bicycle::output_t, N> system_measurement;
+    std::array<model::BicycleWhipple::state_t, N> system_state;
+    std::array<model::BicycleWhipple::state_t, N> system_state_estimate;
+    std::array<model::BicycleWhipple::output_t, N> system_output;
+    std::array<model::BicycleWhipple::output_t, N> system_measurement;
 
     std::random_device rd; // used only to seed rng
 } // namespace
@@ -29,15 +29,15 @@ int main(int argc, char* argv[]) {
     std::normal_distribution<> r0(0, parameters::defaultvalue::kalman::R(0, 0));
     std::normal_distribution<> r1(0, parameters::defaultvalue::kalman::R(1, 1));
 
-    model::Bicycle bicycle(v0, dt);
+    model::BicycleWhipple bicycle(v0, dt);
     x << 0, 0, 10, 10, 0; // define x in degrees
     x *= constants::as_radians; // convert degrees to radians
 
-    observer::Kalman<model::Bicycle> kalman(bicycle,
-            model::Bicycle::state_t::Zero(),
+    observer::Kalman<model::BicycleWhipple> kalman(bicycle,
+            model::BicycleWhipple::state_t::Zero(),
             parameters::defaultvalue::kalman::Q(dt),
             parameters::defaultvalue::kalman::R,
-            std::pow(x[2]/2, 2) * model::Bicycle::state_matrix_t::Identity());
+            std::pow(x[2]/2, 2) * model::BicycleWhipple::state_matrix_t::Identity());
 
     std::cout << "simulating bicycle model with measurement noise (equal to R)" << std::endl;
     std::cout << "initial state:          [" << x.transpose() << "] deg" << std::endl;

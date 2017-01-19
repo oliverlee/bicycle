@@ -1,6 +1,6 @@
 #include <iostream>
 #include <utility>
-#include "bicycle.h"
+#include "bicycle/whipple.h"
 #include "parameters.h"
 
 namespace {
@@ -11,24 +11,24 @@ namespace {
 
     // These matrices are (obviously) not correct and are used only to
     // determine if discrete state space matrices are correctly looked up.
-    const model::Bicycle::state_matrix_t Ad43(
-            2 * model::Bicycle::state_matrix_t::Identity()
+    const model::BicycleWhipple::state_matrix_t Ad43(
+            2 * model::BicycleWhipple::state_matrix_t::Identity()
             );
-    const model::Bicycle::input_matrix_t Bd43(
-            3 * model::Bicycle::input_matrix_t::Identity()
+    const model::BicycleWhipple::input_matrix_t Bd43(
+            3 * model::BicycleWhipple::input_matrix_t::Identity()
             );
-    const model::Bicycle::state_matrix_t Ad60(
-            4 * model::Bicycle::state_matrix_t::Identity()
+    const model::BicycleWhipple::state_matrix_t Ad60(
+            4 * model::BicycleWhipple::state_matrix_t::Identity()
             );
-    const model::Bicycle::input_matrix_t Bd60(
-            5 * model::Bicycle::input_matrix_t::Identity()
+    const model::BicycleWhipple::input_matrix_t Bd60(
+            5 * model::BicycleWhipple::input_matrix_t::Identity()
             );
 
-    const model::Bicycle::state_space_map_t state_space_map {
-        {model::Bicycle::make_state_space_map_key(vw, dt),
-            model::Bicycle::state_space_map_value_t(Ad43, Bd43)},
-        {model::Bicycle::make_state_space_map_key(vc, dt),
-            model::Bicycle::state_space_map_value_t(Ad60, Bd60)},
+    const model::BicycleWhipple::state_space_map_t state_space_map {
+        {model::BicycleWhipple::make_state_space_map_key(vw, dt),
+            model::BicycleWhipple::state_space_map_value_t(Ad43, Bd43)},
+        {model::BicycleWhipple::make_state_space_map_key(vc, dt),
+            model::BicycleWhipple::state_space_map_value_t(Ad60, Bd60)},
     };
 } // namespace
 
@@ -36,8 +36,8 @@ int main(int argc, char* argv[]) {
     (void)argc;
     (void)argv;
 
-    model::Bicycle bicycle0(vw, dt, &state_space_map);
-    model::Bicycle bicycle1(vw, dt);
+    model::BicycleWhipple bicycle0(vw, dt, &state_space_map);
+    model::BicycleWhipple bicycle1(vw, dt);
 
     std::cout << "for vw: " << vw << ", dt: " << dt << std::endl;
     std::cout << "with discrete state space map, Ad" << std::endl <<
