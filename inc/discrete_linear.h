@@ -21,6 +21,7 @@ class DiscreteLinear : private DiscreteLinearBase {
         using state_t = Eigen::Matrix<real_t, n, 1>;
         using input_t = Eigen::Matrix<real_t, m, 1>;
         using output_t = Eigen::Matrix<real_t, l, 1>;
+        using measurement_t = output_t;
         using state_matrix_t = Eigen::Matrix<real_t, n, n>;
         using input_matrix_t = Eigen::Matrix<real_t, n, m>;
         using output_matrix_t = Eigen::Matrix<real_t, l, n>;
@@ -29,11 +30,8 @@ class DiscreteLinear : private DiscreteLinearBase {
 
         // The member function update_state(x, u, z) may not be any different than update_state(x, u)
         // depending on model implementation but must be defined for use with Oracle observer.
-        virtual state_t update_state(const state_t& x, const input_t& u, const output_t& z) const = 0;
-        virtual state_t update_state(const state_t& x, const input_t& u) const = 0;
+        virtual state_t update_state(const state_t& x, const input_t& u, const measurement_t& z) const = 0;
         virtual output_t calculate_output(const state_t& x, const input_t& u) const = 0;
-        virtual state_t update_state(const state_t& x) const = 0;
-        virtual output_t calculate_output(const state_t& x) const = 0;
 
         virtual const state_matrix_t& Ad() const = 0;
         virtual const input_matrix_t& Bd() const = 0;
