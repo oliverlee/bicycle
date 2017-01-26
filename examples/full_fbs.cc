@@ -140,10 +140,10 @@ int main(int argc, char* argv[]) {
         auto u = lqr.control_calculate(kalman.x(), reference(dt*current_sample));
 
         /* system simulate */
-        x = bicycle.update_state(x, u);
-
-        /* update auxiliary states */
-        aux = bicycle.integrate_auxiliary_state(x, aux, bicycle.dt());
+        bicycle_t::full_state_t x_full = bicycle_t::make_full_state(aux, x);
+        x_full = bicycle.integrate_full_state(x_full, u, bicycle.dt());
+        aux = bicycle_t::get_auxiliary_state_part(x_full);
+        x = bicycle_t::get_state_part(x_full);
 
         /* measure output with noise */
         auto z = bicycle.calculate_output(x);

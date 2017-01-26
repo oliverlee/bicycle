@@ -38,42 +38,61 @@ BicycleWhipple::BicycleWhipple(real_t v, real_t dt,
     Bicycle(v, dt),
     m_discrete_state_space_map(discrete_state_space_map) { }
 
-BicycleWhipple::state_t BicycleWhipple::update_state(const BicycleWhipple::state_t& x, const BicycleWhipple::input_t& u, const BicycleWhipple::output_t& z) const {
+BicycleWhipple::state_t BicycleWhipple::update_state(const BicycleWhipple::state_t& x, const BicycleWhipple::input_t& u, const BicycleWhipple::measurement_t& z) const {
     (void)z;
-    return update_state(x, u);
-}
-
-BicycleWhipple::state_t BicycleWhipple::update_state(const BicycleWhipple::state_t& x, const BicycleWhipple::input_t& u) const {
-    return m_Ad*x + m_Bd*u;
+    return m_A*x + m_B*u;
 }
 
 BicycleWhipple::output_t BicycleWhipple::calculate_output(const BicycleWhipple::state_t& x, const BicycleWhipple::input_t& u) const {
     return m_C*x + m_D*u;
 }
 
-BicycleWhipple::state_t BicycleWhipple::update_state(const BicycleWhipple::state_t& x) const {
-    return m_Ad*x;
+BicycleWhipple::full_state_t BicycleWhipple::integrate_full_state(const BicycleWhipple::full_state_t& xf, const BicycleWhipple::input_t& u, real_t t) const {
+    static constexpr auto x_index = index(full_state_index_t::x);
+    static constexpr auto y_index = index(full_state_index_t::y);
+    static constexpr auto rear_wheel_index = index(full_state_index_t::rear_wheel_angle);
+    static constexpr auto pitch_index = index(full_state_index_t::pitch_angle);
+    static constexpr auto yaw_index = index(full_state_index_t::yaw_angle);
+
+    const real_t v = m_v;
+    const real_t rr = m_rr;
+    const state_matrix_t& A = m_A;
+    const Eigen::LLT<second_order_matrix_t>& M_llt = m_M_llt;
+
+    full_state_t xout = xf;
+
+    m_stepper.do_step([&A, &M_llt, &u, v, rr](const full_state_t& x, full_state_t& dxdt, const real_t t) -> void {
+            (void)t; // system is time-independent
+
+            // auxiliary state fields first
+            dxdt[x_index] = v*std::cos(x[yaw_index]);
+            dxdt[y_index] = v*std::sin(x[yaw_index]);
+            dxdt[rear_wheel_index] = -v/rr;
+            dxdt[pitch_index] = 0; // pitch angle is not integrated and must be obtained using solve_pitch_constraint()
+
+            // state fields
+            dxdt.tail<n>() = A*x.tail<n>();
+            // Normally we would write dxdt = A*x + B*u but we prefer not to
+            // use the matrix inverse unless absolutely necessary when computing.
+            // As B = [   0  ], the product Bu = [      0   ]
+            //        [ M^-1 ]                   [ M^-1 * u ]
+            dxdt.tail<o>() += M_llt.solve(u);
+            }, xout, static_cast<real_t>(0), t); // newly obtained state written in place
+    return xout;
 }
 
-BicycleWhipple::output_t BicycleWhipple::calculate_output(const BicycleWhipple::state_t& x) const {
-    return m_C*x;
-}
+BicycleWhipple::state_t BicycleWhipple::integrate_state(const BicycleWhipple::state_t& x, const BicycleWhipple::input_t& u, real_t t) const {
+    state_t xout = x;
 
-BicycleWhipple::state_t BicycleWhipple::integrate_state(const BicycleWhipple::state_t& x, const BicycleWhipple::input_t& u, real_t dt) const {
-    odeint_state_t xout;
+    const state_matrix_t& A = m_A;
+    const Eigen::LLT<second_order_matrix_t>& M_llt = m_M_llt;
 
-    xout << x, u;
-    m_stepper.do_step([this](const odeint_state_t& xu, odeint_state_t& dxdt, const real_t t) -> void {
-                (void)t;
-                dxdt.head<n>() = m_A*xu.head<n>();
-                // Normally we would write dxdt = A*x + B*u but B is not stored
-                // explicitly as that would require the calculation of
-                // M.inverse(). As B = [   0  ], the product Bu = [      0   ]
-                //                     [ M^-1 ]                   [ M^-1 * u ]
-                dxdt.segment<o>(n - o) += m_M_llt.solve(xu.segment<o>(n));
-                dxdt.tail<m>().setZero();
-            }, xout, 0.0, dt); // newly obtained state written in place
-    return xout.head<n>();
+    m_stepper_state.do_step([&A, &M_llt, &u](const state_t& x, state_t& dxdt, const real_t t) -> void {
+            (void)t; // system is time-independent
+            dxdt = A*x;
+            dxdt.tail<o>() += M_llt.solve(u);
+            }, xout, static_cast<real_t>(0), t); // newly obtained state written in place
+    return xout;
 }
 
 void BicycleWhipple::set_state_space() {

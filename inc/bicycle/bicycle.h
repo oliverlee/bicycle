@@ -1,8 +1,6 @@
 #pragma once
 #include <Eigen/Core>
 #include <Eigen/Cholesky>
-#include <boost/numeric/odeint/stepper/runge_kutta_dopri5.hpp>
-#include <boost/numeric/odeint/algebra/vector_space_algebra.hpp>
 #include "discrete_linear.h"
 
 namespace model {
@@ -26,6 +24,7 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
     public:
         static constexpr unsigned int p = 4;
         using auxiliary_state_t = Eigen::Matrix<real_t, p, 1>;
+        using full_state_t = Eigen::Matrix<real_t, p + n, 1>;
 
         /* state enum definitions */
         enum class input_index_t: uint8_t {
@@ -67,15 +66,14 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         };
 
         static bool is_auxiliary_state_field(full_state_index_t field);
+        static full_state_t make_full_state(const auxiliary_state_t& aux, const state_t& x);
+        static auxiliary_state_t get_auxiliary_state_part(const full_state_t& xf);
+        static state_t get_state_part(const full_state_t& xf);
 
         /* pure virtual state and output functions repeated */
-        virtual state_t update_state(const state_t& x, const input_t& u, const output_t& z) const override = 0;
-        virtual state_t update_state(const state_t& x, const input_t& u) const override = 0;
+        virtual state_t update_state(const state_t& x, const input_t& u, const measurement_t& z) const override = 0;
         virtual output_t calculate_output(const state_t& x, const input_t& u) const override = 0;
-        virtual state_t update_state(const state_t& x) const override = 0;
-        virtual output_t calculate_output(const state_t& x) const override = 0;
-
-        auxiliary_state_t integrate_auxiliary_state(const state_t& x, const auxiliary_state_t& x_aux, real_t t) const;
+        virtual full_state_t integrate_full_state(const full_state_t& x, const input_t& u, real_t t) const = 0;
 
         virtual void set_v_dt(real_t v, real_t dt); /* this function _always_ recalculates state space */
         virtual void set_M(second_order_matrix_t& M, bool recalculate_state_space);
@@ -148,17 +146,6 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         input_matrix_t m_B;
         output_matrix_t m_C;
         feedthrough_matrix_t m_D;
-
-        /*
-         * Some steppers have internal state and so none have do_step() defined as const.
-         * While internal state may be changed from multiple calls to do_step(), the
-         * state is 'reset' when all calls to do_step() are completed and the integration
-         * has completed, thus we can mark them as mutable.
-         */
-        using full_state_t = Eigen::Matrix<real_t, p + n, 1>;
-        mutable boost::numeric::odeint::runge_kutta_dopri5<
-            full_state_t, real_t, full_state_t, real_t,
-            boost::numeric::odeint::vector_space_algebra> m_auxiliary_stepper;
 
         Bicycle(const second_order_matrix_t& M, const second_order_matrix_t& C1,
                 const second_order_matrix_t& K0, const second_order_matrix_t& K2,
