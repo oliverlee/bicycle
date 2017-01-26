@@ -3,6 +3,8 @@
 #include <utility>
 #include "bicycle.h"
 #include <boost/functional/hash.hpp>
+#include <boost/numeric/odeint/stepper/runge_kutta_dopri5.hpp>
+#include <boost/numeric/odeint/algebra/vector_space_algebra.hpp>
 
 namespace model {
 
@@ -41,8 +43,8 @@ class BicycleWhipple final : public Bicycle {
 
         virtual state_t update_state(const state_t& x, const input_t& u = input_t::Zero(), const measurement_t& z = measurement_t::Zero()) const override;
         virtual output_t calculate_output(const state_t& x, const input_t& u = input_t::Zero()) const override;
-
-        state_t integrate_state(const state_t& x, const input_t& u, real_t t) const;
+        virtual full_state_t integrate_full_state(const full_state_t& xf, const input_t& u, real_t t) const override;
+        virtual state_t integrate_state(const state_t& x, const input_t& u, real_t t) const;
 
         virtual void set_state_space() override;
 
@@ -71,10 +73,12 @@ class BicycleWhipple final : public Bicycle {
          * has completed, thus we mark them as mutable as we do not perceive the internal
          * state change of the stepper.
          */
-        using odeint_state_t = Eigen::Matrix<real_t, n + m, 1>;
         mutable boost::numeric::odeint::runge_kutta_dopri5<
-            odeint_state_t, real_t, odeint_state_t, real_t,
+            full_state_t, real_t, full_state_t, real_t,
             boost::numeric::odeint::vector_space_algebra> m_stepper;
+        mutable boost::numeric::odeint::runge_kutta_dopri5<
+            state_t, real_t, state_t, real_t,
+            boost::numeric::odeint::vector_space_algebra> m_stepper_state;
 };
 
 inline constexpr BicycleWhipple::state_space_map_key_t BicycleWhipple::make_state_space_map_key(real_t v, real_t dt) {

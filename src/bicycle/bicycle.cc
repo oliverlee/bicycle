@@ -32,32 +32,6 @@ bool Bicycle::is_auxiliary_state_field(full_state_index_t field) {
     return index(field) < index(auxiliary_state_index_t::number_of_types);
 }
 
-Bicycle::auxiliary_state_t Bicycle::integrate_auxiliary_state(const state_t& x, const auxiliary_state_t& x_aux, real_t t) const {
-    full_state_t xout;
-    // FIXME auxiliary state integration is incorrect. Refer to https://github.com/oliverlee/phobos/issues/63
-
-    xout << x_aux, x;
-    m_auxiliary_stepper.do_step([this](
-                const full_state_t& x, full_state_t& dxdt, const real_t t) -> void {
-                (void)t;
-                dxdt[index(full_state_index_t::x)] =
-                    m_v*std::cos(x[index(full_state_index_t::yaw_angle)]); // xdot = v*cos(psi)
-                dxdt[index(full_state_index_t::y)] =
-                    m_v*std::sin(x[index(full_state_index_t::yaw_angle)]); // ydot = v*sin(psi)
-                dxdt[index(full_state_index_t::rear_wheel_angle)] =
-                    -m_v/m_rr;                                             // theta_rdot = -v/rr
-                dxdt.tail<n + 1>().setZero(); // set state values + pitch angle to zero
-            }, xout, 0.0, t);
-
-    // use last pitch angle as initial guess
-    real_t roll = x[index(state_index_t::roll_angle)];
-    real_t steer = x[index(state_index_t::steer_angle)];
-    real_t pitch = x_aux[index(auxiliary_state_index_t::pitch_angle)];
-    xout[index(full_state_index_t::pitch_angle)] =
-        solve_constraint_pitch(roll, steer, pitch);
-    return xout.head<p>();
-}
-
 void Bicycle::set_v_dt(real_t v, real_t dt) {
     m_v = v;
     m_dt = dt;
