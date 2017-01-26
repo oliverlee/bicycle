@@ -32,6 +32,20 @@ bool Bicycle::is_auxiliary_state_field(full_state_index_t field) {
     return index(field) < index(auxiliary_state_index_t::number_of_types);
 }
 
+Bicycle::full_state_t Bicycle::make_full_state(const auxiliary_state_t& aux, const state_t& x) {
+    full_state_t xf;
+    xf << aux, x;
+    return xf;
+}
+
+Bicycle::auxiliary_state_t Bicycle::get_auxiliary_state_part(const full_state_t& xf) {
+    return xf.head<p>();
+}
+
+Bicycle::state_t Bicycle::get_state_part(const full_state_t& xf) {
+    return xf.tail<n>();
+}
+
 void Bicycle::set_v_dt(real_t v, real_t dt) {
     m_v = v;
     m_dt = dt;

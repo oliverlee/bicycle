@@ -66,6 +66,9 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         };
 
         static bool is_auxiliary_state_field(full_state_index_t field);
+        static full_state_t make_full_state(const auxiliary_state_t& aux, const state_t& x);
+        static auxiliary_state_t get_auxiliary_state_part(const full_state_t& xf);
+        static state_t get_state_part(const full_state_t& xf);
 
         /* pure virtual state and output functions repeated */
         virtual state_t update_state(const state_t& x, const input_t& u, const measurement_t& z) const override = 0;
