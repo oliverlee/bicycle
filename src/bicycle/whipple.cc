@@ -24,19 +24,38 @@ BicycleWhipple::BicycleWhipple(const second_order_matrix_t& M, const second_orde
         const second_order_matrix_t& K0, const second_order_matrix_t& K2,
         real_t wheelbase, real_t trail, real_t steer_axis_tilt,
         real_t rear_wheel_radius, real_t front_wheel_radius,
-        real_t v, real_t dt, const state_space_map_t* discrete_state_space_map) :
-    Bicycle(M, C1, K0, K2, wheelbase, trail, steer_axis_tilt, rear_wheel_radius, front_wheel_radius, v, dt),
-    m_discrete_state_space_map(discrete_state_space_map) { }
+        real_t v, real_t dt
+#if BICYCLE_USE_STATE_SPACE_MAP
+        , const state_space_map_t* discrete_state_space_map
+#endif // BICYCLE_USE_STATE_SPACE_MAP
+        ) :
+    Bicycle(M, C1, K0, K2, wheelbase, trail, steer_axis_tilt, rear_wheel_radius, front_wheel_radius, v, dt)
+#if BICYCLE_USE_STATE_SPACE_MAP
+    , m_discrete_state_space_map(discrete_state_space_map)
+#endif // BICYCLE_USE_STATE_SPACE_MAP
+    { }
 
-BicycleWhipple::BicycleWhipple(const char* param_file, real_t v, real_t dt,
-        const state_space_map_t* discrete_state_space_map) :
-    Bicycle(param_file, v, dt),
-    m_discrete_state_space_map(discrete_state_space_map) { }
+BicycleWhipple::BicycleWhipple(const char* param_file, real_t v, real_t dt
+#if BICYCLE_USE_STATE_SPACE_MAP
+        , const state_space_map_t* discrete_state_space_map
+#endif // BICYCLE_USE_STATE_SPACE_MAP
+        ) :
+    Bicycle(param_file, v, dt)
+#if BICYCLE_USE_STATE_SPACE_MAP
+    , m_discrete_state_space_map(discrete_state_space_map)
+#endif // BICYCLE_USE_STATE_SPACE_MAP
+    { }
 
-BicycleWhipple::BicycleWhipple(real_t v, real_t dt,
-        const state_space_map_t* discrete_state_space_map) :
-    Bicycle(v, dt),
-    m_discrete_state_space_map(discrete_state_space_map) { }
+BicycleWhipple::BicycleWhipple(real_t v, real_t dt
+#if BICYCLE_USE_STATE_SPACE_MAP
+        , const state_space_map_t* discrete_state_space_map
+#endif // BICYCLE_USE_STATE_SPACE_MAP
+        ) :
+    Bicycle(v, dt)
+#if BICYCLE_USE_STATE_SPACE_MAP
+    , m_discrete_state_space_map(discrete_state_space_map)
+#endif // BICYCLE_USE_STATE_SPACE_MAP
+    { }
 
 BicycleWhipple::state_t BicycleWhipple::update_state(const BicycleWhipple::state_t& x, const BicycleWhipple::input_t& u, const BicycleWhipple::measurement_t& z) const {
     (void)z;
@@ -112,7 +131,9 @@ void BicycleWhipple::set_state_space() {
         m_Ad.setIdentity();
         m_Bd.setZero();
     } else {
+#if BICYCLE_USE_STATE_SPACE_MAP
         if (!discrete_state_space_lookup(m_v, m_dt)) {
+#endif // BICYCLE_USE_STATE_SPACE_MAP
             /*
              * The full state matrix A is singular as yaw rate, and all other
              * states, are independent of yaw angle. As we discretize the continuous
@@ -136,10 +157,13 @@ void BicycleWhipple::set_state_space() {
             }
             m_Ad = T.topLeftCorner<n, n>();
             m_Bd = T.topRightCorner<n, m>();
+#if BICYCLE_USE_STATE_SPACE_MAP
         }
+#endif // BICYCLE_USE_STATE_SPACE_MAP
     }
 }
 
+#if BICYCLE_USE_STATE_SPACE_MAP
 bool BicycleWhipple::discrete_state_space_lookup(real_t v, real_t dt) {
     if (m_discrete_state_space_map == nullptr) {
         return false;
@@ -156,6 +180,7 @@ bool BicycleWhipple::discrete_state_space_lookup(real_t v, real_t dt) {
     m_Bd = search->second.second;
     return true;
 }
+#endif // BICYCLE_USE_STATE_SPACE_MAP
 
 const BicycleWhipple::state_matrix_t& BicycleWhipple::Ad() const {
     return m_Ad;

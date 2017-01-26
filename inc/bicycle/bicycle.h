@@ -33,7 +33,7 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
             number_of_types
         };
         enum class state_index_t: uint8_t {
-            yaw_angle = 0, /* yaw is included due it's linear relation to other state elements */
+            yaw_angle = 0, /* yaw is included due its linear relation to other state elements */
             roll_angle,
             steer_angle,
             roll_rate,

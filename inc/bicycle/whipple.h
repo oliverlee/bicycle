@@ -1,8 +1,12 @@
 #pragma once
+#if BICYCLE_USE_STATE_SPACE_MAP
 #include <unordered_map>
 #include <utility>
+#endif // BICYCLE_USE_STATE_SPACE_MAP
 #include "bicycle.h"
+#if BICYCLE_USE_STATE_SPACE_MAP
 #include <boost/functional/hash.hpp>
+#endif // BICYCLE_USE_STATE_SPACE_MAP
 #include <boost/numeric/odeint/stepper/runge_kutta_dopri5.hpp>
 #include <boost/numeric/odeint/algebra/vector_space_algebra.hpp>
 
@@ -25,21 +29,32 @@ class BicycleWhipple final : public Bicycle {
          * (round(m_dt_key_precision*dt), round(m_v_key_precision*v)).
          * Where precision is set with m_dt_key_precision and m_v_key_precision.
          */
+#if BICYCLE_USE_STATE_SPACE_MAP
         using state_space_map_key_t = const std::pair<uint32_t, int32_t>;
         using state_space_map_value_t = const std::pair<state_matrix_t, input_matrix_t>;
         using state_space_map_t = std::unordered_map<state_space_map_key_t,
               state_space_map_value_t, boost::hash<state_space_map_key_t>>;
+#endif // BICYCLE_USE_STATE_SPACE_MAP
 
         BicycleWhipple(const second_order_matrix_t& M, const second_order_matrix_t& C1,
                 const second_order_matrix_t& K0, const second_order_matrix_t& K2,
                 real_t wheelbase, real_t trail, real_t steer_axis_tilt,
                 real_t rear_wheel_radius, real_t front_wheel_radius,
-                real_t v, real_t dt,
-                const state_space_map_t* discrete_state_space_map = nullptr);
-        BicycleWhipple(const char* param_file, real_t v, real_t dt,
-                const state_space_map_t* discrete_state_space_map = nullptr);
-        BicycleWhipple(real_t v, real_t dt,
-                const state_space_map_t* discrete_state_space_map = nullptr);
+                real_t v, real_t dt
+#if BICYCLE_USE_STATE_SPACE_MAP
+                , const state_space_map_t* discrete_state_space_map = nullptr
+#endif // BICYCLE_USE_STATE_SPACE_MAP
+                );
+        BicycleWhipple(const char* param_file, real_t v, real_t dt
+#if BICYCLE_USE_STATE_SPACE_MAP
+                , const state_space_map_t* discrete_state_space_map = nullptr
+#endif // BICYCLE_USE_STATE_SPACE_MAP
+                );
+        BicycleWhipple(real_t v, real_t dt
+#if BICYCLE_USE_STATE_SPACE_MAP
+                , const state_space_map_t* discrete_state_space_map = nullptr
+#endif // BICYCLE_USE_STATE_SPACE_MAP
+                );
 
         virtual state_t update_state(const state_t& x, const input_t& u = input_t::Zero(), const measurement_t& z = measurement_t::Zero()) const override;
         virtual output_t calculate_output(const state_t& x, const input_t& u = input_t::Zero()) const override;
@@ -48,8 +63,10 @@ class BicycleWhipple final : public Bicycle {
 
         virtual void set_state_space() override;
 
+#if BICYCLE_USE_STATE_SPACE_MAP
         static constexpr state_space_map_key_t make_state_space_map_key(real_t v, real_t dt);
         bool discrete_state_space_lookup(real_t v, real_t dt);
+#endif // BICYCLE_USE_STATE_SPACE_MAP
 
         // (pseudo) parameter accessors
         virtual const state_matrix_t& Ad() const override;
@@ -61,10 +78,12 @@ class BicycleWhipple final : public Bicycle {
         state_matrix_t m_Ad;
         input_matrix_t m_Bd;
 
+#if BICYCLE_USE_STATE_SPACE_MAP
         static constexpr uint32_t m_dt_key_precision = 1000;
         static constexpr int32_t m_v_key_precision = 1000000;
 
         const state_space_map_t* const m_discrete_state_space_map;
+#endif // BICYCLE_USE_STATE_SPACE_MAP
 
         /*
          * Some steppers have internal state and so none have do_step() defined as const.
@@ -81,8 +100,10 @@ class BicycleWhipple final : public Bicycle {
             boost::numeric::odeint::vector_space_algebra> m_stepper_state;
 };
 
+#if BICYCLE_USE_STATE_SPACE_MAP
 inline constexpr BicycleWhipple::state_space_map_key_t BicycleWhipple::make_state_space_map_key(real_t v, real_t dt) {
     return state_space_map_key_t(m_dt_key_precision*dt, m_v_key_precision*v);
 }
+#endif // BICYCLE_USE_STATE_SPACE_MAP
 
 } // namespace model
