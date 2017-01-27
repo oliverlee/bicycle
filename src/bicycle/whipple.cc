@@ -59,7 +59,7 @@ BicycleWhipple::BicycleWhipple(real_t v, real_t dt
 
 BicycleWhipple::state_t BicycleWhipple::update_state(const BicycleWhipple::state_t& x, const BicycleWhipple::input_t& u, const BicycleWhipple::measurement_t& z) const {
     (void)z;
-    return m_A*x + m_B*u;
+    return m_Ad*x + m_Bd*u;
 }
 
 BicycleWhipple::output_t BicycleWhipple::calculate_output(const BicycleWhipple::state_t& x, const BicycleWhipple::input_t& u) const {
