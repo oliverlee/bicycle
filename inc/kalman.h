@@ -75,7 +75,7 @@ class Kalman final : public Observer<T> {
 
 template <typename T>
 inline void Kalman<T>::set_x(const state_t& x) {
-    set_state(x);
+    this->set_state(x);
 }
 
 template <typename T>
