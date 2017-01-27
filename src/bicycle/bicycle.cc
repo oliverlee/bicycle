@@ -37,6 +37,12 @@ namespace {
                 "Invalid index type for given state type.");
         return x[index(field)];
     }
+
+    template <typename T, typename I>
+    constexpr void mod_two_pi_element(T& x, I field) {
+        const model::real_t modded_value = std::fmod(get_element(x, field), constants::two_pi);
+        set_element(x, field, modded_value);
+    }
 } // namespace
 
 namespace model {
@@ -416,14 +422,10 @@ Bicycle::state_t Bicycle::normalize_state(const state_t& x) const {
     static_assert(index(Bicycle::state_index_t::number_of_types) == 5,
         "Invalid underlying value for state index element");
 
-    constexpr auto yaw_index = index(Bicycle::state_index_t::yaw_angle);
-    constexpr auto roll_index = index(Bicycle::state_index_t::roll_angle);
-    constexpr auto steer_index = index(Bicycle::state_index_t::steer_angle);
-
     state_t normalized_x = x;
-    normalized_x[yaw_index] = std::fmod(x[yaw_index], constants::two_pi);
-    normalized_x[roll_index] = std::fmod(x[roll_index], constants::two_pi);
-    normalized_x[steer_index] = std::fmod(x[steer_index], constants::two_pi);
+    mod_two_pi_element(normalized_x, state_index_t::yaw_angle);
+    mod_two_pi_element(normalized_x, state_index_t::roll_angle);
+    mod_two_pi_element(normalized_x, state_index_t::steer_angle);
     return normalized_x;
 }
 
@@ -436,10 +438,8 @@ Bicycle::output_t Bicycle::normalize_output(const output_t& y) const {
         "Invalid underlying value for output index element");
 
     output_t normalized_y = y;
-    set_output_element(normalized_y, output_index_t::yaw_angle,
-            std::fmod(get_output_element(y, output_index_t::yaw_angle), constants::two_pi));
-    set_output_element(normalized_y, output_index_t::steer_angle,
-            std::fmod(get_output_element(y, output_index_t::steer_angle), constants::two_pi));
+    mod_two_pi_element(normalized_y, output_index_t::yaw_angle);
+    mod_two_pi_element(normalized_y, output_index_t::steer_angle);
     return normalized_y;
 }
 
@@ -456,12 +456,8 @@ Bicycle::auxiliary_state_t Bicycle::normalize_auxiliary_state(const auxiliary_st
         "Invalid underlying value for auxiliary state index element");
 
     auxiliary_state_t normalized_x_aux = x_aux;
-    set_auxiliary_state_element(normalized_x_aux, auxiliary_state_index_t::rear_wheel_angle,
-            std::fmod(get_auxiliary_state_element(x_aux, auxiliary_state_index_t::rear_wheel_angle),
-                constants::two_pi));
-    set_auxiliary_state_element(normalized_x_aux, auxiliary_state_index_t::pitch_angle,
-            std::fmod(get_auxiliary_state_element(x_aux, auxiliary_state_index_t::pitch_angle),
-                constants::two_pi));
+    mod_two_pi_element(normalized_x_aux, auxiliary_state_index_t::rear_wheel_angle);
+    mod_two_pi_element(normalized_x_aux, auxiliary_state_index_t::pitch_angle);
     return normalized_x_aux;
 }
 
