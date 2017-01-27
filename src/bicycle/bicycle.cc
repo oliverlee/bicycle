@@ -13,6 +13,36 @@ namespace {
     constexpr typename std::underlying_type<E>::type index(E e) {
         return static_cast<typename std::underlying_type<E>::type>(e);
     }
+
+    template <typename T, typename I>
+    constexpr void set_element(T& x, I field, model::real_t value) {
+        static_assert(
+                (std::is_same<T, model::Bicycle::state_t>::value && std::is_same<I, model::Bicycle::state_index_t>::value) ||
+                (std::is_same<T, model::Bicycle::auxiliary_state_t>::value && std::is_same<I, model::Bicycle::auxiliary_state_index_t>::value) ||
+                (std::is_same<T, model::Bicycle::full_state_t>::value && std::is_same<I, model::Bicycle::full_state_index_t>::value) ||
+                (std::is_same<T, model::Bicycle::input_t>::value && std::is_same<I, model::Bicycle::input_index_t>::value) ||
+                (std::is_same<T, model::Bicycle::output_t>::value && std::is_same<I, model::Bicycle::output_index_t>::value),
+                "Invalid index type for given state type.");
+        x[index(field)] = value;
+    }
+
+    template <typename T, typename I>
+    constexpr model::real_t get_element(const T& x, I field) {
+        static_assert(
+                (std::is_same<T, model::Bicycle::state_t>::value && std::is_same<I, model::Bicycle::state_index_t>::value) ||
+                (std::is_same<T, model::Bicycle::auxiliary_state_t>::value && std::is_same<I, model::Bicycle::auxiliary_state_index_t>::value) ||
+                (std::is_same<T, model::Bicycle::full_state_t>::value && std::is_same<I, model::Bicycle::full_state_index_t>::value) ||
+                (std::is_same<T, model::Bicycle::input_t>::value && std::is_same<I, model::Bicycle::input_index_t>::value) ||
+                (std::is_same<T, model::Bicycle::output_t>::value && std::is_same<I, model::Bicycle::output_index_t>::value),
+                "Invalid index type for given state type.");
+        return x[index(field)];
+    }
+
+    template <typename T, typename I>
+    constexpr void mod_two_pi_element(T& x, I field) {
+        const model::real_t modded_value = std::fmod(get_element(x, field), constants::two_pi);
+        set_element(x, field, modded_value);
+    }
 } // namespace
 
 namespace model {
@@ -44,6 +74,46 @@ Bicycle::auxiliary_state_t Bicycle::get_auxiliary_state_part(const full_state_t&
 
 Bicycle::state_t Bicycle::get_state_part(const full_state_t& xf) {
     return xf.tail<n>();
+}
+
+void Bicycle::set_state_element(state_t& x, state_index_t field, real_t value) {
+    set_element(x, field, value);
+}
+
+void Bicycle::set_auxiliary_state_element(auxiliary_state_t& x, auxiliary_state_index_t field, real_t value) {
+    set_element(x, field, value);
+}
+
+void Bicycle::set_full_state_element(full_state_t& x, full_state_index_t field, real_t value) {
+    set_element(x, field, value);
+}
+
+void Bicycle::set_input_element(input_t& x, input_index_t field, real_t value) {
+    set_element(x, field, value);
+}
+
+void Bicycle::set_output_element(output_t& x, output_index_t field, real_t value) {
+    set_element(x, field, value);
+}
+
+real_t Bicycle::get_state_element(const state_t& x, state_index_t field) {
+    return get_element(x, field);
+}
+
+real_t Bicycle::get_auxiliary_state_element(const auxiliary_state_t& x, auxiliary_state_index_t field) {
+    return get_element(x, field);
+}
+
+real_t Bicycle::get_full_state_element(const full_state_t& x, full_state_index_t field) {
+    return get_element(x, field);
+}
+
+real_t Bicycle::get_input_element(const input_t& x, input_index_t field) {
+    return get_element(x, field);
+}
+
+real_t Bicycle::get_output_element(const output_t& x, output_index_t field) {
+    return get_element(x, field);
 }
 
 void Bicycle::set_v_dt(real_t v, real_t dt) {
@@ -352,14 +422,10 @@ Bicycle::state_t Bicycle::normalize_state(const state_t& x) const {
     static_assert(index(Bicycle::state_index_t::number_of_types) == 5,
         "Invalid underlying value for state index element");
 
-    constexpr auto yaw_index = index(Bicycle::state_index_t::yaw_angle);
-    constexpr auto roll_index = index(Bicycle::state_index_t::roll_angle);
-    constexpr auto steer_index = index(Bicycle::state_index_t::steer_angle);
-
     state_t normalized_x = x;
-    normalized_x[yaw_index] = std::fmod(x[yaw_index], constants::two_pi);
-    normalized_x[roll_index] = std::fmod(x[roll_index], constants::two_pi);
-    normalized_x[steer_index] = std::fmod(x[steer_index], constants::two_pi);
+    mod_two_pi_element(normalized_x, state_index_t::yaw_angle);
+    mod_two_pi_element(normalized_x, state_index_t::roll_angle);
+    mod_two_pi_element(normalized_x, state_index_t::steer_angle);
     return normalized_x;
 }
 
@@ -371,12 +437,9 @@ Bicycle::output_t Bicycle::normalize_output(const output_t& y) const {
     static_assert(index(Bicycle::output_index_t::number_of_types) == 2,
         "Invalid underlying value for output index element");
 
-    constexpr auto yaw_index = index(Bicycle::output_index_t::yaw_angle);
-    constexpr auto steer_index = index(Bicycle::output_index_t::steer_angle);
-
     output_t normalized_y = y;
-    normalized_y[yaw_index] = std::fmod(y[yaw_index], constants::two_pi);
-    normalized_y[steer_index] = std::fmod(y[steer_index], constants::two_pi);
+    mod_two_pi_element(normalized_y, output_index_t::yaw_angle);
+    mod_two_pi_element(normalized_y, output_index_t::steer_angle);
     return normalized_y;
 }
 
@@ -392,12 +455,9 @@ Bicycle::auxiliary_state_t Bicycle::normalize_auxiliary_state(const auxiliary_st
     static_assert(index(Bicycle::auxiliary_state_index_t::number_of_types) == 4,
         "Invalid underlying value for auxiliary state index element");
 
-    constexpr auto rear_wheel_index = index(Bicycle::auxiliary_state_index_t::rear_wheel_angle);
-    constexpr auto pitch_index = index(Bicycle::auxiliary_state_index_t::pitch_angle);
-
     auxiliary_state_t normalized_x_aux = x_aux;
-    normalized_x_aux[rear_wheel_index] = std::fmod(x_aux[rear_wheel_index], constants::two_pi);
-    normalized_x_aux[pitch_index] = std::fmod(x_aux[pitch_index], constants::two_pi);
+    mod_two_pi_element(normalized_x_aux, auxiliary_state_index_t::rear_wheel_angle);
+    mod_two_pi_element(normalized_x_aux, auxiliary_state_index_t::pitch_angle);
     return normalized_x_aux;
 }
 

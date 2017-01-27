@@ -70,6 +70,18 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         static auxiliary_state_t get_auxiliary_state_part(const full_state_t& xf);
         static state_t get_state_part(const full_state_t& xf);
 
+        static void set_state_element(state_t& x, state_index_t field, real_t value);
+        static void set_auxiliary_state_element(auxiliary_state_t& x, auxiliary_state_index_t field, real_t value);
+        static void set_full_state_element(full_state_t& x, full_state_index_t field, real_t value);
+        static void set_input_element(input_t& x, input_index_t field, real_t value);
+        static void set_output_element(output_t& x, output_index_t field, real_t value);
+
+        static real_t get_state_element(const state_t& x, state_index_t field);
+        static real_t get_auxiliary_state_element(const auxiliary_state_t& x, auxiliary_state_index_t field);
+        static real_t get_full_state_element(const full_state_t& x, full_state_index_t field);
+        static real_t get_input_element(const input_t& x, input_index_t field);
+        static real_t get_output_element(const output_t& x, output_index_t field);
+
         /* pure virtual state and output functions repeated */
         virtual state_t update_state(const state_t& x, const input_t& u, const measurement_t& z) const override = 0;
         virtual output_t calculate_output(const state_t& x, const input_t& u) const override = 0;
