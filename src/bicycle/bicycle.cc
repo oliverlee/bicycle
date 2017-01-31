@@ -289,11 +289,10 @@ m_rf*(-std::sin(pitch)*std::cos(roll)*std::cos(steer) +
 std::sin(roll)*std::sin(steer)))*(-std::sin(pitch)*std::cos(roll)*std::cos(steer) +
 std::sin(roll)*std::sin(steer)))*std::abs(std::cos(roll)) +
 std::sqrt(square(-std::sin(pitch)*std::cos(roll)*std::cos(steer) + std::sin(roll)*std::sin(steer)) +
-square(std::cos(pitch))*square(std::cos(roll)))*(-m_d1*std::sqrt(std::pow(std::cos(roll),
-two))*std::sin(pitch) + m_d2*std::abs(std::cos(roll))*std::cos(pitch) -
-m_rr*std::cos(roll))*std::cos(roll))/(std::sqrt(std::pow(-std::sin(pitch)*std::cos(roll)*std::cos(steer) +
-std::sin(roll)*std::sin(steer), two) + square(std::cos(pitch))*std::pow(std::cos(roll),
-two))*std::abs(std::cos(roll)))
+square(std::cos(pitch))*square(std::cos(roll)))*(-m_d1*std::sqrt(square(std::cos(roll)))*std::sin(pitch) +
+m_d2*std::abs(std::cos(roll))*std::cos(pitch) -
+m_rr*std::cos(roll))*std::cos(roll))/(std::sqrt(square(-std::sin(pitch)*std::cos(roll)*std::cos(steer) +
+std::sin(roll)*std::sin(steer)) + square(std::cos(pitch))*square(std::cos(roll)))*std::abs(std::cos(roll)))
                 ,
 ((m_rf*square(std::cos(pitch))*square(std::cos(roll)) +
 (m_d3*std::sqrt(square(-std::sin(pitch)*std::cos(roll)*std::cos(steer) + std::sin(roll)*std::sin(steer)) +
@@ -302,22 +301,22 @@ m_rf*(-std::sin(pitch)*std::cos(roll)*std::cos(steer) +
 std::sin(roll)*std::sin(steer)))*(-std::sin(pitch)*std::cos(roll)*std::cos(steer) +
 std::sin(roll)*std::sin(steer)))*std::abs(std::cos(roll)) +
 std::sqrt(square(-std::sin(pitch)*std::cos(roll)*std::cos(steer) + std::sin(roll)*std::sin(steer)) +
-square(std::cos(pitch))*square(std::cos(roll)))*(-m_d1*std::sqrt(std::pow(std::cos(roll),
-two))*std::sin(pitch) + m_d2*std::abs(std::cos(roll))*std::cos(pitch) -
+square(std::cos(pitch))*square(std::cos(roll)))*(-m_d1*std::sqrt(square(std::cos(roll)))*std::sin(pitch) +
+m_d2*std::abs(std::cos(roll))*std::cos(pitch) -
 m_rr*std::cos(roll))*std::cos(roll))*((-std::sin(pitch)*std::cos(roll)*std::cos(steer) +
 std::sin(roll)*std::sin(steer))*std::cos(pitch)*std::cos(roll)*std::cos(steer) +
-std::sin(pitch)*std::cos(pitch)*std::pow(std::cos(roll),
-two))/(std::pow(square(-std::sin(pitch)*std::cos(roll)*std::cos(steer) + std::sin(roll)*std::sin(steer)) +
+std::sin(pitch)*std::cos(pitch)*square(std::cos(roll)))/(std::pow(square(-std::sin(pitch)*std::cos(roll)*std::cos(steer) +
+std::sin(roll)*std::sin(steer)) +
 square(std::cos(pitch))*square(std::cos(roll)), one_five)*std::abs(std::cos(roll))) +
-((-m_d1*std::abs(std::cos(roll))*std::cos(pitch) - m_d2*std::sqrt(std::pow(std::cos(roll),
-two))*std::sin(pitch))*std::sqrt(std::pow(-std::sin(pitch)*std::cos(roll)*std::cos(steer) +
-std::sin(roll)*std::sin(steer), two) + square(std::cos(pitch))*square(std::cos(roll)))*std::cos(roll) +
+((-m_d1*std::abs(std::cos(roll))*std::cos(pitch) -
+m_d2*std::sqrt(square(std::cos(roll)))*std::sin(pitch))*std::sqrt(square(-std::sin(pitch)*std::cos(roll)*std::cos(steer) +
+std::sin(roll)*std::sin(steer)) + square(std::cos(pitch))*square(std::cos(roll)))*std::cos(roll) +
 (-(-std::sin(pitch)*std::cos(roll)*std::cos(steer) +
 std::sin(roll)*std::sin(steer))*std::cos(pitch)*std::cos(roll)*std::cos(steer) -
-std::sin(pitch)*std::cos(pitch)*square(std::cos(roll)))*(-m_d1*std::sqrt(std::pow(std::cos(roll),
-two))*std::sin(pitch) + m_d2*std::abs(std::cos(roll))*std::cos(pitch) -
-m_rr*std::cos(roll))*std::cos(roll)/std::sqrt(std::pow(-std::sin(pitch)*std::cos(roll)*std::cos(steer) +
-std::sin(roll)*std::sin(steer), two) + square(std::cos(pitch))*square(std::cos(roll))) +
+std::sin(pitch)*std::cos(pitch)*square(std::cos(roll)))*(-m_d1*std::sqrt(square(std::cos(roll)))*std::sin(pitch) +
+m_d2*std::abs(std::cos(roll))*std::cos(pitch) -
+m_rr*std::cos(roll))*std::cos(roll)/std::sqrt(square(-std::sin(pitch)*std::cos(roll)*std::cos(steer) +
+std::sin(roll)*std::sin(steer)) + square(std::cos(pitch))*square(std::cos(roll))) +
 (-two*m_rf*std::sin(pitch)*std::cos(pitch)*square(std::cos(roll)) -
 (m_d3*std::sqrt(square(-std::sin(pitch)*std::cos(roll)*std::cos(steer) + std::sin(roll)*std::sin(steer)) +
 square(std::cos(pitch))*square(std::cos(roll))) +
@@ -325,12 +324,12 @@ m_rf*(-std::sin(pitch)*std::cos(roll)*std::cos(steer) +
 std::sin(roll)*std::sin(steer)))*std::cos(pitch)*std::cos(roll)*std::cos(steer) +
 (m_d3*(-(-std::sin(pitch)*std::cos(roll)*std::cos(steer) +
 std::sin(roll)*std::sin(steer))*std::cos(pitch)*std::cos(roll)*std::cos(steer) -
-std::sin(pitch)*std::cos(pitch)*std::pow(std::cos(roll),
-two))/std::sqrt(square(-std::sin(pitch)*std::cos(roll)*std::cos(steer) + std::sin(roll)*std::sin(steer)) +
+std::sin(pitch)*std::cos(pitch)*square(std::cos(roll)))/std::sqrt(square(-std::sin(pitch)*std::cos(roll)*std::cos(steer) +
+std::sin(roll)*std::sin(steer)) +
 square(std::cos(pitch))*square(std::cos(roll))) -
 m_rf*std::cos(pitch)*std::cos(roll)*std::cos(steer))*(-std::sin(pitch)*std::cos(roll)*std::cos(steer) +
-std::sin(roll)*std::sin(steer)))*std::sqrt(std::pow(std::cos(roll),
-two)))/(std::sqrt(square(-std::sin(pitch)*std::cos(roll)*std::cos(steer) + std::sin(roll)*std::sin(steer)) +
+std::sin(roll)*std::sin(steer)))*std::sqrt(square(std::cos(roll))))/(std::sqrt(square(-std::sin(pitch)*std::cos(roll)*std::cos(steer) +
+std::sin(roll)*std::sin(steer)) +
 square(std::cos(pitch))*square(std::cos(roll)))*std::abs(std::cos(roll)))
                 );
     };
