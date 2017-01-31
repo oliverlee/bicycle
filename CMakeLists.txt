@@ -64,10 +64,13 @@ set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES
 
 set(BICYCLE_SOURCE
     ${BICYCLE_SOURCE_DIR}/src/bicycle/bicycle.cc
+    ${BICYCLE_SOURCE_DIR}/src/bicycle/bicycle_solve_constraint_pitch.cc
     ${BICYCLE_SOURCE_DIR}/src/bicycle/whipple.cc
     ${BICYCLE_SOURCE_DIR}/src/parameters.cc
     ${BICYCLE_SOURCE_DIR}/src/network_server.cc
     ${BICYCLE_SOURCE_DIR}/src/serial.cc)
+set_source_files_properties(${BICYCLE_SOURCE_DIR}/src/bicycle/bicycle_solve_constraint_pitch.cc
+    PROPERTIES COMPILE_FLAGS "-fassociative-math")
 
 option(BICYCLE_BUILD_TESTS "Build tests." ON)
 option(BICYCLE_BUILD_TOOLS "Build tools." ON)
