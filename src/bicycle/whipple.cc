@@ -33,7 +33,9 @@ BicycleWhipple::BicycleWhipple(const second_order_matrix_t& M, const second_orde
 #if BICYCLE_USE_STATE_SPACE_MAP
     , m_discrete_state_space_map(discrete_state_space_map)
 #endif // BICYCLE_USE_STATE_SPACE_MAP
-    { }
+    {
+    set_discrete_state_space();
+}
 
 BicycleWhipple::BicycleWhipple(const char* param_file, real_t v, real_t dt
 #if BICYCLE_USE_STATE_SPACE_MAP
@@ -44,7 +46,9 @@ BicycleWhipple::BicycleWhipple(const char* param_file, real_t v, real_t dt
 #if BICYCLE_USE_STATE_SPACE_MAP
     , m_discrete_state_space_map(discrete_state_space_map)
 #endif // BICYCLE_USE_STATE_SPACE_MAP
-    { }
+    {
+    set_discrete_state_space();
+}
 
 BicycleWhipple::BicycleWhipple(real_t v, real_t dt
 #if BICYCLE_USE_STATE_SPACE_MAP
@@ -55,7 +59,9 @@ BicycleWhipple::BicycleWhipple(real_t v, real_t dt
 #if BICYCLE_USE_STATE_SPACE_MAP
     , m_discrete_state_space_map(discrete_state_space_map)
 #endif // BICYCLE_USE_STATE_SPACE_MAP
-    { }
+    {
+    set_discrete_state_space();
+}
 
 BicycleWhipple::state_t BicycleWhipple::update_state(const BicycleWhipple::state_t& x, const BicycleWhipple::input_t& u, const BicycleWhipple::measurement_t& z) const {
     (void)z;
@@ -121,9 +127,46 @@ void BicycleWhipple::set_state_space() {
      * space matrices and additionally calculates discrete time state space if
      * sampling time is nonzero.
      */
-
     Bicycle::set_state_space();
+    set_discrete_state_space();
+}
 
+#if BICYCLE_USE_STATE_SPACE_MAP
+bool BicycleWhipple::discrete_state_space_lookup(real_t v, real_t dt) {
+    if (m_discrete_state_space_map == nullptr) {
+        return false;
+    }
+
+    state_space_map_key_t k = make_state_space_map_key(v, dt);
+    auto search = m_discrete_state_space_map->find(k);
+    if (search == m_discrete_state_space_map->end()) {
+        return false;
+    }
+
+    // discrete state space matrices Ad, Bd have been provided for speed v, sample time dt.
+    m_Ad = search->second.first;
+    m_Bd = search->second.second;
+    return true;
+}
+#endif // BICYCLE_USE_STATE_SPACE_MAP
+
+const BicycleWhipple::state_matrix_t& BicycleWhipple::Ad() const {
+    return m_Ad;
+}
+
+const BicycleWhipple::input_matrix_t& BicycleWhipple::Bd() const {
+    return m_Bd;
+}
+
+const BicycleWhipple::output_matrix_t& BicycleWhipple::Cd() const {
+    return C();
+}
+
+const BicycleWhipple::feedthrough_matrix_t& BicycleWhipple::Dd() const {
+    return D();
+}
+
+void BicycleWhipple::set_discrete_state_space() {
     m_Ad.setZero();
     m_Bd.setZero();
 
@@ -161,41 +204,6 @@ void BicycleWhipple::set_state_space() {
         }
 #endif // BICYCLE_USE_STATE_SPACE_MAP
     }
-}
-
-#if BICYCLE_USE_STATE_SPACE_MAP
-bool BicycleWhipple::discrete_state_space_lookup(real_t v, real_t dt) {
-    if (m_discrete_state_space_map == nullptr) {
-        return false;
-    }
-
-    state_space_map_key_t k = make_state_space_map_key(v, dt);
-    auto search = m_discrete_state_space_map->find(k);
-    if (search == m_discrete_state_space_map->end()) {
-        return false;
-    }
-
-    // discrete state space matrices Ad, Bd have been provided for speed v, sample time dt.
-    m_Ad = search->second.first;
-    m_Bd = search->second.second;
-    return true;
-}
-#endif // BICYCLE_USE_STATE_SPACE_MAP
-
-const BicycleWhipple::state_matrix_t& BicycleWhipple::Ad() const {
-    return m_Ad;
-}
-
-const BicycleWhipple::input_matrix_t& BicycleWhipple::Bd() const {
-    return m_Bd;
-}
-
-const BicycleWhipple::output_matrix_t& BicycleWhipple::Cd() const {
-    return C();
-}
-
-const BicycleWhipple::feedthrough_matrix_t& BicycleWhipple::Dd() const {
-    return D();
 }
 
 } // namespace model
