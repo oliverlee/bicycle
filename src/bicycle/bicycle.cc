@@ -476,6 +476,7 @@ void Bicycle::set_parameters_from_file(const char* param_file) {
     pf.close();
 
     m_M = Eigen::Map<second_order_matrix_t>(buffer.data()).transpose();
+    m_M_llt.compute(m_M);
     m_C1 = Eigen::Map<second_order_matrix_t>(buffer.data() + num_elem).transpose();
     m_K0 = Eigen::Map<second_order_matrix_t>(buffer.data() + 2*num_elem).transpose();
     m_K2 = Eigen::Map<second_order_matrix_t>(buffer.data() + 3*num_elem).transpose();
@@ -497,6 +498,7 @@ Bicycle::Bicycle(const second_order_matrix_t& M, const second_order_matrix_t& C1
     m_rr(rear_wheel_radius), m_rf(front_wheel_radius),
     m_recalculate_state_space(true),
     m_recalculate_moore_parameters(true),
+    m_M_llt(M),
     m_A(state_matrix_t::Zero()),
     m_B(input_matrix_t::Zero()),
     m_C(parameters::defaultvalue::bicycle::C),
