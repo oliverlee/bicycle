@@ -98,6 +98,8 @@ class BicycleWhipple final : public Bicycle {
         mutable boost::numeric::odeint::runge_kutta_dopri5<
             state_t, real_t, state_t, real_t,
             boost::numeric::odeint::vector_space_algebra> m_stepper_state;
+
+        void set_discrete_state_space();
 };
 
 #if BICYCLE_USE_STATE_SPACE_MAP

@@ -476,6 +476,7 @@ void Bicycle::set_parameters_from_file(const char* param_file) {
     pf.close();
 
     m_M = Eigen::Map<second_order_matrix_t>(buffer.data()).transpose();
+    m_M_llt.compute(m_M);
     m_C1 = Eigen::Map<second_order_matrix_t>(buffer.data() + num_elem).transpose();
     m_K0 = Eigen::Map<second_order_matrix_t>(buffer.data() + 2*num_elem).transpose();
     m_K2 = Eigen::Map<second_order_matrix_t>(buffer.data() + 3*num_elem).transpose();
@@ -491,20 +492,28 @@ Bicycle::Bicycle(const second_order_matrix_t& M, const second_order_matrix_t& C1
         real_t wheelbase, real_t trail, real_t steer_axis_tilt,
         real_t rear_wheel_radius, real_t front_wheel_radius,
         real_t v, real_t dt):
+    m_v(v), m_dt(dt),
     m_M(M), m_C1(C1), m_K0(K0), m_K2(K2),
     m_w(wheelbase), m_c(trail), m_lambda(steer_axis_tilt),
     m_rr(rear_wheel_radius), m_rf(front_wheel_radius),
     m_recalculate_state_space(true),
     m_recalculate_moore_parameters(true),
+    m_M_llt(M),
     m_A(state_matrix_t::Zero()),
     m_B(input_matrix_t::Zero()),
     m_C(parameters::defaultvalue::bicycle::C),
     m_D(parameters::defaultvalue::bicycle::D) {
     set_moore_parameters();
-    set_v_dt(v, dt);
+
+    // This isn't called as it calls set_state_space(), a pure virtual function,
+    // and the derived object is not yet constructed. We simply do the same thing
+    // manually. Subsequent calls to set_v_dt() will work after object construction.
+    // set_v_dt(v, dt);
+    Bicycle::set_state_space();
 }
 
 Bicycle::Bicycle(const char* param_file, real_t v, real_t dt) :
+    m_v(v), m_dt(dt),
     m_recalculate_state_space(true),
     m_recalculate_moore_parameters(true),
     m_A(state_matrix_t::Zero()),
@@ -514,7 +523,12 @@ Bicycle::Bicycle(const char* param_file, real_t v, real_t dt) :
     // set M, C1, K0, K2 matrices and w, c, lambda, rr, rf parameters from file
     set_parameters_from_file(param_file);
     set_moore_parameters();
-    set_v_dt(v, dt);
+
+    // This isn't called as it calls set_state_space(), a pure virtual function,
+    // and the derived object is not yet constructed. We simply do the same thing
+    // manually. Subsequent calls to set_v_dt() will work after object construction.
+    // set_v_dt(v, dt);
+    Bicycle::set_state_space();
 }
 
 Bicycle::Bicycle(real_t v, real_t dt) :
