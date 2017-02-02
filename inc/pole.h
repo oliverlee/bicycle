@@ -1,29 +1,43 @@
 #pragma once
 #include <complex>
-#include <type_traits>
-#include <unsupported/Eigen/MatrixFunctions>
+#include <Eigen/Core>
 
 namespace pole {
 
-using pole_t = std::complex<model::real_t>;
+using real_t = model::real_t;
+using pole_t = std::complex<real_t>;
 
-pole_t continuous_to_discrete(const pole_t& p, model::real_t dt) {
-    return std::exp(p*dt);
-}
+namespace internal {
+
+template <typename DerivedA, typename DerivedB>
+Eigen::Matrix<real_t, DerivedB::ColsAtCompileTime, DerivedB::RowsAtCompileTime>
+    place_full_rank(const Eigen::MatrixBase<DerivedA>& A,
+                    const DerivedB& qr_B,
+                    const Eigen::MatrixBase<Eigen::Matrix<pole_t, DerivedA::RowsAtCompileTime, 1>>& poles);
+
+template <typename DerivedS, typename DerivedX, typename DerivedB>
+void yt_loop(Eigen::MatrixBase<DerivedS>& S,
+             Eigen::MatrixBase<DerivedX>& X,
+             const Eigen::MatrixBase<DerivedB>& B,
+             const Eigen::MatrixBase<Eigen::Matrix<pole_t, DerivedB::RowsAtCompileTime, 1>>& poles);
+
+} // namespace internal
+
+
+pole_t continuous_to_discrete(const pole_t& p, real_t dt) { return std::exp(p*dt); }
 
 template <typename T>
-T continuous_to_discrete(const Eigen::DenseBase<T>& poles, model::real_t dt) {
-    static_assert(std::is_same<typename T::Scalar, pole_t>::value,
-            "Invalid scalar type converting poles from continuous to discrete time");
-    static_assert(
-            (T::ColsAtCompileTime == 1) || (T::RowsAtCompileTime == 1),
-            "Input must be a vector of poles");
+T continuous_to_discrete(const Eigen::DenseBase<T>& poles, real_t dt);
 
-    T discrete_poles;
-    for (unsigned int i = 0; i < poles.size(); ++i) {
-        discrete_poles(i) = continuous_to_discrete(poles(i), dt);
-    }
-    return discrete_poles;
-}
+template <typename T>
+T sort(const Eigen::DenseBase<T>& poles);
+
+template <typename DerivedA, typename DerivedB>
+Eigen::Matrix<real_t, DerivedB::ColsAtCompileTime, DerivedB::RowsAtCompileTime>
+    place(const Eigen::MatrixBase<DerivedA>& A,
+          const Eigen::MatrixBase<DerivedB>& B,
+          const Eigen::MatrixBase<Eigen::Matrix<pole_t, DerivedA::RowsAtCompileTime, 1>>& poles);
 
 } // namespace pole
+
+#include "pole.hh"

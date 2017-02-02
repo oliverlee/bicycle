@@ -123,7 +123,7 @@ typename Luenberger<T>::pole_vector_t Luenberger<T>::calculate_pole_locations(co
 
 template <typename T>
 typename Luenberger<T>::luenberger_gain_t Luenberger<T>::calculate_luenberger_gain(const pole_vector_t& poles) const {
-    throw NotImplementedException();
+    return pole::place(m_system.Ad().transpose(), m_system.Cd().transpose(), poles).transpose();
 }
 
 } // namespace observer
