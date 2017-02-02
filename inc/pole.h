@@ -12,7 +12,7 @@ pole_t continuous_to_discrete(const pole_t& p, model::real_t dt) {
 }
 
 template <typename T>
-T continuous_to_discrete(const T& poles, model::real_t dt) {
+T continuous_to_discrete(const Eigen::DenseBase<T>& poles, model::real_t dt) {
     static_assert(std::is_same<typename T::Scalar, pole_t>::value,
             "Invalid scalar type converting poles from continuous to discrete time");
     static_assert(
