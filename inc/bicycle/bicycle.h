@@ -103,7 +103,7 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         virtual void set_state_space() = 0; /* this pure virtual function is defined */
         void set_moore_parameters();
 
-        real_t solve_constraint_pitch(real_t roll_angle, real_t steer_angle, real_t guess) const;
+        real_t solve_constraint_pitch(real_t roll_angle, real_t steer_angle, real_t guess, size_t max_iterations = 3) const;
 
         // (pseudo) parameter accessors
         virtual const state_matrix_t& Ad() const override = 0;
