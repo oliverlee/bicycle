@@ -1,13 +1,7 @@
-#include <array>
 #include <cmath>
 #include <fstream>
-#include <stdexcept>
-#include <tuple>
-#include <Eigen/QR>
 #include <unsupported/Eigen/MatrixFunctions>
-#include <boost/math/tools/roots.hpp>
 #include "bicycle/whipple.h"
-#include "parameters.h"
 
 namespace {
     const model::real_t discretization_precision = Eigen::NumTraits<model::real_t>::dummy_precision();
