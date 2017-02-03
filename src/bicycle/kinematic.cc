@@ -1,5 +1,13 @@
+#include <cmath>
 #include "bicycle/kinematic.h"
 #include "constants.h"
+
+namespace {
+    template <typename E>
+    constexpr uint8_t index(E e) {
+        return static_cast<uint8_t>(e);
+    }
+} // namespace
 
 namespace model {
 BicycleKinematic::BicycleKinematic(const second_order_matrix_t& M, const second_order_matrix_t& C1,
@@ -45,13 +53,11 @@ BicycleKinematic::state_t BicycleKinematic::update_state(const BicycleKinematic:
     return next_x;
 }
 
-BicycleKinematic::full_state_t BicycleKinematic::integrate_full_state(const BicycleKinematic::full_state_t& xf, const BicycleKinematic::input_t& u, real_t t) const {
+BicycleKinematic::full_state_t BicycleKinematic::integrate_full_state(const BicycleKinematic::full_state_t& xf, const BicycleKinematic::input_t& u, real_t t, const BicycleKinematic::measurement_t& z) const {
     /*
      * As this class is already a simplification, we integrate the auxiliary state part separately, using the state at
      * the previous time. After, integration of the auxiliary state, the dynamic state is updated.
      */
-    measurement_t z = measurement_t::Zero(); // FIXME need z as an argument
-
     static constexpr auto x_index = index(full_state_index_t::x);
     static constexpr auto y_index = index(full_state_index_t::y);
     static constexpr auto rear_wheel_index = index(full_state_index_t::rear_wheel_angle);
@@ -79,8 +85,7 @@ BicycleKinematic::full_state_t BicycleKinematic::integrate_full_state(const Bicy
 }
 
 void BicycleKinematic::set_state_space() {
-    // FIXME this functionality is the same as in BicycleWhipple (well computation of the discrete state space)
-    // Maybe we can just set K here?
+    Bicycle::set_state_space();
     set_K();
 }
 
