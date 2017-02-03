@@ -14,7 +14,7 @@ template <typename DerivedA, typename DerivedB>
 Eigen::Matrix<real_t, DerivedB::ColsAtCompileTime, DerivedB::RowsAtCompileTime>
     place_full_rank(const Eigen::MatrixBase<DerivedA>& A,
                     const DerivedB& qr_B,
-                    const Eigen::MatrixBase<Eigen::Matrix<pole_t, DerivedA::RowsAtCompileTime, 1>>& poles) {
+                    const Eigen::MatrixBase<Eigen::Matrix<pole_t, DerivedA::RowsAtCompileTime, 1>>& sorted_poles) {
     static_assert(DerivedA::RowsAtCompileTime == DerivedA::ColsAtCompileTime, "A must be square");
     static_assert(DerivedA::RowsAtCompileTime == DerivedB::RowsAtCompileTime, "Row size of A and B must be equal");
 
@@ -22,21 +22,20 @@ Eigen::Matrix<real_t, DerivedB::ColsAtCompileTime, DerivedB::RowsAtCompileTime>
 
     Eigen::Matrix<real_t, n, n> diagonal_pole_matrix = Eigen::Matrix<real_t, n, n>::Zero();
     for (unsigned int j = 0; j < n; ++j) {
-        pole_t p = poles(j);
+        pole_t p = sorted_poles(j);
         diagonal_pole_matrix(j, j) = p.real();
         /*
          * If p is complex, we use a _real_ block matrix with eigenvalues identical to the conjugate pair
          * [a+bi    0] => [a -b]
          * [   0 a-bi]    [b  a]
          */
-        if (p.imag() != static_cast<real_t>(0)) {
+        if (!is_real(p)) {
             diagonal_pole_matrix(j, j + 1) = -p.imag();
             diagonal_pole_matrix(j + 1, j) = p.imag();
             diagonal_pole_matrix(j + 1, j + 1) = p.real();
 
             /* assert the next pole is the complex conjugate */
-            assert(poles(j + 1).real() == p.real());
-            assert(poles(j + 1).imag() == -p.imag());
+            assert(p == std::conj(sorted_poles(j + 1)));
             ++j;
         }
     }
@@ -76,16 +75,6 @@ T continuous_to_discrete(const Eigen::DenseBase<T>& poles, real_t dt) {
     return discrete_poles;
 }
 
-template <typename T>
-T sort(const Eigen::DenseBase<T>& poles) {
-    static_assert(std::is_same<typename T::Scalar, pole_t>::value,
-            "Invalid scalar type for converting sorting poles");
-    static_assert(T::ColsAtCompileTime == 1, "Input must be a vector of poles");
-
-    throw NotImplementedException();
-    return T::Ones();
-}
-
 template <typename DerivedA, typename DerivedB>
 Eigen::Matrix<real_t, DerivedB::ColsAtCompileTime, DerivedB::RowsAtCompileTime>
     place(const Eigen::MatrixBase<DerivedA>& A,
@@ -99,16 +88,15 @@ Eigen::Matrix<real_t, DerivedB::ColsAtCompileTime, DerivedB::RowsAtCompileTime>
     using namespace Eigen;
     static constexpr auto n = DerivedB::RowsAtCompileTime;
     static constexpr auto m = DerivedB::ColsAtCompileTime;
-    Eigen::Matrix<pole_t, n, 1> sorted_poles = sort(poles);
+    Eigen::Matrix<pole_t, n, 1> sorted_poles = poles;
+    std::sort(sorted_poles.data(), sorted_poles.data() + n, pole::internal::compare);
 
     if (m >= n) {
         const ColPivHouseholderQR<typename MatrixBase<DerivedB>::PlainObject> col_qr_B = B.colPivHouseholderQr();
         assert(col_qr_B.rank() == n); /* B is full rank */
         return -1*internal::place_full_rank(A, col_qr_B, sorted_poles);
     }
-#if !defined(NDEBUG)
     assert(B.colPivHouseholderQr().rank() == m); /* B is full rank */
-#endif
 
     /*
      * step A: QR decomposition of B, page 1132 KNV
@@ -134,15 +122,14 @@ Eigen::Matrix<real_t, DerivedB::ColsAtCompileTime, DerivedB::RowsAtCompileTime>
         const Matrix<complex_t, n, m> Sj = Qj.template rightCols<m>();
         const Matrix<complex_t, n, 1> Xj = Sj.rowwise().sum().normalized();
 
-        if (p.imag() != static_cast<real_t>(0)) {
+        if (!is_real(p)) {
             S.template block<n, m>(0, j*m) = Sj;
             S.template block<n, m>(0, (j + 1)*m) = Sj;
             X.col(j) = Xj.real();
             X.col(j) = Xj.imag();
 
             /* assert the next pole is the complex conjugate */
-            assert(sorted_poles(j + 1).real() == p.real());
-            assert(sorted_poles(j + 1).imag() == -p.imag());
+            assert(p == std::conj(sorted_poles(j + 1)));
             ++j;
         } else {
             S.template block<n, m>(0, j*m) = Sj;
@@ -160,7 +147,7 @@ Eigen::Matrix<real_t, DerivedB::ColsAtCompileTime, DerivedB::RowsAtCompileTime>
     Matrix<complex_t, n, n> Xc = X;
     for (unsigned int j = 0; j < n; ++j) {
         const complex_t p = sorted_poles(j);
-        if (p.imag() != static_cast<real_t>(0)) {
+        if(!is_real(p)) {
             static constexpr complex_t i = complex_t{static_cast<real_t>(0), static_cast<real_t>(1)};
 
             const Matrix<complex_t, n, 1> real_part = Xc.col(j);
