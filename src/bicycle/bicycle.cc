@@ -2,11 +2,10 @@
 #include <cmath>
 #include <fstream>
 #include <stdexcept>
-//#include <tuple>
 #include <type_traits>
-//#include <boost/math/tools/roots.hpp>
 #include "bicycle/bicycle.h"
 #include "parameters.h"
+#include "angle.h"
 
 namespace {
     template <typename E>
@@ -380,7 +379,8 @@ Bicycle::output_t Bicycle::normalize_output(const output_t& y) const {
         "Invalid underlying value for output index element");
 
     output_t normalized_y = y;
-    mod_two_pi_element(normalized_y, output_index_t::yaw_angle);
+    set_element(normalized_y, output_index_t::yaw_angle,
+            angle::wrap(get_element(y, output_index_t::yaw_angle)));
     mod_two_pi_element(normalized_y, output_index_t::steer_angle);
     return normalized_y;
 }
