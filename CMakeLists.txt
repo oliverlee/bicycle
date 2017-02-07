@@ -65,6 +65,7 @@ set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES
 set(BICYCLE_SOURCE
     ${BICYCLE_SOURCE_DIR}/src/bicycle/bicycle.cc
     ${BICYCLE_SOURCE_DIR}/src/bicycle/bicycle_solve_constraint_pitch.cc
+    ${BICYCLE_SOURCE_DIR}/src/bicycle/kinematic.cc
     ${BICYCLE_SOURCE_DIR}/src/bicycle/whipple.cc
     ${BICYCLE_SOURCE_DIR}/src/parameters.cc
     ${BICYCLE_SOURCE_DIR}/src/network_server.cc
