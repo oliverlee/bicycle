@@ -57,27 +57,18 @@ class BicycleWhipple final : public Bicycle {
                 );
 
         virtual state_t update_state(const state_t& x, const input_t& u = input_t::Zero(), const measurement_t& z = measurement_t::Zero()) const override;
-        virtual output_t calculate_output(const state_t& x, const input_t& u = input_t::Zero()) const override;
-        virtual full_state_t integrate_full_state(const full_state_t& xf, const input_t& u, real_t t) const override;
+        virtual full_state_t integrate_full_state(const full_state_t& xf, const input_t& u, real_t t, const measurement_t& z = measurement_t::Zero()) const override;
         virtual state_t integrate_state(const state_t& x, const input_t& u, real_t t) const;
 
         virtual void set_state_space() override;
 
 #if BICYCLE_USE_STATE_SPACE_MAP
         static constexpr state_space_map_key_t make_state_space_map_key(real_t v, real_t dt);
-        bool discrete_state_space_lookup(real_t v, real_t dt);
+        bool in_discrete_state_space_map(real_t v, real_t dt);
+        void set_discrete_state_space_from_map(real_t v, real_t dt);
 #endif // BICYCLE_USE_STATE_SPACE_MAP
 
-        // (pseudo) parameter accessors
-        virtual const state_matrix_t& Ad() const override;
-        virtual const input_matrix_t& Bd() const override;
-        virtual const output_matrix_t& Cd() const override;
-        virtual const feedthrough_matrix_t& Dd() const override;
-
     private:
-        state_matrix_t m_Ad;
-        input_matrix_t m_Bd;
-
 #if BICYCLE_USE_STATE_SPACE_MAP
         static constexpr uint32_t m_dt_key_precision = 1000;
         static constexpr int32_t m_v_key_precision = 1000000;
@@ -98,8 +89,6 @@ class BicycleWhipple final : public Bicycle {
         mutable boost::numeric::odeint::runge_kutta_dopri5<
             state_t, real_t, state_t, real_t,
             boost::numeric::odeint::vector_space_algebra> m_stepper_state;
-
-        void set_discrete_state_space();
 };
 
 #if BICYCLE_USE_STATE_SPACE_MAP

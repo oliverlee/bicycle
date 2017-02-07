@@ -1,8 +1,8 @@
 #include <array>
 #include <cmath>
 #include <fstream>
-#include <stdexcept>
 #include <type_traits>
+#include <unsupported/Eigen/MatrixFunctions>
 #include "bicycle/bicycle.h"
 #include "parameters.h"
 
@@ -41,6 +41,10 @@ namespace {
         const model::real_t modded_value = std::fmod(get_element(x, field), constants::two_pi);
         set_element(x, field, modded_value);
     }
+
+#if !defined(NDEBUG)
+    const model::real_t discretization_precision = Eigen::NumTraits<model::real_t>::dummy_precision();
+#endif
 } // namespace
 
 namespace model {
@@ -113,6 +117,11 @@ real_t Bicycle::get_input_element(const input_t& x, input_index_t field) {
 real_t Bicycle::get_output_element(const output_t& x, output_index_t field) {
     return get_element(x, field);
 }
+
+Bicycle::output_t Bicycle::calculate_output(const Bicycle::state_t& x, const Bicycle::input_t& u) const {
+    return m_C*x + m_D*u;
+}
+
 
 void Bicycle::set_v_dt(real_t v, real_t dt) {
     m_v = v;
@@ -256,6 +265,39 @@ void Bicycle::set_state_space() {
     m_A.bottomRightCorner<o, o>() = -m_M_llt.solve(m_v*m_C1);
     m_B.bottomRows<o>() = m_M.inverse();
     m_recalculate_state_space = false;
+
+    set_discrete_state_space();
+}
+
+void Bicycle::set_discrete_state_space() {
+    m_Ad.setZero();
+    m_Bd.setZero();
+
+    if (m_dt == static_cast<real_t>(0)) { // discrete time state does not change
+        m_Ad.setIdentity();
+        m_Bd.setZero();
+    } else {
+        /*
+         * The full state matrix A is singular as yaw rate, and all other
+         * states, are independent of yaw angle. As we discretize the continuous
+         * state space, this is problematic for computation of Bd since we assume
+         * that A is rarely singular.
+         * The continuous time state space is discretized using the following property:
+         *      [ A  B ]         [ Ad  Bd ]
+         * exp( [ 0  0 ] * T ) = [  0   I ]
+         */
+        using discretization_matrix_t = Eigen::Matrix<real_t, n + m, n + m>;
+        discretization_matrix_t AT = discretization_matrix_t::Zero();
+        AT.topLeftCorner<n, n>() = m_A;
+        AT.topRightCorner<n, m>() = m_B;
+        AT *= m_dt;
+
+        discretization_matrix_t T = AT.exp();
+        assert((T.bottomLeftCorner<m, n>().isZero(discretization_precision)) &&
+               (T.bottomRightCorner<m, m>().isIdentity(discretization_precision)));
+        m_Ad = T.topLeftCorner<n, n>();
+        m_Bd = T.topRightCorner<n, m>();
+    }
 }
 
 /* set d1, d2, d3 used in pitch constraint calculation */
@@ -271,6 +313,22 @@ void Bicycle::set_moore_parameters() {
  *  THIS FUNCTION IS DEFINED IN: bicycle_solve_constraint_pitch.cc
  * }
  */
+
+const Bicycle::state_matrix_t& Bicycle::Ad() const {
+    return m_Ad;
+}
+
+const Bicycle::input_matrix_t& Bicycle::Bd() const {
+    return m_Bd;
+}
+
+const Bicycle::output_matrix_t& Bicycle::Cd() const {
+    return C();
+}
+
+const Bicycle::feedthrough_matrix_t& Bicycle::Dd() const {
+    return D();
+}
 
 const Bicycle::state_matrix_t& Bicycle::A() const {
     return m_A;

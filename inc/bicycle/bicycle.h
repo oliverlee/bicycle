@@ -84,8 +84,8 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
 
         /* pure virtual state and output functions repeated */
         virtual state_t update_state(const state_t& x, const input_t& u, const measurement_t& z) const override = 0;
-        virtual output_t calculate_output(const state_t& x, const input_t& u) const override = 0;
-        virtual full_state_t integrate_full_state(const full_state_t& x, const input_t& u, real_t t) const = 0;
+        virtual full_state_t integrate_full_state(const full_state_t& x, const input_t& u, real_t t, const measurement_t& z) const = 0;
+        virtual output_t calculate_output(const state_t& x, const input_t& u = input_t::Zero()) const override final;
 
         virtual void set_v_dt(real_t v, real_t dt); /* this function _always_ recalculates state space */
         virtual void set_M(second_order_matrix_t& M, bool recalculate_state_space);
@@ -101,15 +101,16 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         void set_D(const feedthrough_matrix_t& D);
 
         virtual void set_state_space() = 0; /* this pure virtual function is defined */
+        void set_discrete_state_space();
         void set_moore_parameters();
 
-        real_t solve_constraint_pitch(real_t roll_angle, real_t steer_angle, real_t guess) const;
+        real_t solve_constraint_pitch(real_t roll_angle, real_t steer_angle, real_t guess, size_t max_iterations = 3) const;
 
         // (pseudo) parameter accessors
-        virtual const state_matrix_t& Ad() const override = 0;
-        virtual const input_matrix_t& Bd() const override = 0;
-        virtual const output_matrix_t& Cd() const override = 0;
-        virtual const feedthrough_matrix_t& Dd() const override = 0;
+        virtual const state_matrix_t& Ad() const override final;
+        virtual const input_matrix_t& Bd() const override final;
+        virtual const output_matrix_t& Cd() const override final;
+        virtual const feedthrough_matrix_t& Dd() const override final;
         const state_matrix_t& A() const;
         const input_matrix_t& B() const;
         const output_matrix_t& C() const;
@@ -158,6 +159,9 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         input_matrix_t m_B;
         output_matrix_t m_C;
         feedthrough_matrix_t m_D;
+
+        state_matrix_t m_Ad;
+        input_matrix_t m_Bd;
 
         Bicycle(const second_order_matrix_t& M, const second_order_matrix_t& C1,
                 const second_order_matrix_t& K0, const second_order_matrix_t& K2,

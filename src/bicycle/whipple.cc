@@ -1,22 +1,11 @@
-#include <array>
 #include <cmath>
-#include <fstream>
-#include <stdexcept>
-#include <tuple>
-#include <Eigen/QR>
-#include <unsupported/Eigen/MatrixFunctions>
-#include <boost/math/tools/roots.hpp>
 #include "bicycle/whipple.h"
-#include "parameters.h"
 
 namespace {
-    const model::real_t discretization_precision = Eigen::NumTraits<model::real_t>::dummy_precision();
-
     template <typename E>
     constexpr uint8_t index(E e) {
         return static_cast<uint8_t>(e);
     }
-
 } // namespace
 
 namespace model {
@@ -33,9 +22,7 @@ BicycleWhipple::BicycleWhipple(const second_order_matrix_t& M, const second_orde
 #if BICYCLE_USE_STATE_SPACE_MAP
     , m_discrete_state_space_map(discrete_state_space_map)
 #endif // BICYCLE_USE_STATE_SPACE_MAP
-    {
-    set_discrete_state_space();
-}
+    { }
 
 BicycleWhipple::BicycleWhipple(const char* param_file, real_t v, real_t dt
 #if BICYCLE_USE_STATE_SPACE_MAP
@@ -46,9 +33,7 @@ BicycleWhipple::BicycleWhipple(const char* param_file, real_t v, real_t dt
 #if BICYCLE_USE_STATE_SPACE_MAP
     , m_discrete_state_space_map(discrete_state_space_map)
 #endif // BICYCLE_USE_STATE_SPACE_MAP
-    {
-    set_discrete_state_space();
-}
+    { }
 
 BicycleWhipple::BicycleWhipple(real_t v, real_t dt
 #if BICYCLE_USE_STATE_SPACE_MAP
@@ -59,20 +44,15 @@ BicycleWhipple::BicycleWhipple(real_t v, real_t dt
 #if BICYCLE_USE_STATE_SPACE_MAP
     , m_discrete_state_space_map(discrete_state_space_map)
 #endif // BICYCLE_USE_STATE_SPACE_MAP
-    {
-    set_discrete_state_space();
-}
+    { }
 
 BicycleWhipple::state_t BicycleWhipple::update_state(const BicycleWhipple::state_t& x, const BicycleWhipple::input_t& u, const BicycleWhipple::measurement_t& z) const {
     (void)z;
     return m_Ad*x + m_Bd*u;
 }
 
-BicycleWhipple::output_t BicycleWhipple::calculate_output(const BicycleWhipple::state_t& x, const BicycleWhipple::input_t& u) const {
-    return m_C*x + m_D*u;
-}
-
-BicycleWhipple::full_state_t BicycleWhipple::integrate_full_state(const BicycleWhipple::full_state_t& xf, const BicycleWhipple::input_t& u, real_t t) const {
+BicycleWhipple::full_state_t BicycleWhipple::integrate_full_state(const BicycleWhipple::full_state_t& xf, const BicycleWhipple::input_t& u, real_t t, const BicycleWhipple::measurement_t& z) const {
+    (void)z;
     static constexpr auto x_index = index(full_state_index_t::x);
     static constexpr auto y_index = index(full_state_index_t::y);
     static constexpr auto rear_wheel_index = index(full_state_index_t::rear_wheel_angle);
@@ -126,13 +106,33 @@ void BicycleWhipple::set_state_space() {
      * is always called after setting v. This function calculates the state
      * space matrices and additionally calculates discrete time state space if
      * sampling time is nonzero.
+     *
+     * The Whipple class allows usage of a discrete-time state space lookup map.
+     * As the discrete-time state space computation will be calculated in the
+     * base class, we first check if the lookup succeeds, and if so, set m_dt
+     * to zero to skip the discrete-time computation.
+     *
+     * Should we even keep this? It seems extremely unlikely to ever be used given
+     * the time to calculate is quite small.
      */
+#if BICYCLE_USE_STATE_SPACE_MAP
+    real_t dt = static_cast<real_t>(0);
+    if (in_discrete_state_space_map(m_v, m_dt)) {
+        dt = m_dt;
+        m_dt = static_cast<real_t>(0);
+    }
+#endif // BICYCLE_USE_STATE_SPACE_MAP
     Bicycle::set_state_space();
-    set_discrete_state_space();
+#if BICYCLE_USE_STATE_SPACE_MAP
+    if (dt != static_cast<real_t>(0)) {
+        m_dt = dt;
+        set_discrete_state_space_from_map(m_v, m_dt);
+    }
+#endif // BICYCLE_USE_STATE_SPACE_MAP
 }
 
 #if BICYCLE_USE_STATE_SPACE_MAP
-bool BicycleWhipple::discrete_state_space_lookup(real_t v, real_t dt) {
+bool BicycleWhipple::in_discrete_state_space_map(real_t v, real_t dt) {
     if (m_discrete_state_space_map == nullptr) {
         return false;
     }
@@ -143,67 +143,21 @@ bool BicycleWhipple::discrete_state_space_lookup(real_t v, real_t dt) {
         return false;
     }
 
-    // discrete state space matrices Ad, Bd have been provided for speed v, sample time dt.
-    m_Ad = search->second.first;
-    m_Bd = search->second.second;
     return true;
 }
-#endif // BICYCLE_USE_STATE_SPACE_MAP
 
-const BicycleWhipple::state_matrix_t& BicycleWhipple::Ad() const {
-    return m_Ad;
-}
-
-const BicycleWhipple::input_matrix_t& BicycleWhipple::Bd() const {
-    return m_Bd;
-}
-
-const BicycleWhipple::output_matrix_t& BicycleWhipple::Cd() const {
-    return C();
-}
-
-const BicycleWhipple::feedthrough_matrix_t& BicycleWhipple::Dd() const {
-    return D();
-}
-
-void BicycleWhipple::set_discrete_state_space() {
-    m_Ad.setZero();
-    m_Bd.setZero();
-
-    if (m_dt == 0.0) { // discrete time state does not change
-        m_Ad.setIdentity();
-        m_Bd.setZero();
-    } else {
-#if BICYCLE_USE_STATE_SPACE_MAP
-        if (!discrete_state_space_lookup(m_v, m_dt)) {
-#endif // BICYCLE_USE_STATE_SPACE_MAP
-            /*
-             * The full state matrix A is singular as yaw rate, and all other
-             * states, are independent of yaw angle. As we discretize the continuous
-             * state space, this is problematic for computation of Bd since we assume
-             * that A is rarely singular.
-             * The continuous time state space is discretized using the following property:
-             *      [ A  B ]         [ Ad  Bd ]
-             * exp( [ 0  0 ] * T ) = [  0   I ]
-             */
-            using discretization_matrix_t = Eigen::Matrix<real_t, n + m, n + m>;
-            discretization_matrix_t AT = discretization_matrix_t::Zero();
-            AT.topLeftCorner<n, n>() = m_A;
-            AT.topRightCorner<n, m>() = m_B;
-            AT *= m_dt;
-
-            discretization_matrix_t T = AT.exp();
-            if (!T.bottomLeftCorner<m, n>().isZero(discretization_precision) ||
-                !T.bottomRightCorner<m, m>().isIdentity(discretization_precision)) {
-                std::cout << "Warning: Discretization validation failed with v = " << m_v <<
-                    ", dt = " << m_dt << ". Computation of Ad and Bd may be inaccurate.\n";
-            }
-            m_Ad = T.topLeftCorner<n, n>();
-            m_Bd = T.topRightCorner<n, m>();
-#if BICYCLE_USE_STATE_SPACE_MAP
+void BicycleWhipple::set_discrete_state_space_from_map(real_t v, real_t dt) {
+    if (m_discrete_state_space_map != nullptr) {
+        state_space_map_key_t k = make_state_space_map_key(v, dt);
+        auto search = m_discrete_state_space_map->find(k);
+        if (search != m_discrete_state_space_map->end()) {
+            // discrete state space matrices Ad, Bd have been provided for speed v, sample time dt.
+            m_Ad = search->second.first;
+            m_Bd = search->second.second;
+            return;
         }
-#endif // BICYCLE_USE_STATE_SPACE_MAP
     }
 }
+#endif // BICYCLE_USE_STATE_SPACE_MAP
 
 } // namespace model
