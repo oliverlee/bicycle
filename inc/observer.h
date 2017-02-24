@@ -17,6 +17,7 @@ class Observer : private ObserverBase {
     static_assert(std::is_base_of<model::DiscreteLinearBase, T>::value, "Invalid template parameter type for Observer");
 
     public:
+        using model_t = T;
         using state_t = typename T::state_t;
         using input_t = typename T::input_t;
         using measurement_t = typename T::output_t;
