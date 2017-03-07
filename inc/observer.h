@@ -25,17 +25,17 @@ class Observer : private ObserverBase {
         virtual void reset() = 0;
         virtual void update_state(const input_t& u, const measurement_t& z) = 0;
 
-        virtual void set_state(const state_t& x) { m_x = m_system.normalize_state(x); }
+        virtual void set_state(const state_t& x) { m_x = m_model.normalize_state(x); }
 
-        virtual Model& system() const { return m_system; }
-        virtual real_t dt() const { return m_system.dt(); }
+        virtual Model& model() const { return m_model; }
+        virtual real_t dt() const { return m_model.dt(); }
         virtual const state_t& state() const { return m_x; }
 
     protected:
-        Model& m_system;
+        Model& m_model;
         state_t m_x;
 
-        Observer(Model& system, const state_t& x) : m_system(system), m_x(x) { }
+        Observer(Model& model, const state_t& x) : m_model(model), m_x(x) { }
 };
 
 } // namespace observer

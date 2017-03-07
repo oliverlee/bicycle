@@ -22,14 +22,14 @@ class Oracle final : public Observer<Model> {
         using input_t = typename Model::input_t;
         using measurement_t = typename Model::output_t;
 
-        Oracle(Model& system);
-        Oracle(Model& system, const state_t& x0);
+        Oracle(Model& model);
+        Oracle(Model& model, const state_t& x0);
 
         virtual void reset() override;
         virtual void update_state(const input_t& u, const measurement_t& z) override;
 
     private:
-        using Observer<Model>::m_system;
+        using Observer<Model>::m_model;
         using Observer<Model>::m_x;
 };
 

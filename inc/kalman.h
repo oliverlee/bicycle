@@ -26,9 +26,9 @@ class Kalman final : public Observer<Model> {
         using process_noise_covariance_t = typename Model::state_matrix_t;
         using measurement_noise_covariance_t = typename Eigen::Matrix<real_t, Model::l, Model::l>;
 
-        Kalman(Model& system);
-        Kalman(Model& system, const state_t& x0);
-        Kalman(Model& system, const state_t& x0,
+        Kalman(Model& model);
+        Kalman(Model& model, const state_t& x0);
+        Kalman(Model& model, const state_t& x0,
                 const process_noise_covariance_t& Q,
                 const measurement_noise_covariance_t& R,
                 const error_covariance_t& P0);
@@ -57,7 +57,7 @@ class Kalman final : public Observer<Model> {
         const measurement_noise_covariance_t& R() const;
 
     private:
-        using Observer<Model>::m_system;
+        using Observer<Model>::m_model;
         using Observer<Model>::m_x;
         kalman_gain_t m_K;
         error_covariance_t m_P;
