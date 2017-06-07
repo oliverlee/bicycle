@@ -22,7 +22,7 @@ real_t Bicycle::solve_constraint_pitch(real_t roll, real_t steer, real_t guess, 
     static constexpr int digits = std::numeric_limits<real_t>::digits*2/3;
     static constexpr real_t two = static_cast<real_t>(2.0);
     static constexpr real_t one_five = static_cast<real_t>(1.5);
-    static constexpr real_t min = -constants::pi/2;
+    static constexpr real_t min = static_cast<real_t>(0.0);
     static constexpr real_t max = constants::pi/2;
     boost::uintmax_t max_it = max_iterations;
 
