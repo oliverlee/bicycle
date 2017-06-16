@@ -132,7 +132,7 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
 
         // utility class static member functions
         virtual state_t normalize_state(const state_t& x) const override final;
-        virtual output_t normalize_output(const output_t& y) const override final;
+        virtual output_t normalize_output(const output_t& y) const override;
         auxiliary_state_t normalize_auxiliary_state(const auxiliary_state_t& x_aux) const;
 
     protected:

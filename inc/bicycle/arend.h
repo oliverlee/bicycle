@@ -9,7 +9,7 @@ class BicycleArend final : public Bicycle {
     public:
         enum class output_index_t: uint8_t {
             steer_angle = 0,
-            steer_rate= 0,
+            steer_rate,
             number_of_types
         };
 
@@ -25,6 +25,11 @@ class BicycleArend final : public Bicycle {
         virtual full_state_t integrate_full_state(const full_state_t& xf, const input_t& u, real_t t, const measurement_t& z) const override;
 
         virtual void set_state_space() override;
+
+        // define non-static output element set and get functions due to new output_index_t definition
+        void set_output_element(output_t& x, output_index_t field, real_t value);
+        real_t get_output_element(const output_t& x, output_index_t field);
+        virtual output_t normalize_output(const output_t& y) const override;
 
     private:
         /*

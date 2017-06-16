@@ -30,8 +30,8 @@ BicycleArend::BicycleArend(real_t v, real_t dt) :
 }
 
 BicycleArend::state_t BicycleArend::update_state(const BicycleArend::state_t& x, const BicycleArend::input_t& u, const BicycleArend::measurement_t& z) const {
-    full_state_t xout = integrate_full_state(make_full_state(auxiliary_state_t::Zero(), x), u, z);
-    return get_state_part(xf);
+    full_state_t xout = integrate_full_state(make_full_state(auxiliary_state_t::Zero(), x), u, m_dt, z);
+    return get_state_part(xout);
 }
 
 BicycleArend::full_state_t BicycleArend::integrate_full_state(const BicycleArend::full_state_t& xf, const BicycleArend::input_t& u, real_t t, const BicycleArend::measurement_t& z) const {
@@ -88,12 +88,13 @@ BicycleArend::full_state_t BicycleArend::integrate_full_state(const BicycleArend
     const real_t v = m_v;
     const real_t rr = m_rr;
 
-    const real_t steer_angle_measurement = get_output_element(z, output_index_t::steer_angle);
-    const real_t steer_rate_measurement = get_output_element(z, output_index_t::steer_rate);
+    const real_t steer_angle_measurement = z[index(output_index_t::steer_angle)];
+    const real_t steer_rate_measurement = z[index(output_index_t::steer_rate)];
 
     full_state_t xout = xf;
 
-    m_stepper.do_step([&A, M_00, C_01, K_01, C_00, K_00, v, rr](
+    m_stepper.do_step([&A, M_00, C_01, K_01, C_00, K_00, v, rr,
+                       steer_angle_measurement, steer_rate_measurement](
                 const full_state_t& x, full_state_t& dxdt, const real_t t) -> void {
             (void)t; // system is time-independent;
 
@@ -109,9 +110,9 @@ BicycleArend::full_state_t BicycleArend::integrate_full_state(const BicycleArend
             dxdt[roll_index] = x[roll_rate_index];
             dxdt[steer_index] = 0; // disable steer angle integration
             dxdt[roll_rate_index] = -(C_01*steer_rate_measurement +
-                                      K_01*steer_angle_measuremnt +
+                                      K_01*steer_angle_measurement +
                                       C_00*x[roll_rate_index] +
-                                      K_00*x[roll_angle_index])/M_00;
+                                      K_00*x[roll_index])/M_00;
             dxdt[steer_rate_index] = 0; // disable steer rate integration
             }, xout, static_cast<real_t>(0), t); // newly obtained state written in place
     return xout;
@@ -121,6 +122,29 @@ void BicycleArend::set_state_space() {
     Bicycle::set_state_space();
     set_K();
 }
+
+void BicycleArend::set_output_element(output_t& x, output_index_t field, real_t value) {
+    x[index(field)] = value;
+}
+
+real_t BicycleArend::get_output_element(const output_t& x, output_index_t field) {
+    return x[index(field)];
+}
+
+BicycleArend::output_t BicycleArend::normalize_output(const output_t& y) const {
+    static_assert(index(output_index_t::steer_angle) == 0,
+        "Invalid underlying value for output index element");
+    static_assert(index(output_index_t::steer_rate) == 1,
+        "Invalid underlying value for output index element");
+    static_assert(index(output_index_t::number_of_types) == 2,
+        "Invalid underlying value for output index element");
+
+    output_t normalized_y = y;
+    const real_t steer = std::fmod(y[index(output_index_t::steer_angle)], constants::two_pi);
+    normalized_y[index(output_index_t::steer_angle)] = steer;
+    return normalized_y;
+}
+
 
 void BicycleArend::set_K() {
     m_K = constants::g*m_K0 + m_v*m_v*m_K2;
