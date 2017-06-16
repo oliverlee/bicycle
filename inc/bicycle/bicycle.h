@@ -2,6 +2,7 @@
 #include <Eigen/Core>
 #include <Eigen/Cholesky>
 #include "discrete_linear.h"
+#include <type_traits>
 
 namespace model {
 
@@ -20,7 +21,19 @@ namespace model {
  * index access.
  */
 
+enum class output_state_index_t: uint8_t {
+    yaw_angle = 0,
+    steer_angle,
+    number_of_types
+};
+
+template <typename OutputIndexEnum = output_state_index_t>
 class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
+
+static_assert(std::is_enum<OutputIndexEnum>::value, "Invalid OutputIndexEnum type");
+static_assert(std::is_same<uint8_t, typename std::underlying_type<OutputIndexEnum>::type>::value,
+        "Invalid OutputIndexEnum type");
+
     public:
         static constexpr unsigned int p = 4;
         using auxiliary_state_t = Eigen::Matrix<real_t, p, 1>;
@@ -40,11 +53,7 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
             steer_rate,
             number_of_types
         };
-        enum class output_index_t: uint8_t {
-            yaw_angle = 0,
-            steer_angle,
-            number_of_types
-        };
+        using output_index_t = OutputIndexEnum;
         enum class auxiliary_state_index_t: uint8_t {
             x = 0,
             y,
@@ -174,3 +183,5 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
 }; // class Bicycle
 
 } // namespace model
+
+#include "bicycle/bicycle.hh"
