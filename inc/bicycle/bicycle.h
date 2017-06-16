@@ -1,7 +1,7 @@
 #pragma once
 #include <Eigen/Core>
 #include <Eigen/Cholesky>
-#include "discrete_linear.h"
+#include "bicycle/base.h"
 #include <type_traits>
 
 namespace model {
@@ -28,7 +28,7 @@ enum class output_state_index_t: uint8_t {
 };
 
 template <typename OutputIndexEnum = output_state_index_t>
-class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
+class Bicycle : public BicycleBase {
 
 static_assert(std::is_enum<OutputIndexEnum>::value, "Invalid OutputIndexEnum type");
 static_assert(std::is_same<uint8_t, typename std::underlying_type<OutputIndexEnum>::type>::value,

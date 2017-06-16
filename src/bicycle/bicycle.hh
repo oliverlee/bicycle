@@ -5,48 +5,45 @@
 #include <unsupported/Eigen/MatrixFunctions>
 #include "parameters.h"
 
-namespace {
+namespace model {
     template <typename E>
     constexpr typename std::underlying_type<E>::type index(E e) {
         return static_cast<typename std::underlying_type<E>::type>(e);
     }
 
     template <typename OutputIndexEnum, typename T, typename I>
-    constexpr void set_element(T& x, I field, model::real_t value) {
+    constexpr void set_element(T& x, I field, real_t value) {
         static_assert(
-                (std::is_same<T, typename model::Bicycle<OutputIndexEnum>::state_t>::value && std::is_same<I, typename model::Bicycle<OutputIndexEnum>::state_index_t>::value) ||
-                (std::is_same<T, typename model::Bicycle<OutputIndexEnum>::auxiliary_state_t>::value && std::is_same<I, typename model::Bicycle<OutputIndexEnum>::auxiliary_state_index_t>::value) ||
-                (std::is_same<T, typename model::Bicycle<OutputIndexEnum>::full_state_t>::value && std::is_same<I, typename model::Bicycle<OutputIndexEnum>::full_state_index_t>::value) ||
-                (std::is_same<T, typename model::Bicycle<OutputIndexEnum>::input_t>::value && std::is_same<I, typename model::Bicycle<OutputIndexEnum>::input_index_t>::value) ||
-                (std::is_same<T, typename model::Bicycle<OutputIndexEnum>::output_t>::value && std::is_same<I, typename model::Bicycle<OutputIndexEnum>::output_index_t>::value),
+                (std::is_same<T, typename Bicycle<OutputIndexEnum>::state_t>::value && std::is_same<I, typename Bicycle<OutputIndexEnum>::state_index_t>::value) ||
+                (std::is_same<T, typename Bicycle<OutputIndexEnum>::auxiliary_state_t>::value && std::is_same<I, typename Bicycle<OutputIndexEnum>::auxiliary_state_index_t>::value) ||
+                (std::is_same<T, typename Bicycle<OutputIndexEnum>::full_state_t>::value && std::is_same<I, typename Bicycle<OutputIndexEnum>::full_state_index_t>::value) ||
+                (std::is_same<T, typename Bicycle<OutputIndexEnum>::input_t>::value && std::is_same<I, typename Bicycle<OutputIndexEnum>::input_index_t>::value) ||
+                (std::is_same<T, typename Bicycle<OutputIndexEnum>::output_t>::value && std::is_same<I, typename Bicycle<OutputIndexEnum>::output_index_t>::value),
                 "Invalid index type for given state type.");
         x[index(field)] = value;
     }
 
     template <typename OutputIndexEnum, typename T, typename I>
-    constexpr model::real_t get_element(const T& x, I field) {
+    constexpr real_t get_element(const T& x, I field) {
         static_assert(
-                (std::is_same<T, typename model::Bicycle<OutputIndexEnum>::state_t>::value && std::is_same<I, typename model::Bicycle<OutputIndexEnum>::state_index_t>::value) ||
-                (std::is_same<T, typename model::Bicycle<OutputIndexEnum>::auxiliary_state_t>::value && std::is_same<I, typename model::Bicycle<OutputIndexEnum>::auxiliary_state_index_t>::value) ||
-                (std::is_same<T, typename model::Bicycle<OutputIndexEnum>::full_state_t>::value && std::is_same<I, typename model::Bicycle<OutputIndexEnum>::full_state_index_t>::value) ||
-                (std::is_same<T, typename model::Bicycle<OutputIndexEnum>::input_t>::value && std::is_same<I, typename model::Bicycle<OutputIndexEnum>::input_index_t>::value) ||
-                (std::is_same<T, typename model::Bicycle<OutputIndexEnum>::output_t>::value && std::is_same<I, typename model::Bicycle<OutputIndexEnum>::output_index_t>::value),
+                (std::is_same<T, typename Bicycle<OutputIndexEnum>::state_t>::value && std::is_same<I, typename Bicycle<OutputIndexEnum>::state_index_t>::value) ||
+                (std::is_same<T, typename Bicycle<OutputIndexEnum>::auxiliary_state_t>::value && std::is_same<I, typename Bicycle<OutputIndexEnum>::auxiliary_state_index_t>::value) ||
+                (std::is_same<T, typename Bicycle<OutputIndexEnum>::full_state_t>::value && std::is_same<I, typename Bicycle<OutputIndexEnum>::full_state_index_t>::value) ||
+                (std::is_same<T, typename Bicycle<OutputIndexEnum>::input_t>::value && std::is_same<I, typename Bicycle<OutputIndexEnum>::input_index_t>::value) ||
+                (std::is_same<T, typename Bicycle<OutputIndexEnum>::output_t>::value && std::is_same<I, typename Bicycle<OutputIndexEnum>::output_index_t>::value),
                 "Invalid index type for given state type.");
         return x[index(field)];
     }
 
     template <typename OutputIndexEnum, typename T, typename I>
     constexpr void mod_two_pi_element(T& x, I field) {
-        const model::real_t modded_value = std::fmod(get_element<OutputIndexEnum>(x, field), constants::two_pi);
+        const real_t modded_value = std::fmod(get_element<OutputIndexEnum>(x, field), constants::two_pi);
         set_element<OutputIndexEnum>(x, field, modded_value);
     }
 
 #if !defined(NDEBUG)
-    const model::real_t discretization_precision = Eigen::NumTraits<model::real_t>::dummy_precision();
+    const real_t discretization_precision = Eigen::NumTraits<real_t>::dummy_precision();
 #endif
-} // namespace
-
-namespace model {
 
 template <typename OutputIndexEnum>
 bool Bicycle<OutputIndexEnum>::is_auxiliary_state_field(full_state_index_t field) {
@@ -72,52 +69,52 @@ typename Bicycle<OutputIndexEnum>::state_t Bicycle<OutputIndexEnum>::get_state_p
 
 template <typename OutputIndexEnum>
 void Bicycle<OutputIndexEnum>::set_state_element(state_t& x, state_index_t field, real_t value) {
-    set_element(x, field, value);
+    set_element<OutputIndexEnum>(x, field, value);
 }
 
 template <typename OutputIndexEnum>
 void Bicycle<OutputIndexEnum>::set_auxiliary_state_element(auxiliary_state_t& x, auxiliary_state_index_t field, real_t value) {
-    set_element(x, field, value);
+    set_element<OutputIndexEnum>(x, field, value);
 }
 
 template <typename OutputIndexEnum>
 void Bicycle<OutputIndexEnum>::set_full_state_element(full_state_t& x, full_state_index_t field, real_t value) {
-    set_element(x, field, value);
+    set_element<OutputIndexEnum>(x, field, value);
 }
 
 template <typename OutputIndexEnum>
 void Bicycle<OutputIndexEnum>::set_input_element(input_t& x, input_index_t field, real_t value) {
-    set_element(x, field, value);
+    set_element<OutputIndexEnum>(x, field, value);
 }
 
 template <typename OutputIndexEnum>
 void Bicycle<OutputIndexEnum>::set_output_element(output_t& x, output_index_t field, real_t value) {
-    set_element(x, field, value);
+    set_element<OutputIndexEnum>(x, field, value);
 }
 
 template <typename OutputIndexEnum>
 real_t Bicycle<OutputIndexEnum>::get_state_element(const state_t& x, state_index_t field) {
-    return get_element(x, field);
+    return get_element<OutputIndexEnum>(x, field);
 }
 
 template <typename OutputIndexEnum>
 real_t Bicycle<OutputIndexEnum>::get_auxiliary_state_element(const auxiliary_state_t& x, auxiliary_state_index_t field) {
-    return get_element(x, field);
+    return get_element<OutputIndexEnum>(x, field);
 }
 
 template <typename OutputIndexEnum>
 real_t Bicycle<OutputIndexEnum>::get_full_state_element(const full_state_t& x, full_state_index_t field) {
-    return get_element(x, field);
+    return get_element<OutputIndexEnum>(x, field);
 }
 
 template <typename OutputIndexEnum>
 real_t Bicycle<OutputIndexEnum>::get_input_element(const input_t& x, input_index_t field) {
-    return get_element(x, field);
+    return get_element<OutputIndexEnum>(x, field);
 }
 
 template <typename OutputIndexEnum>
 real_t Bicycle<OutputIndexEnum>::get_output_element(const output_t& x, output_index_t field) {
-    return get_element(x, field);
+    return get_element<OutputIndexEnum>(x, field);
 }
 
 template <typename OutputIndexEnum>
@@ -462,9 +459,9 @@ typename Bicycle<OutputIndexEnum>::state_t Bicycle<OutputIndexEnum>::normalize_s
         "Invalid underlying value for state index element");
 
     state_t normalized_x = x;
-    mod_two_pi_element(normalized_x, state_index_t::yaw_angle);
-    mod_two_pi_element(normalized_x, state_index_t::roll_angle);
-    mod_two_pi_element(normalized_x, state_index_t::steer_angle);
+    mod_two_pi_element<OutputIndexEnum>(normalized_x, state_index_t::yaw_angle);
+    mod_two_pi_element<OutputIndexEnum>(normalized_x, state_index_t::roll_angle);
+    mod_two_pi_element<OutputIndexEnum>(normalized_x, state_index_t::steer_angle);
     return normalized_x;
 }
 
@@ -490,6 +487,10 @@ typename Bicycle<>::output_t Bicycle<>::normalize_output(const output_t& y) cons
     mod_two_pi_element<output_index_t>(normalized_y, output_index_t::steer_angle);
     return normalized_y;
 }
+template <typename OutputIndexEnum>
+typename Bicycle<OutputIndexEnum>::output_t Bicycle<OutputIndexEnum>::normalize_output(const output_t& y) const {
+    return y;
+}
 
 template <typename OutputIndexEnum>
 typename Bicycle<OutputIndexEnum>::auxiliary_state_t Bicycle<OutputIndexEnum>::normalize_auxiliary_state(const auxiliary_state_t& x_aux) const {
@@ -505,8 +506,8 @@ typename Bicycle<OutputIndexEnum>::auxiliary_state_t Bicycle<OutputIndexEnum>::n
         "Invalid underlying value for auxiliary state index element");
 
     auxiliary_state_t normalized_x_aux = x_aux;
-    mod_two_pi_element(normalized_x_aux, auxiliary_state_index_t::rear_wheel_angle);
-    mod_two_pi_element(normalized_x_aux, auxiliary_state_index_t::pitch_angle);
+    mod_two_pi_element<OutputIndexEnum>(normalized_x_aux, auxiliary_state_index_t::rear_wheel_angle);
+    mod_two_pi_element<OutputIndexEnum>(normalized_x_aux, auxiliary_state_index_t::pitch_angle);
     return normalized_x_aux;
 }
 
@@ -593,6 +594,7 @@ Bicycle<OutputIndexEnum>::Bicycle(const char* param_file, real_t v, real_t dt) :
     m_C(1, index(Bicycle<OutputIndexEnum>::output_index_t::steer_angle)) = 1;
 }
 
+#include "parameters.h"
 template <typename OutputIndexEnum>
 Bicycle<OutputIndexEnum>::Bicycle(real_t v, real_t dt) :
     Bicycle(parameters::benchmark::M, parameters::benchmark::C1,
