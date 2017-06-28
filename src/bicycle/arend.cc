@@ -115,6 +115,10 @@ BicycleArend::full_state_t BicycleArend::integrate_full_state(const BicycleArend
                                       K_00*x[roll_index])/M_00;
             dxdt[steer_rate_index] = 0; // disable steer rate integration
             }, xout, static_cast<real_t>(0), t); // newly obtained state written in place
+
+    // set steer angle and rate to measured values
+    xout[index(full_state_index_t::steer_angle)] = steer_angle_measurement;
+    xout[index(full_state_index_t::steer_rate)] = steer_rate_measurement;
     return xout;
 }
 
