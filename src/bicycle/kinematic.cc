@@ -38,12 +38,19 @@ BicycleKinematic::state_t BicycleKinematic::update_state(const BicycleKinematic:
      *
      */
     (void)u;
-    const real_t yaw_angle_measurement = get_output_element(z, output_index_t::yaw_angle);
     const real_t steer_angle_measurement = get_output_element(z, output_index_t::steer_angle);
+
+    static constexpr auto yaw_index_A = index(state_index_t::yaw_angle);
+    static constexpr auto steer_index_A = index(state_index_t::steer_angle);
+    static constexpr auto steer_rate_index_A = index(state_index_t::steer_rate);
+    const real_t yaw_rate = m_A(yaw_index_A, steer_index_A)*get_state_element(x, state_index_t::steer_angle) +
+                            m_A(yaw_index_A, steer_rate_index_A)*get_state_element(x, state_index_t::steer_rate);
+    const real_t yaw_angle = get_output_element(z, output_index_t::yaw_angle);
     const real_t next_roll = -m_K(0, 1)/m_K(0, 0) * steer_angle_measurement;
 
+
     state_t next_x = state_t::Zero();
-    set_state_element(next_x, state_index_t::yaw_angle, yaw_angle_measurement);
+    set_state_element(next_x, state_index_t::yaw_angle, yaw_rate*m_dt + yaw_angle);
     set_state_element(next_x, state_index_t::steer_rate,
             (steer_angle_measurement - get_state_element(x, state_index_t::steer_angle))/m_dt);
     set_state_element(next_x, state_index_t::roll_rate,
