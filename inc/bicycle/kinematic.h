@@ -29,7 +29,7 @@ class BicycleKinematic final : public Bicycle {
          * state change of the stepper.
          */
         mutable boost::numeric::odeint::runge_kutta_dopri5<
-            auxiliary_state_t, real_t, auxiliary_state_t, real_t,
+            full_state_t, real_t, full_state_t, real_t,
             boost::numeric::odeint::vector_space_algebra> m_stepper;
         second_order_matrix_t m_K;
 

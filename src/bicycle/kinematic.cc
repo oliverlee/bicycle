@@ -38,23 +38,20 @@ BicycleKinematic::state_t BicycleKinematic::update_state(const BicycleKinematic:
      *
      */
     (void)u;
+    (void)x;
     const real_t steer_angle_measurement = get_output_element(z, output_index_t::steer_angle);
+    const real_t yaw_angle_measurement = get_output_element(z, output_index_t::yaw_angle);
 
-    static constexpr auto yaw_index_A = index(state_index_t::yaw_angle);
-    static constexpr auto steer_index_A = index(state_index_t::steer_angle);
-    static constexpr auto steer_rate_index_A = index(state_index_t::steer_rate);
-    const real_t yaw_rate = m_A(yaw_index_A, steer_index_A)*get_state_element(x, state_index_t::steer_angle) +
-                            m_A(yaw_index_A, steer_rate_index_A)*get_state_element(x, state_index_t::steer_rate);
-    const real_t yaw_angle = get_output_element(z, output_index_t::yaw_angle);
+    //static constexpr auto yaw_index_A = index(state_index_t::yaw_angle);
+    //static constexpr auto steer_index_A = index(state_index_t::steer_angle);
     const real_t next_roll = -m_K(0, 1)/m_K(0, 0) * steer_angle_measurement;
 
-
     state_t next_x = state_t::Zero();
-    set_state_element(next_x, state_index_t::yaw_angle, yaw_rate*m_dt + yaw_angle);
-    set_state_element(next_x, state_index_t::steer_rate,
-            (steer_angle_measurement - get_state_element(x, state_index_t::steer_angle))/m_dt);
-    set_state_element(next_x, state_index_t::roll_rate,
-            (next_roll - get_state_element(x, state_index_t::roll_angle))/m_dt);
+    // FIXME: Don't update yaw because it "looks wrong".
+    // steer rate is not used in this simplified update of yaw rate
+    //set_state_element(next_x, state_index_t::yaw_angle,
+    //        (m_Ad(yaw_index_A, yaw_index_A)*yaw_angle_measurement +
+    //         m_Ad(yaw_index_A, steer_index_A)*steer_angle_measurement));
     set_state_element(next_x, state_index_t::steer_angle, steer_angle_measurement);
     set_state_element(next_x, state_index_t::roll_angle, next_roll);
     return next_x;
@@ -65,30 +62,39 @@ BicycleKinematic::full_state_t BicycleKinematic::integrate_full_state(const Bicy
      * As this class is already a simplification, we integrate the auxiliary state part separately, using the state at
      * the previous time. After, integration of the auxiliary state, the dynamic state is updated.
      */
+    const real_t steer_angle_measurement = get_output_element(z, output_index_t::steer_angle);
+    const real_t yaw_angle_measurement = get_output_element(z, output_index_t::yaw_angle);
+
     static constexpr auto x_index = index(full_state_index_t::x);
     static constexpr auto y_index = index(full_state_index_t::y);
     static constexpr auto rear_wheel_index = index(full_state_index_t::rear_wheel_angle);
     static constexpr auto pitch_index = index(full_state_index_t::pitch_angle);
+    static constexpr auto yaw_index = index(full_state_index_t::yaw_angle);
 
     const real_t v = m_v;
     const real_t rr = m_rr;
-    const real_t yaw_angle = get_full_state_element(xf, full_state_index_t::yaw_angle);
+    const state_matrix_t& A = m_A;
 
-    auxiliary_state_t x_aux_out = get_auxiliary_state_part(xf);
-
-    m_stepper.do_step([v, rr, yaw_angle](const auxiliary_state_t& x, auxiliary_state_t& dxdt, const real_t t) -> void {
+    full_state_t xout = xf;
+    // this model ignores roll rate and steer rate
+    set_full_state_element(xout, full_state_index_t::roll_rate, static_cast<real_t>(0));
+    set_full_state_element(xout, full_state_index_t::steer_rate, static_cast<real_t>(0));
+    m_stepper.do_step([&A, &u, v, rr](const full_state_t& x, full_state_t& dxdt, const real_t t) -> void {
             (void)t; // system is time-independent;
-            (void)x;
 
-            // auxiliary state fields only
-            dxdt[x_index] = v*std::cos(yaw_angle);
-            dxdt[y_index] = v*std::sin(yaw_angle);
+            dxdt[x_index] = v*std::cos(x[yaw_index]);
+            dxdt[y_index] = v*std::sin(x[yaw_index]);
             dxdt[rear_wheel_index] = -v/rr;
             dxdt[pitch_index] = 0; // pitch angle is not integrated and must be obtained using solve_pitch_constraint()
-            }, x_aux_out, static_cast<real_t>(0), t);
+            dxdt.tail<n>() = A*x.tail<n>();
+            }, xout, static_cast<real_t>(0), t); // newly obtained state written in place
 
-    const state_t x_out = update_state(get_state_part(xf), u, z);
-    return make_full_state(x_aux_out, x_out);
+    const real_t next_roll = -m_K(0, 1)/m_K(0, 0) * steer_angle_measurement;
+    set_full_state_element(xout, full_state_index_t::roll_angle, next_roll);
+    set_full_state_element(xout, full_state_index_t::steer_angle, steer_angle_measurement);
+    set_full_state_element(xout, full_state_index_t::roll_rate, static_cast<real_t>(0));
+    set_full_state_element(xout, full_state_index_t::steer_rate, static_cast<real_t>(0));
+    return xout;
 }
 
 void BicycleKinematic::set_state_space() {
