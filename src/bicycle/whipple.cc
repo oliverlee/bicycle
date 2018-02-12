@@ -27,7 +27,13 @@ BicycleWhipple::BicycleWhipple(real_t v, real_t dt) :
 
 BicycleWhipple::state_t BicycleWhipple::update_state(const BicycleWhipple::state_t& x, const BicycleWhipple::input_t& u, const BicycleWhipple::measurement_t& z) const {
     (void)z;
+#if !defined(BICYCLE_NO_DISCRETIZATION)
+    // This simply calls integrate state with the integration time set to m_dt
+    // if discretization has been disabled.
+    return integrate_state(x, u, m_dt);
+#else
     return m_Ad*x + m_Bd*u;
+#endif
 }
 
 BicycleWhipple::full_state_t BicycleWhipple::integrate_full_state(const BicycleWhipple::full_state_t& xf, const BicycleWhipple::input_t& u, real_t t, const BicycleWhipple::measurement_t& z) const {
