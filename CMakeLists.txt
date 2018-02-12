@@ -78,8 +78,12 @@ option(BICYCLE_BUILD_TESTS "Build tests." ON)
 option(BICYCLE_BUILD_TOOLS "Build tools." ON)
 option(BICYCLE_BUILD_EXAMPLES "Build examples." ON)
 option(BICYCLE_USE_DOUBLE_PRECISION_REAL "Use double precision for real types." ON)
+option(BICYCLE_NO_DISCRETIZATION "Do not calculate state space discretization." OFF)
 
 add_definitions("-DBICYCLE_USE_DOUBLE_PRECISION_REAL=${BICYCLE_USE_DOUBLE_PRECISION_REAL}")
+if(BICYCLE_NO_DISCRETIZATION)
+    add_definitions("-DBICYCLE_NO_DISCRETIZATION")
+endif()
 
 if(BICYCLE_BUILD_EXAMPLES)
     add_subdirectory(examples)
