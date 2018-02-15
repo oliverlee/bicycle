@@ -11,8 +11,6 @@ namespace {
     const double dt = 1.0/fs; // sample time [s]
     const double v0 = 4.0; // forward speed [m/s]
     const size_t N = 1000; // length of simulation in samples
-    const auto simulation_period = std::chrono::microseconds(100);
-    const auto transmission_period = std::chrono::milliseconds(1);
 
     std::array<model::BicycleWhipple::state_t, N> discrete_time_system_state_n;
 } // namespace
