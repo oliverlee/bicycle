@@ -100,6 +100,9 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         void set_C(const output_matrix_t& C);
         void set_D(const feedthrough_matrix_t& D);
 
+        void set_v(real_t v); /* this function _always_ recalculates state space */
+        void set_dt(real_t dt);
+
         virtual void set_state_space() = 0; /* this pure virtual function is defined */
 #if !defined(BICYCLE_NO_DISCRETIZATION)
         void set_discrete_state_space();
