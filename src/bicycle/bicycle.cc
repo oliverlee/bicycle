@@ -72,11 +72,11 @@ Bicycle::full_state_t Bicycle::make_full_state(const auxiliary_state_t& aux, con
     return xf;
 }
 
-Bicycle::auxiliary_state_t Bicycle::get_auxiliary_state_part(const full_state_t& xf) {
+const Bicycle::auxiliary_state_t& Bicycle::get_auxiliary_state_part(const full_state_t& xf) {
     return xf.head<p>();
 }
 
-Bicycle::state_t Bicycle::get_state_part(const full_state_t& xf) {
+const Bicycle::state_t& Bicycle::get_state_part(const full_state_t& xf) {
     return xf.tail<n>();
 }
 
