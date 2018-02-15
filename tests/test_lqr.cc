@@ -12,8 +12,8 @@ class LqrTrackingTest: public ConvergenceTest {
                         10.0, 1.0, 1.0, 0.0, 0.0).finished().asDiagonal() *
                     constants::as_radians);
         }
-        void simulate() {
-            for(unsigned int i = 0; i < m_N; ++i) {
+        void simulate(size_t N = default_simulation_length) {
+            for(unsigned int i = 0; i < N; ++i) {
                 auto u = m_lqr->control_calculate(m_x);
                 m_x = m_bicycle->update_state(m_x, u);
             }
@@ -36,7 +36,7 @@ TEST_P(LqrTrackingTest, ZeroReference) {
 TEST_P(LqrTrackingTest, ZeroReferenceWithPeriodicRollTorqueDisturbance) {
     simulate();
 
-    for(unsigned int i = 0; i < m_N; ++i) {
+    for(unsigned int i = 0; i < default_simulation_length; ++i) {
         auto u = m_lqr->control_calculate(m_x);
 
         bool disturb = ((i / 100) % 5 == 0);
@@ -53,7 +53,7 @@ TEST_P(LqrTrackingTest, ZeroReferenceWithPeriodicRollTorqueDisturbance) {
 TEST_P(LqrTrackingTest, ZeroReferenceWithConstantRollTorqueDisturbance) {
     simulate();
 
-    for(unsigned int i = 0; i < m_N; ++i) {
+    for(unsigned int i = 0; i < default_simulation_length; ++i) {
         auto u = m_lqr->control_calculate(m_x);
         u[0] += 1.0;
 
