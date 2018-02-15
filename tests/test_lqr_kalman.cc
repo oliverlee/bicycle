@@ -4,8 +4,8 @@
 // TODO: Add more extensive testing
 class LqrKalmanConvergenceTest: public ConvergenceTest {
     public:
-        void simulate() {
-            for(unsigned int i = 0; i < m_N; ++i) {
+        void simulate(size_t N = default_simulation_length) {
+            for(unsigned int i = 0; i < N; ++i) {
                 auto u = m_lqr->control_calculate(m_kalman->x());
                 m_x = m_bicycle->update_state(m_x, u);
 

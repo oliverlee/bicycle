@@ -13,7 +13,7 @@ class ConvergenceTest: public ::testing::TestWithParam<model::real_t> {
         using lqr_t = controller::Lqr<bicycle_t>;
         virtual void SetUp();
         virtual void TearDown();
-        virtual void simulate() = 0;
+        virtual void simulate(size_t N) = 0;
         void test_state_near(model::BicycleWhipple::state_t actual,
                 model::BicycleWhipple::state_t expected, model::real_t tol_multiplier = 1.0);
         model::BicycleWhipple::state_t x_true();
@@ -25,8 +25,8 @@ class ConvergenceTest: public ::testing::TestWithParam<model::real_t> {
         static const model::real_t m_roll_rate_tol;
         static const model::real_t m_steer_rate_tol;
         static const model::real_t m_dt;
-        static const uint32_t m_N; // simulation length
-        static const uint32_t m_n; // horizon length
+        static const size_t default_simulation_length; // default simulation length
+        static const size_t default_horizon_length; // horizon length
         model::BicycleWhipple* m_bicycle;
         observer::Kalman<model::BicycleWhipple>* m_kalman;
         controller::Lqr<model::BicycleWhipple>* m_lqr;

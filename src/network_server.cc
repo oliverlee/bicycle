@@ -12,8 +12,8 @@ Server::Server(uint16_t server_port, uint16_t remote_port) :
     m_service_thread(std::bind(&Server::run_service, this)),
     m_pending_receptions(0),
     m_pending_transmissions(0),
-    m_receive_count(0),
-    m_transmit_count(0) {
+    m_receive_count(0) {
+    //m_transmit_count(0) {
         std::cout << "Starting UDP server, receiving on port " << server_port << "\n";
         std::cout << "                  transmitting to port " << remote_port << "\n";
 }
