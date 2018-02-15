@@ -124,7 +124,6 @@ Bicycle::output_t Bicycle::calculate_output(const Bicycle::state_t& x, const Bic
     return m_C*x + m_D*u;
 }
 
-
 void Bicycle::set_v_dt(real_t v, real_t dt) {
     m_v = v;
     m_dt = dt;
@@ -226,6 +225,20 @@ void Bicycle::set_C(const output_matrix_t& C) {
 
 void Bicycle::set_D(const feedthrough_matrix_t& D) {
     m_D = D;
+}
+
+void Bicycle::set_v(real_t v) {
+    m_v = v;
+
+    set_state_space();
+}
+
+void Bicycle::set_dt(real_t dt) {
+    m_dt = dt;
+
+#if !defined(BICYCLE_NO_DISCRETIZATION)
+    set_discrete_state_space();
+#endif
 }
 
 void Bicycle::set_state_space() {
