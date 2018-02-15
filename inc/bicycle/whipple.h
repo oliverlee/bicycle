@@ -21,7 +21,6 @@ class BicycleWhipple final : public Bicycle {
 
         virtual void set_state_space() override;
 
-
     private:
         /*
          * Some steppers have internal state and so none have do_step() defined as const.

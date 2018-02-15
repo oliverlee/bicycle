@@ -2,7 +2,9 @@
 #include <cmath>
 #include <fstream>
 #include <type_traits>
+#if !defined(BICYCLE_NO_DISCRETIZATION)
 #include <unsupported/Eigen/MatrixFunctions>
+#endif
 #include "bicycle/bicycle.h"
 #include "parameters.h"
 
@@ -42,7 +44,7 @@ namespace {
         set_element(x, field, modded_value);
     }
 
-#if !defined(NDEBUG)
+#if !defined(NDEBUG) and !defined(BICYCLE_NO_DISCRETIZATION)
     const model::real_t discretization_precision = Eigen::NumTraits<model::real_t>::dummy_precision();
 #endif
 } // namespace
@@ -121,7 +123,6 @@ real_t Bicycle::get_output_element(const output_t& x, output_index_t field) {
 Bicycle::output_t Bicycle::calculate_output(const Bicycle::state_t& x, const Bicycle::input_t& u) const {
     return m_C*x + m_D*u;
 }
-
 
 void Bicycle::set_v_dt(real_t v, real_t dt) {
     m_v = v;
@@ -226,6 +227,20 @@ void Bicycle::set_D(const feedthrough_matrix_t& D) {
     m_D = D;
 }
 
+void Bicycle::set_v(real_t v) {
+    m_v = v;
+
+    set_state_space();
+}
+
+void Bicycle::set_dt(real_t dt) {
+    m_dt = dt;
+
+#if !defined(BICYCLE_NO_DISCRETIZATION)
+    set_discrete_state_space();
+#endif
+}
+
 void Bicycle::set_state_space() {
     static_assert(index(Bicycle::state_index_t::yaw_angle) == 0,
         "Invalid underlying value for state index element");
@@ -266,9 +281,12 @@ void Bicycle::set_state_space() {
     m_B.bottomRows<o>() = m_M.inverse();
     m_recalculate_state_space = false;
 
+#if !defined(BICYCLE_NO_DISCRETIZATION)
     set_discrete_state_space();
+#endif
 }
 
+#if !defined(BICYCLE_NO_DISCRETIZATION)
 void Bicycle::set_discrete_state_space() {
     m_Ad.setZero();
     m_Bd.setZero();
@@ -299,6 +317,7 @@ void Bicycle::set_discrete_state_space() {
         m_Bd = T.topRightCorner<n, m>();
     }
 }
+#endif
 
 /* set d1, d2, d3 used in pitch constraint calculation */
 void Bicycle::set_moore_parameters() {
@@ -314,6 +333,7 @@ void Bicycle::set_moore_parameters() {
  * }
  */
 
+#if !defined(BICYCLE_NO_DISCRETIZATION)
 const Bicycle::state_matrix_t& Bicycle::Ad() const {
     return m_Ad;
 }
@@ -329,6 +349,7 @@ const Bicycle::output_matrix_t& Bicycle::Cd() const {
 const Bicycle::feedthrough_matrix_t& Bicycle::Dd() const {
     return D();
 }
+#endif
 
 const Bicycle::state_matrix_t& Bicycle::A() const {
     return m_A;

@@ -100,17 +100,24 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         void set_C(const output_matrix_t& C);
         void set_D(const feedthrough_matrix_t& D);
 
+        void set_v(real_t v); /* this function _always_ recalculates state space */
+        void set_dt(real_t dt);
+
         virtual void set_state_space() = 0; /* this pure virtual function is defined */
+#if !defined(BICYCLE_NO_DISCRETIZATION)
         void set_discrete_state_space();
+#endif
         void set_moore_parameters();
 
         real_t solve_constraint_pitch(real_t roll_angle, real_t steer_angle, real_t guess, size_t max_iterations = 3) const;
 
         // (pseudo) parameter accessors
+#if !defined(BICYCLE_NO_DISCRETIZATION)
         virtual const state_matrix_t& Ad() const override final;
         virtual const input_matrix_t& Bd() const override final;
         virtual const output_matrix_t& Cd() const override final;
         virtual const feedthrough_matrix_t& Dd() const override final;
+#endif
         const state_matrix_t& A() const;
         const input_matrix_t& B() const;
         const output_matrix_t& C() const;
@@ -160,8 +167,10 @@ class Bicycle : public DiscreteLinear<5, 2, 2, 2> {
         output_matrix_t m_C;
         feedthrough_matrix_t m_D;
 
+#if !defined(BICYCLE_NO_DISCRETIZATION)
         state_matrix_t m_Ad;
         input_matrix_t m_Bd;
+#endif
 
         Bicycle(const second_order_matrix_t& M, const second_order_matrix_t& C1,
                 const second_order_matrix_t& K0, const second_order_matrix_t& K2,
