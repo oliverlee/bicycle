@@ -16,7 +16,7 @@ include_directories(external/asio/asio/include)
 
 add_subdirectory(external/flatbuffers)
 include_directories(external/flatbuffers/include)
-set(FLATBUFFERS_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(FLATBUFFERS_BUILD_TESTS ON CACHE BOOL "" FORCE)
 set(FLATBUFFERS_INSTALL OFF CACHE BOOL "" FORCE)
 set(FLATBUFFERS_BUILD_FLATLIB ON CACHE BOOL "" FORCE)
 set(FLATBUFFERS_BUILD_FLATC ON CACHE BOOL "" FORCE)
