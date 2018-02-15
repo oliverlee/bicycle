@@ -44,7 +44,7 @@ class Server {
         uint32_t m_pending_transmissions;
 
         uint32_t m_receive_count;
-        uint32_t m_transmit_count;
+        //uint32_t m_transmit_count;
 
         asio::ip::udp::endpoint remote_endpoint() const;
         asio::ip::udp::endpoint server_endpoint() const;

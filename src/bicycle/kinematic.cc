@@ -40,18 +40,12 @@ BicycleKinematic::state_t BicycleKinematic::update_state(const BicycleKinematic:
     (void)u;
     (void)x;
     const real_t steer_angle_measurement = get_output_element(z, output_index_t::steer_angle);
-    const real_t yaw_angle_measurement = get_output_element(z, output_index_t::yaw_angle);
 
     //static constexpr auto yaw_index_A = index(state_index_t::yaw_angle);
     //static constexpr auto steer_index_A = index(state_index_t::steer_angle);
     const real_t next_roll = -m_K(0, 1)/m_K(0, 0) * steer_angle_measurement;
 
     state_t next_x = state_t::Zero();
-    // FIXME: Don't update yaw because it "looks wrong".
-    // steer rate is not used in this simplified update of yaw rate
-    //set_state_element(next_x, state_index_t::yaw_angle,
-    //        (m_Ad(yaw_index_A, yaw_index_A)*yaw_angle_measurement +
-    //         m_Ad(yaw_index_A, steer_index_A)*steer_angle_measurement));
     set_state_element(next_x, state_index_t::steer_angle, steer_angle_measurement);
     set_state_element(next_x, state_index_t::roll_angle, next_roll);
     return next_x;
@@ -63,7 +57,6 @@ BicycleKinematic::full_state_t BicycleKinematic::integrate_full_state(const Bicy
      * the previous time. After, integration of the auxiliary state, the dynamic state is updated.
      */
     const real_t steer_angle_measurement = get_output_element(z, output_index_t::steer_angle);
-    const real_t yaw_angle_measurement = get_output_element(z, output_index_t::yaw_angle);
 
     static constexpr auto x_index = index(full_state_index_t::x);
     static constexpr auto y_index = index(full_state_index_t::y);
