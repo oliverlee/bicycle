@@ -39,6 +39,8 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG" CACHE
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y -Wall -Wextra")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-missing-field-initializers") # suppress warnings from googletest
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-parameter") # suppress warnings from boost numeric
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-local-typedef") # suppress warnings from asio
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations") # suppress warnings from asio
 
 
 # default to release type if none provided
