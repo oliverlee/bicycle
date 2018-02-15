@@ -7,8 +7,8 @@ const model::real_t ConvergenceTest::m_steer_tol = 0.3 * constants::as_radians;
 const model::real_t ConvergenceTest::m_roll_rate_tol = 10 * ConvergenceTest::m_roll_tol;
 const model::real_t ConvergenceTest::m_steer_rate_tol = 10 * ConvergenceTest::m_steer_tol;
 const model::real_t ConvergenceTest::m_dt = 1.0/200;
-const uint32_t ConvergenceTest::m_N = 1000;
-const uint32_t ConvergenceTest::m_n = 100;
+const size_t ConvergenceTest::default_simulation_length = 1000;
+const size_t ConvergenceTest::default_horizon_length = 100;
 
 void ConvergenceTest::SetUp() {
     // set initial state
@@ -24,7 +24,7 @@ void ConvergenceTest::SetUp() {
     m_lqr = new lqr_t(*m_bicycle,
             lqr_t::state_cost_t::Identity(),
             0.1 * (lqr_t::input_cost_t() << 0, 0, 0, 1).finished(),
-            bicycle_t::state_t::Zero(), m_n);
+            bicycle_t::state_t::Zero(), default_horizon_length);
 
     m_gen = std::mt19937(m_rd());
     m_r0 = std::normal_distribution<>(0, parameters::defaultvalue::kalman::R(0, 0));
